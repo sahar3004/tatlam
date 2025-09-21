@@ -333,13 +333,22 @@ def dbg_cats_snapshot():
 def fetch_all_basic_categories() -> list[dict]:
     con = get_db()
     cur = con.cursor()
+    # Prefer selecting approval columns up-front so gating can work
     try:
         cur.execute(
-            f"SELECT id, title, category, created_at FROM {TABLE_NAME} "  # noqa: S608
+            f"SELECT id, title, category, status, approved_by, created_at FROM {TABLE_NAME} "  # noqa: S608
             "ORDER BY datetime(created_at) DESC, id DESC"
         )
     except sqlite3.OperationalError:
-        cur.execute(f"SELECT id, title, category FROM {TABLE_NAME} ORDER BY id DESC")  # noqa: S608
+        # Fallback for older schemas: include approval columns only if present
+        select_cols = ["id", "title", "category"]
+        if db_has_column(TABLE_NAME, "status"):
+            select_cols.append("status")
+        if db_has_column(TABLE_NAME, "approved_by"):
+            select_cols.append("approved_by")
+        cur.execute(
+            f"SELECT {', '.join(select_cols)} FROM {TABLE_NAME} ORDER BY id DESC"  # noqa: S608
+        )
     rows = [dict(x) for x in cur.fetchall()]
     # gate: only approved rows are visible in public listing
     rows = [r for r in rows if is_approved_row(r)]
