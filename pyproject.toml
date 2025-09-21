@@ -1,0 +1,113 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tatlam"
+version = "0.1.0"
+description = "Tatlam scenario QA tooling and web app"
+readme = "README.md"
+authors = [{ name = "Tatlam Team" }]
+requires-python = ">=3.9"
+dependencies = [
+    "Flask==3.0.3",
+    "Jinja2==3.1.6",
+    "openai==1.40.3",
+    "numpy==1.26.4",
+    "python-dotenv==1.0.1",
+    "flask-admin==1.6.1",
+    "SQLAlchemy==2.0.32",
+    "pandas==2.2.2",
+    "openpyxl==3.1.5",
+    "requests==2.32.4",
+    "WTForms==3.1.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black==24.8.0",
+    "ruff==0.6.4",
+    "mypy==1.11.1",
+    "pytest==8.3.2",
+    "pytest-cov==5.0.0",
+    "hypothesis==6.112.1",
+    "bandit==1.7.9",
+    "pip-audit==2.7.3",
+    "coverage==7.6.1",
+    "types-requests==2.32.0.20240907",
+]
+
+[tool.black]
+line-length = 100
+target-version = ["py39"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+exclude = [
+    "debug",
+    "gold_md",
+    "templates",
+    "__pycache__",
+    "app.backup.py",
+    "app.py.save",
+    "app.py.bak",
+    "*.backup.py",
+    "*.bak",
+    ".venv",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S"]
+ignore = ["E203", "S311"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["tatlam"]
+combine-as-imports = true
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "I001"]
+"run_batch.py" = ["S608", "E501"]
+"export_json.py" = ["S608"]
+"render_cards.py" = ["S608"]
+"app.py" = ["UP035"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "--cov=tatlam --cov=app --cov=run_batch --cov-report=term-missing"
+testpaths = ["tests"]
+filterwarnings = [
+    "ignore::DeprecationWarning:sqlalchemy",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["tatlam", "app", "run_batch"]
+omit = [
+    "tests/*",
+    "debug/*",
+    "templates/*",
+]
+
+[tool.coverage.report]
+fail_under = 0
+show_missing = true
+skip_covered = false
+
+[tool.mypy]
+python_version = "3.9"
+strict = true
+files = "tatlam"
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unreachable = true
+ignore_missing_imports = true
+allow_untyped_decorators = true
+
+[tool.bandit]
+skips = ["B101"]
+exclude_dirs = ["tests", "debug", "gold_md", "templates"]
+
+[tool.setuptools]
+packages = ["tatlam"]

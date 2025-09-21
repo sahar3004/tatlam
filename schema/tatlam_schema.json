@@ -1,0 +1,40 @@
+{
+  "type": "object",
+  "properties": {
+    "bundle_id": {"type":"string"},
+    "scenarios": {
+      "type": "array",
+      "items": {
+        "type":"object",
+        "properties": {
+          "external_id": {"type":"string"},
+          "title": {"type":"string"},
+          "category": {"type":"string"},
+          "threat_level": {"type":"string"},
+          "likelihood": {"type":"string"},
+          "complexity": {"type":"string"},
+          "location": {"type":"string"},
+          "background": {"type":"string"},
+          "steps": {"type":"array","items":{"type":"string"}},
+          "required_response": {"type":"array","items":{"type":"string"}},
+          "debrief_points": {"type":"array","items":{"type":"string"}},
+          "operational_background": {"type":"string"},
+          "media_link": {"type":["string","null"]},
+          "mask_usage": {"type":["string","null"]},
+          "authority_notes": {"type":"string"},
+          "cctv_usage": {"type":"string"},
+          "comms": {"type":"array","items":{"type":"string"}},
+          "decision_points": {"type":"array","items":{"type":"string"}},
+          "escalation_conditions": {"type":"array","items":{"type":"string"}},
+          "end_state_success": {"type":"string"},
+          "end_state_failure": {"type":"string"},
+          "lessons_learned": {"type":"array","items":{"type":"string"}},
+          "variations": {"type":"array","items":{"type":"string"}},
+          "validation": {"type":"array","items":{"type":"string"}}
+        },
+        "required": ["title","category","threat_level","steps","required_response","debrief_points","end_state_success","end_state_failure","lessons_learned","variations"]
+      }
+    }
+  },
+  "required": ["bundle_id","scenarios"]
+}

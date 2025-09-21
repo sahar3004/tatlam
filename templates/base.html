@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title if title else "תטל״מים" }}</title>
+  <style>
+    body{font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial; margin:0; background:#0b0c10; color:#e6e7ea;}
+    a{color:#9bd3ff; text-decoration:none}
+    header,main{max-width:1200px; margin:0 auto; padding:16px;}
+    .grid{display:grid; gap:16px;}
+    .cards{grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));}
+    .card{background:#151822; border:1px solid #24293a; border-radius:16px; padding:16px; box-shadow:0 2px 12px rgba(0,0,0,.25);}
+    .meta{font-size:14px; color:#aab;}
+    .badge{display:inline-block; padding:2px 8px; border-radius:999px; background:#222a3b; margin-inline:4px;}
+    nav a{margin-inline:8px}
+    .title{font-weight:700; font-size:18px; margin:0 0 8px}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;}
+    .muted{color:#9aa1b1;}
+    ul{margin:0 0 0 1em}
+    li{margin:2px 0}
+  </style>
+</head>
+<body>
+<header>
+  <h1 style="margin:0 0 8px">תטל״מים – כרטיסיות</h1>
+  <div class="muted">רענון חי: אם מסד הנתונים מתעדכן – הדף יתרענן אוטומטית</div>
+  <nav style="margin-top:8px"><a href="/">דף הבית</a></nav>
+</header>
+<main>
+  {% block content %}{% endblock %}
+</main>
+<script>
+  if (!!window.EventSource) {
+    const es = new EventSource("/events");
+    es.onmessage = () => location.reload();
+  } else {
+    setInterval(()=>location.reload(), 5000);
+  }
+</script>
+</body>
+</html>

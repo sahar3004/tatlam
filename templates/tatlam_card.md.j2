@@ -1,0 +1,32 @@
+🧩 כותרת: {{ title }}
+
+📂 קטגוריה: {{ category }}
+
+🔥 רמת סיכון: {{ threat_level }}
+
+📊 רמת סבירות: {{ likelihood or "לא צוין" }}
+
+🧠 רמת מורכבות: {{ complexity or "לא צוין" }}
+
+📋 סיפור מקרה:
+- מיקום: {{ location }}
+- תיאור: {{ background }}
+
+🎯 שלבי תגובה:
+{% for s in steps %}• {{ s }}
+{% endfor %}
+
+🔫 נוהל פתיחה באש:
+{% if rules_of_engagement is defined and rules_of_engagement %}
+{{ rules_of_engagement }}
+{% else %}
+לא צוין; אם לא התקיימו התנאים – אין פתיחה באש.
+{% endif %}
+
+😷 שימוש במסכה: {{ mask_usage if mask_usage else "לא רלוונטי" }}
+
+🎥 רקע מבצעי:
+{{ operational_background }}
+
+📎 לינק לסרטון:
+{{ media_link if media_link else "אין תיעוד רלוונטי" }}

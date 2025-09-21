@@ -1,0 +1,40 @@
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.python-version
+.venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+coverage.xml
+dist/
+build/
+*.egg-info/
+
+# Environments & local config (keep template tracked)
+.env
+.env.*
+!.env.template
+
+# Project artifacts & debug outputs
+artifacts/
+debug/
+
+# Local databases & backups
+db/*.db
+db/*.backup.*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+

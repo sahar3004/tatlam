@@ -1,0 +1,187 @@
+import sqlite3
+import json
+import os
+import time
+from config import DB_PATH, TABLE_NAME
+from flask import Flask, render_template, abort, Response
+
+
+app = Flask(__name__)
+
+# --- Flask-Admin over SQLite (reflect existing schema) ---
+from sqlalchemy import create_engine
+from sqlalchemy.ext.automap import automap_base
+from sqlalchemy.orm import Session
+from flask_admin import Admin
+from flask_admin.contrib.sqla import ModelView
+
+# חיבור ל-SQLite (אין שרת חיצוני)
+engine = create_engine(
+    f"sqlite:///{DB_PATH}", connect_args={"check_same_thread": False}
+)
+
+# רפלקציה של טבלאות קיימות למסגרות ORM
+Base = automap_base()
+Base.prepare(engine, reflect=True)  # משקף את כל הטבלאות הקיימות
+
+# פותחים סשן
+session = Session(engine)
+
+admin = Admin(app, name="Tatlam Admin", template_mode="bootstrap4")
+
+# מוסיפים את טבלת התטל״מים. השם חייב להתאים לטבלת ה-DB שלך: 'scenarios'
+try:
+    Scenarios = Base.classes.scenarios
+    admin.add_view(ModelView(Scenarios, session))
+except Exception as e:
+    print(
+        f"[ADMIN] אזהרה: לא הצלחתי לשקף את טבלת 'scenarios' ({e}). ודא שה-DB נוצר ויש טבלה בשם הזה."
+    )
+# --- end admin setup ---
+
+CATS = {
+    "piguim-peshutim": {
+        "title": "פיגועים פשוטים",
+        "aliases": ["פיגועים פשוטים", "פיגועים פשוטים (דקירה/ירי)"],
+    },
+    "ezrahi-murkav": {
+        "title": "אזרחי מורכב",
+        "aliases": ["אזרחי מורכב", "אירועים מורכבים עם אזרחים"],
+    },
+    "hadira-razishim": {
+        "title": "חדירה לחדרים רגישים",
+        "aliases": ["חדירה לחדרים רגישים"],
+    },
+    "tachanot-iliyot": {"title": "תחנות עיליות", "aliases": ["תחנות עיליות"]},
+    "iyumim-tech": {"title": "איומים טכנולוגיים", "aliases": ["איומים טכנולוגיים"]},
+    "eiroa-kimi": {"title": "אירוע כימי", "aliases": ["אירוע כימי"]},
+    "bnei-aruba": {"title": "בני ערובה", "aliases": ["בני ערובה"]},
+    "chefetz-chashud": {
+        "title": "חפץ חשוד ומטען",
+        "aliases": [
+            "חפץ חשוד ומטען",
+            "כבודה עזובה / חפץ חשוד / מטען",
+            "כבודה עזובה/חפץ חשוד/מטען",
+        ],
+    },
+}
+
+JSON_FIELDS = [
+    "steps",
+    "required_response",
+    "debrief_points",
+    "comms",
+    "decision_points",
+    "escalation_conditions",
+    "lessons_learned",
+    "variations",
+    "validation",
+]
+
+
+def get_db():
+    con = sqlite3.connect(DB_PATH)
+    con.row_factory = sqlite3.Row
+    return con
+
+
+def normalize_row(r):
+    row = dict(r)
+    for k in JSON_FIELDS:
+        try:
+            row[k] = json.loads(row.get(k) or "[]")
+        except Exception:
+            row[k] = []
+    return row
+
+
+def fetch_all():
+    con = get_db()
+    cur = con.cursor()
+    cur.execute(
+        f"SELECT * FROM {TABLE_NAME} ORDER BY datetime(created_at) DESC, id DESC"
+    )
+    rows = [normalize_row(x) for x in cur.fetchall()]
+    con.close()
+    return rows
+
+
+def fetch_by_category_slug(slug):
+    if slug not in CATS:
+        abort(404)
+    aliases = CATS[slug]["aliases"]
+    con = get_db()
+    cur = con.cursor()
+    qmarks = ",".join("?" * len(aliases))
+    cur.execute(
+        f"SELECT * FROM {TABLE_NAME} WHERE category IN ({qmarks}) ORDER BY datetime(created_at) DESC, id DESC",
+        aliases,
+    )
+    rows = [normalize_row(x) for x in cur.fetchall()]
+    con.close()
+    return rows
+
+
+def fetch_one(sid: int):
+    con = get_db()
+    cur = con.cursor()
+    cur.execute(f"SELECT * FROM {TABLE_NAME} WHERE id=?", (sid,))
+    r = cur.fetchone()
+    con.close()
+    if not r:
+        abort(404)
+    return normalize_row(r)
+
+
+@app.route("/")
+def home():
+    data = fetch_all()
+    counts = {slug: 0 for slug in CATS}
+    for row in data:
+        for slug, meta in CATS.items():
+            if row["category"] in meta["aliases"]:
+                counts[slug] += 1
+                break
+    cats = [
+        {"slug": slug, "title": meta["title"], "count": counts[slug]}
+        for slug, meta in CATS.items()
+    ]
+    return render_template("home.html", cats=cats)
+
+
+@app.route("/cat/<slug>")
+def by_cat(slug):
+    if slug not in CATS:
+        abort(404)
+    rows = fetch_by_category_slug(slug)
+    return render_template("list.html", cat_title=CATS[slug]["title"], items=rows)
+
+
+@app.route("/scenario/<int:sid>")
+def scenario(sid):
+    row = fetch_one(sid)
+    return render_template("detail.html", s=row)
+
+
+@app.route("/events")
+def events():
+    def stream():
+        path = DB_PATH
+        last = None
+        while True:
+            try:
+                m = os.path.getmtime(path)
+            except FileNotFoundError:
+                m = 0
+            if last is None:
+                last = m
+            elif m != last:
+                last = m
+                yield f"data: {m}\n\n"
+            time.sleep(2)
+
+    return Response(stream(), mimetype="text/event-stream")
+
+
+if __name__ == "__main__":
+    app.run(debug=True)

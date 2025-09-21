@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>קטגוריות</h2>
+<div class="grid cards">
+  {% for c in cats %}
+  <a class="card" href="{{ url_for('by_cat', slug=c.slug) }}">
+    <div class="title">📂 {{ c.title }}</div>
+    <div class="meta">כמות תטל״מים: <span class="badge mono">{{ c.count }}</span></div>
+    <div class="muted">נתיב: /cat/{{ c.slug }}</div>
+  </a>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,9 @@
+{
+  "status": 200,
+  "json": {
+    "checks": [
+      "rows=19"
+    ],
+    "ready": true
+  }
+}
