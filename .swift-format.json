@@ -1,0 +1,18 @@
+{
+  "maximumBlankLines": 1,
+  "lineLength": 120,
+  "indentation": {
+    "spaces": 4
+  },
+  "respectsExistingLineBreaks": true,
+  "rules": {
+    "DoNotUseSemicolons": true,
+    "NoCasesWithOnlyFallthrough": true,
+    "NoEmptyTrailingClosureParentheses": true,
+    "NoParensAroundConditions": true,
+    "NoVoidReturnOnFunctionSignature": true,
+    "UseEarlyExits": true,
+    "UseLetInEveryBoundCaseVariable": true,
+    "UseShorthandTypeNames": true
+  }
+}

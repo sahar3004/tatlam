@@ -38,3 +38,102 @@ db/*.backup.*.db
 # Logs
 *.log
 
+
+# Xcode / Swift
+DerivedData/
+build/
+*.xcworkspace/
+*.xcodeproj/project.xcworkspace/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/xcshareddata/WorkspaceSettings.xcsettings
+xcuserdata/
+*.xcuserdatad
+*.xccheckout
+*.xcscmblueprint
+*.swiftpm/
+.swiftpm/
+.sourcekitten/
+.swiftlint.cache
+.swift-format
+
+# Carthage / CocoaPods / SPM artifacts
+Carthage/Build/
+Carthage/Checkouts/
+Pods/
+.build/
+Package.resolved
+
+# Swift coverage & reports
+*.profdata
+*.gcda
+*.gcno
+*.lcov
+sonarqube/
+reports/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# Node / web (if present)
+node_modules/
+.npm/
+.pnpm-store/
+.yarn/
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/install-state.gz
+.yarnrc.yml
+build/**
+dist/**
+
+# Python virtual env variants
+.venv/
+venv/
+ENV/
+.env.bak
+
+# Tooling caches
+.pre-commit-config.yaml.bak
+.pre-commit-hooks/
+.mypy_cache/
+.pytype/
+.pyre/
+.ruff_cache/
+pytestdebug.log
+
+# IDEs (more)
+*.swp
+*.swo
+*.swn
+*.swm
+*.orig
+*.rej
+*.iml
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# Project outputs and reports
+$OUT/
+artifacts/
+
+# Python build artifacts
+*.egg-info/
+.eggs/
+__pycache__/
+
+# Backup and temp files
+backups/*.bak*
+backups/*.backup.*
+backups/*.save
+
+# Misc accidental files
+=
+*.DS_Store
+
+# Hypothesis cache
+.hypothesis/

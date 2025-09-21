@@ -1,0 +1,19 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.5
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+      - id: ruff-format
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+  - repo: local
+    hooks:
+      - id: swift-format
+        name: swift-format
+        entry: bash -c 'if command -v swift-format >/dev/null 2>&1 && [ -f .swift-format.json ]; then swift-format lint --configuration .swift-format.json --recursive .; else echo "swift-format not available or config missing, skipping"; fi'
+        language: system
+        types: [swift]
