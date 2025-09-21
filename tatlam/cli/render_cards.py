@@ -25,7 +25,7 @@ JSON_LIST_FIELDS = [
 ]
 
 
-def _json_to_list(val: Any):
+def _json_to_list(val: Any) -> list[Any]:
     """המרת תוכן עמודה (שעלול להיות list/str/None) לרשימה.
     - אם כבר list → החזר כמו שהוא
     - אם None/ריק → []
@@ -112,7 +112,7 @@ def _safe_table(name: str) -> str:
     return name
 
 
-def fetch(category: str | None = None, bundle_id: str | None = None):
+def fetch(category: str | None = None, bundle_id: str | None = None) -> list[dict[str, Any]]:
     # שימוש ב-row_factory כדי לאפשר גישה לשמות עמודות כמו dict
     with sqlite3.connect(DB_PATH) as con:
         con.row_factory = sqlite3.Row

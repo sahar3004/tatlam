@@ -9,9 +9,9 @@ from tatlam.cli.render_cards import (
     coerce_row_types,
     fetch,
     load_template,
+    main,
     safe_filename,
     unique_path,
-    main,
 )
 
 __all__ = [
