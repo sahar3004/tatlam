@@ -332,43 +332,34 @@ def test_trinity_brain_initialization_success():
 
     Goal: Ensure Trinity Brain initializes without crashing.
     Method:
-    - Mock anthropic.Anthropic and google.generativeai
+    - Use dependency injection to pass mock clients
     - Instantiate TrinityBrain
     - Assert no exceptions are raised
     """
-    # Need to mock config_trinity API keys before importing TrinityBrain
-    import config_trinity
+    from tatlam.core.brain import TrinityBrain
 
-    with patch.object(config_trinity, 'ANTHROPIC_API_KEY', 'mock-anthropic-key'):
-        with patch.object(config_trinity, 'GOOGLE_API_KEY', 'mock-google-key'):
-            # Mock anthropic.Anthropic
-            with patch('tatlam.core.brain.anthropic.Anthropic') as mock_anthropic:
-                # Mock google.generativeai
-                with patch('tatlam.core.brain.genai.configure') as mock_genai_configure:
-                    with patch('tatlam.core.brain.genai.GenerativeModel') as mock_genai_model:
-                        # Mock OpenAI (for local simulator)
-                        with patch('tatlam.core.brain.OpenAI') as mock_openai:
-                            # Setup mocks
-                            mock_anthropic.return_value = MagicMock(name='MockAnthropicClient')
-                            mock_genai_model.return_value = MagicMock(name='MockGeminiModel')
-                            mock_openai.return_value = MagicMock(name='MockOpenAIClient')
+    # Create mock clients
+    mock_writer = MagicMock(name='MockAnthropicClient')
+    mock_judge = MagicMock(name='MockGeminiModel')
+    mock_simulator = MagicMock(name='MockOpenAIClient')
 
-                            # Import and instantiate TrinityBrain
-                            from tatlam.core.brain import TrinityBrain
+    # Use dependency injection (new pattern)
+    brain = TrinityBrain(
+        writer_client=mock_writer,
+        judge_client=mock_judge,
+        simulator_client=mock_simulator,
+        auto_initialize=False
+    )
 
-                            # This should not raise any exceptions
-                            brain = TrinityBrain()
+    # Verify all three clients were set
+    assert brain.writer_client is mock_writer
+    assert brain.judge_client is mock_judge
+    assert brain.simulator_client is mock_simulator
 
-                            # Verify all three clients were initialized
-                            assert brain.writer_client is not None
-                            assert brain.judge_client is not None
-                            assert brain.simulator_client is not None
-
-                            # Verify the mocks were called
-                            mock_anthropic.assert_called_once()
-                            mock_genai_configure.assert_called_once()
-                            mock_genai_model.assert_called_once()
-                            mock_openai.assert_called_once()
+    # Verify status methods
+    assert brain.has_writer() is True
+    assert brain.has_judge() is True
+    assert brain.has_simulator() is True
 
 
 def test_trinity_brain_initialization_missing_keys():
@@ -378,41 +369,37 @@ def test_trinity_brain_initialization_missing_keys():
     When API keys are missing, the brain should initialize but clients should be None.
     No exceptions should be raised.
     """
+    from tatlam.settings import get_settings
+    from tatlam.core.brain import TrinityBrain
+
+    # Clear settings cache
+    get_settings.cache_clear()
+
     # Mock environment with missing keys
     with patch.dict(os.environ, {
         'ANTHROPIC_API_KEY': '',
         'GOOGLE_API_KEY': '',
         'LOCAL_BASE_URL': 'http://localhost:8080/v1',
         'LOCAL_API_KEY': 'mock-local-key'
-    }, clear=True):
-        # Reload config to pick up cleared env vars
-        import sys
-        if 'config_trinity' in sys.modules:
-            del sys.modules['config_trinity']
+    }, clear=False):
+        # Clear settings cache to pick up new env vars
+        get_settings.cache_clear()
 
-        # Mock the external clients (even though they won't be initialized)
-        with patch('tatlam.core.brain.anthropic.Anthropic') as mock_anthropic:
-            with patch('tatlam.core.brain.genai.configure') as mock_genai_configure:
-                with patch('tatlam.core.brain.genai.GenerativeModel') as mock_genai_model:
-                    with patch('tatlam.core.brain.OpenAI') as mock_openai:
-                        mock_openai.return_value = MagicMock(name='MockOpenAIClient')
+        # Mock OpenAI at the openai module level (since it's imported inside functions)
+        with patch('openai.OpenAI') as mock_openai:
+            mock_openai.return_value = MagicMock(name='MockOpenAIClient')
 
-                        # Import config_trinity to get the missing keys
-                        import config_trinity
+            # Instantiate TrinityBrain with auto_initialize=True
+            brain = TrinityBrain(auto_initialize=True)
 
-                        # Force the keys to be None/empty
-                        with patch.object(config_trinity, 'ANTHROPIC_API_KEY', None):
-                            with patch.object(config_trinity, 'GOOGLE_API_KEY', None):
-                                from tatlam.core.brain import TrinityBrain
+            # Writer and Judge should be None due to missing keys
+            assert brain.writer_client is None
+            assert brain.judge_client is None
+            # Simulator should still be initialized
+            assert brain.simulator_client is not None
 
-                                # Should not raise exceptions
-                                brain = TrinityBrain()
-
-                                # Writer and Judge should be None due to missing keys
-                                assert brain.writer_client is None
-                                assert brain.judge_client is None
-                                # Simulator should still be initialized
-                                assert brain.simulator_client is not None
+    # Cleanup
+    get_settings.cache_clear()
 
 
 def test_trinity_brain_initialization_client_failure():
@@ -422,36 +409,41 @@ def test_trinity_brain_initialization_client_failure():
     If a client fails to initialize (exception raised), the brain should still instantiate
     and the failed client should be None.
     """
-    import sys
-    import config_trinity
+    from tatlam.settings import get_settings, ConfigurationError
+    from tatlam.core.brain import TrinityBrain
 
-    # Reload config_trinity to pick up patches
-    if 'tatlam.core.brain' in sys.modules:
-        del sys.modules['tatlam.core.brain']
+    # Clear settings cache
+    get_settings.cache_clear()
 
-    with patch.object(config_trinity, 'ANTHROPIC_API_KEY', 'mock-key'):
-        with patch.object(config_trinity, 'GOOGLE_API_KEY', 'mock-key'):
-            # Make Anthropic initialization raise an exception
-            with patch('tatlam.core.brain.anthropic.Anthropic') as mock_anthropic:
-                mock_anthropic.side_effect = Exception("Connection error")
+    with patch.dict(os.environ, {
+        'ANTHROPIC_API_KEY': 'mock-key',
+        'GOOGLE_API_KEY': 'mock-key',
+        'LOCAL_BASE_URL': 'http://localhost:8080/v1',
+        'LOCAL_API_KEY': 'mock-local-key'
+    }, clear=False):
+        get_settings.cache_clear()
 
-                with patch('tatlam.core.brain.genai.configure'):
-                    with patch('tatlam.core.brain.genai.GenerativeModel') as mock_genai:
-                        mock_genai.return_value = MagicMock()
+        # Make create_writer_client raise a ConfigurationError
+        with patch('tatlam.core.brain.create_writer_client') as mock_create_writer:
+            mock_create_writer.side_effect = ConfigurationError("Connection error")
 
-                        with patch('tatlam.core.brain.OpenAI') as mock_openai:
-                            mock_openai.return_value = MagicMock()
+            with patch('tatlam.core.brain.create_judge_client') as mock_create_judge:
+                mock_create_judge.return_value = MagicMock(name='MockGeminiModel')
 
-                            from tatlam.core.brain import TrinityBrain
+                with patch('tatlam.core.brain.create_simulator_client') as mock_create_sim:
+                    mock_create_sim.return_value = MagicMock(name='MockOpenAIClient')
 
-                            # Should not raise - error should be caught and logged
-                            brain = TrinityBrain()
+                    # Should not raise - error should be caught and logged
+                    brain = TrinityBrain(auto_initialize=True)
 
-                            # Writer client should be None due to exception
-                            assert brain.writer_client is None
-                            # Other clients should be initialized
-                            assert brain.judge_client is not None
-                            assert brain.simulator_client is not None
+                    # Writer client should be None due to exception
+                    assert brain.writer_client is None
+                    # Other clients should be initialized
+                    assert brain.judge_client is not None
+                    assert brain.simulator_client is not None
+
+    # Cleanup
+    get_settings.cache_clear()
 
 
 # ==============================================================================
@@ -462,13 +454,20 @@ def test_json_fields_empty_handling(temp_db_path, monkeypatch):
     """
     Test that normalize_row correctly handles empty/null JSON fields.
     """
+    from tatlam.settings import get_settings
+    get_settings.cache_clear()
+
     monkeypatch.setenv("DB_PATH", temp_db_path)
     monkeypatch.setenv("TABLE_NAME", "scenarios")
 
     import sys
-    for mod in ['config', 'config_trinity', 'tatlam.infra.db', 'tatlam.infra.repo']:
+    for mod in ['tatlam.settings', 'tatlam.infra.db', 'tatlam.infra.repo']:
         if mod in sys.modules:
             del sys.modules[mod]
+
+    # Re-import to pick up new env vars
+    from tatlam.settings import get_settings as get_new_settings
+    get_new_settings.cache_clear()
 
     from tatlam.infra.db import get_db
     from tatlam.infra.repo import insert_scenario, normalize_row

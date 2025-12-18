@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import sqlite3
-from importlib import import_module
+
+from tatlam.settings import get_settings
 
 
 def get_db() -> sqlite3.Connection:
@@ -10,8 +11,8 @@ def get_db() -> sqlite3.Connection:
     Centralizing this ensures consistent row handling across app and CLI.
     """
     # Resolve DB_PATH at call time to respect tests that reload config
-    config = import_module("config")
-    con = sqlite3.connect(config.DB_PATH)
+    settings = get_settings()
+    con = sqlite3.connect(settings.DB_PATH)
     con.row_factory = sqlite3.Row
     return con
 

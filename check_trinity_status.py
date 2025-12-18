@@ -4,10 +4,12 @@ Trinity System Status Checker
 Verifies that all three AI models are accessible before launching the system.
 """
 
-import os
 import sys
 from openai import OpenAI
-import config_trinity
+from tatlam.settings import get_settings
+
+# Get settings instance
+settings = get_settings()
 
 
 def check_env_variable(var_name: str, var_value: str | None) -> bool:
@@ -23,11 +25,11 @@ def check_env_variable(var_name: str, var_value: str | None) -> bool:
 def check_local_server() -> bool:
     """Check if the local Qwen server is running and accessible."""
     try:
-        print(f"\n🔍 Checking local server at {config_trinity.LOCAL_BASE_URL}...")
+        print(f"\n🔍 Checking local server at {settings.LOCAL_BASE_URL}...")
 
         client = OpenAI(
-            base_url=config_trinity.LOCAL_BASE_URL,
-            api_key=config_trinity.LOCAL_API_KEY
+            base_url=settings.LOCAL_BASE_URL,
+            api_key=settings.LOCAL_API_KEY
         )
 
         # Try to list models
@@ -38,17 +40,17 @@ def check_local_server() -> bool:
         print(f"   Available models: {', '.join(model_ids)}")
 
         # Check if the configured model is available
-        if config_trinity.LOCAL_MODEL_NAME in model_ids:
-            print(f"   ✅ Configured model '{config_trinity.LOCAL_MODEL_NAME}' is available")
+        if settings.LOCAL_MODEL_NAME in model_ids:
+            print(f"   ✅ Configured model '{settings.LOCAL_MODEL_NAME}' is available")
             return True
         else:
-            print(f"   ⚠️  Warning: Configured model '{config_trinity.LOCAL_MODEL_NAME}' not found in available models")
+            print(f"   ⚠️  Warning: Configured model '{settings.LOCAL_MODEL_NAME}' not found in available models")
             print(f"   The server will use the first available model: {model_ids[0] if model_ids else 'none'}")
             return True  # Still return True if server is running
 
     except Exception as e:
         print(f"❌ Local server connection failed: {e}")
-        print(f"   Make sure the server is running on {config_trinity.LOCAL_BASE_URL}")
+        print(f"   Make sure the server is running on {settings.LOCAL_BASE_URL}")
         return False
 
 
@@ -62,23 +64,23 @@ def main():
 
     # Check 1: Writer (Claude via Anthropic)
     print("\n1️⃣  THE WRITER (Claude via Anthropic)")
-    print(f"   Model: {config_trinity.WRITER_MODEL_NAME}")
-    results.append(check_env_variable("ANTHROPIC_API_KEY", config_trinity.ANTHROPIC_API_KEY))
+    print(f"   Model: {settings.WRITER_MODEL_NAME}")
+    results.append(check_env_variable("ANTHROPIC_API_KEY", settings.ANTHROPIC_API_KEY))
 
     # Check 2: Judge (Gemini via Google)
     print("\n2️⃣  THE JUDGE (Gemini via Google)")
-    print(f"   Model: {config_trinity.JUDGE_MODEL_NAME}")
-    results.append(check_env_variable("GOOGLE_API_KEY", config_trinity.GOOGLE_API_KEY))
+    print(f"   Model: {settings.JUDGE_MODEL_NAME}")
+    results.append(check_env_variable("GOOGLE_API_KEY", settings.GOOGLE_API_KEY))
 
     # Check 3: Simulator (Local Qwen)
     print("\n3️⃣  THE SIMULATOR (Local Qwen)")
-    print(f"   Model: {config_trinity.LOCAL_MODEL_NAME}")
+    print(f"   Model: {settings.LOCAL_MODEL_NAME}")
     results.append(check_local_server())
 
     # Database check
     print("\n4️⃣  DATABASE")
     from pathlib import Path
-    db_path = Path(config_trinity.DB_PATH)
+    db_path = Path(settings.DB_PATH)
     if db_path.exists():
         print(f"✅ Database found at: {db_path}")
         results.append(True)

@@ -13,7 +13,10 @@ logger = logging.getLogger(__name__)
 
 # Trinity imports
 from tatlam.core.brain import TrinityBrain
-import config_trinity
+from tatlam.settings import get_settings
+
+# Get settings instance
+settings = get_settings()
 
 # Persistence imports
 from tatlam.infra.repo import insert_scenario
@@ -22,7 +25,7 @@ from tatlam.core.gold_md import parse_md_to_scenario
 
 # Page Configuration
 st.set_page_config(
-    page_title=config_trinity.PAGE_TITLE,
+    page_title=settings.PAGE_TITLE,
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -125,7 +128,7 @@ def save_chat_log(messages: list[dict], title: str = None) -> tuple[bool, str]:
         logger.info(f"Starting chat log save process for {len(messages)} messages")
 
         # Create logs directory if it doesn't exist
-        logs_dir = Path(config_trinity.BASE_DIR) / "chat_logs"
+        logs_dir = settings.BASE_DIR / "chat_logs"
         logs_dir.mkdir(parents=True, exist_ok=True)
 
         # Generate filename
@@ -170,7 +173,7 @@ def home_view():
 
     # Metric 1: Scenarios in gold_md
     with col1:
-        gold_dir = Path(config_trinity.GOLD_DIR)
+        gold_dir = settings.GOLD_DIR
         if gold_dir.exists() and gold_dir.is_dir():
             md_files = list(gold_dir.glob("*.md"))
             count = len(md_files)
@@ -199,7 +202,7 @@ def home_view():
 
     # Metric 4: Local model
     with col4:
-        model_short = config_trinity.LOCAL_MODEL_NAME.split("-")[0].upper()  # "QWEN"
+        model_short = settings.LOCAL_MODEL_NAME.split("-")[0].upper()  # "QWEN"
         st.metric("מודל מקומי", model_short, delta="2.5-32B")
 
     st.markdown("---")
@@ -244,13 +247,13 @@ def home_view():
     status_col1, status_col2 = st.columns(2)
 
     with status_col1:
-        if config_trinity.ANTHROPIC_API_KEY:
+        if settings.has_writer():
             st.success("✓ Anthropic API - מחובר")
         else:
             st.error("✗ Anthropic API - מנותק")
 
     with status_col2:
-        if config_trinity.GOOGLE_API_KEY:
+        if settings.has_judge():
             st.success("✓ Google API - מחובר")
         else:
             st.error("✗ Google API - מנותק")
@@ -398,7 +401,7 @@ def catalog_view():
     st.markdown("---")
 
     # Get gold_md files
-    gold_dir = Path(config_trinity.GOLD_DIR)
+    gold_dir = settings.GOLD_DIR
 
     if not gold_dir.exists():
         st.error(f"תיקיית ארכיון לא נמצאה: {gold_dir}")

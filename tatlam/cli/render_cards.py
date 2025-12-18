@@ -9,7 +9,12 @@ from typing import Any
 
 from jinja2 import Template
 
-from config_trinity import DB_PATH, TABLE_NAME
+from tatlam.settings import get_settings
+
+# Get settings for module-level constants
+_settings = get_settings()
+DB_PATH = _settings.DB_PATH
+TABLE_NAME = _settings.TABLE_NAME
 
 # שדות שמאוחסנים ב-SQLite כמחרוזות JSON, ונרצה להמיר חזרה למבני פייתון
 JSON_LIST_FIELDS = [

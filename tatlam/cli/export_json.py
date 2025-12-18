@@ -6,7 +6,12 @@ import re
 import sqlite3
 from typing import Any
 
-from config_trinity import DB_PATH, TABLE_NAME
+from tatlam.settings import get_settings
+
+# Get settings for module-level constants
+_settings = get_settings()
+DB_PATH = _settings.DB_PATH
+TABLE_NAME = _settings.TABLE_NAME
 
 
 def _safe_table(name: str) -> str:

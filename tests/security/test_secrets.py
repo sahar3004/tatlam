@@ -50,13 +50,15 @@ class TestSecretsManagement:
 
     def test_config_uses_environment_variables(self):
         """Test that config loads API keys from environment."""
-        import config_trinity
+        from tatlam.settings import get_settings
+
+        settings = get_settings()
 
         # Config should attempt to load from environment or have placeholder
         # Check that API key attributes exist
-        assert hasattr(config_trinity, 'ANTHROPIC_API_KEY')
-        assert hasattr(config_trinity, 'GOOGLE_API_KEY')
-        assert hasattr(config_trinity, 'OPENAI_API_KEY')
+        assert hasattr(settings, 'ANTHROPIC_API_KEY')
+        assert hasattr(settings, 'GOOGLE_API_KEY')
+        assert hasattr(settings, 'OPENAI_API_KEY')
 
     def test_no_passwords_in_database(self, in_memory_db):
         """Test that database doesn't contain password fields."""
@@ -89,9 +91,10 @@ class TestSecretsManagement:
 
     def test_database_path_not_exposed(self):
         """Test that database path doesn't expose sensitive information."""
-        import config_trinity
+        from tatlam.settings import get_settings
 
-        db_path = config_trinity.DB_PATH
+        settings = get_settings()
+        db_path = settings.DB_PATH
 
         # Database path should not contain sensitive information
         sensitive_terms = ["password", "secret", "key", "token"]
@@ -150,10 +153,10 @@ class TestSecretsManagement:
 
     def test_config_file_permissions(self):
         """Test that config files have appropriate permissions."""
-        config_path = Path("config_trinity.py")
+        config_path = Path("tatlam/settings.py")
 
         if not config_path.exists():
-            pytest.skip("config_trinity.py not found")
+            pytest.skip("tatlam/settings.py not found")
 
         # On Unix systems, check file permissions
         import stat

@@ -5,9 +5,14 @@ import sqlite3
 from datetime import datetime
 from typing import Any
 
-from config_trinity import REQUIRE_APPROVED_ONLY, TABLE_NAME
+from tatlam.settings import get_settings
 from tatlam.core.categories import CATS, category_to_slug
 from tatlam.infra.db import get_db
+
+# Get settings for module-level constants
+_settings = get_settings()
+REQUIRE_APPROVED_ONLY = _settings.REQUIRE_APPROVED_ONLY
+TABLE_NAME = _settings.TABLE_NAME
 
 
 def _getconn() -> sqlite3.Connection:
@@ -17,10 +22,8 @@ def _getconn() -> sqlite3.Connection:
 def db_has_column(table: str, col: str) -> bool:
     try:
         # Resolve DB_PATH at call time to respect tests that reload config
-        from importlib import import_module
-
-        cfg = import_module("config_trinity")
-        with sqlite3.connect(cfg.DB_PATH) as _c:
+        settings = get_settings()
+        with sqlite3.connect(settings.DB_PATH) as _c:
             cur = _c.cursor()
             cur.execute(f"PRAGMA table_info({table})")  # nosec B608 - table is trusted
             return any(r[1] == col for r in cur.fetchall())

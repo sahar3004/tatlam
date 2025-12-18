@@ -3,97 +3,174 @@ Unit tests for tatlam/core/brain.py
 
 Tests TrinityBrain class with mocked API clients (NO REAL NETWORK CALLS).
 Target: Verify TrinityBrain initialization and client management.
+
+Updated for Phase 1 dependency injection architecture.
 """
 
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
 
 
 @pytest.mark.unit
 class TestBrainMock:
     """Test suite for TrinityBrain with mocked APIs."""
 
-    def test_trinity_brain_initializes(self, mock_brain):
-        """Test TrinityBrain can be instantiated."""
-        assert mock_brain is not None
-
-    def test_trinity_brain_has_writer_client(self, mock_brain):
-        """Verify writer_client is initialized."""
-        assert hasattr(mock_brain, 'writer_client')
-        assert mock_brain.writer_client is not None
-
-    def test_trinity_brain_has_reviewer_client(self, mock_brain):
-        """Verify reviewer_client is initialized."""
-        assert hasattr(mock_brain, 'reviewer_client')
-        assert mock_brain.reviewer_client is not None
-
-    def test_trinity_brain_has_judge_client(self, mock_brain):
-        """Verify judge_client is initialized."""
-        assert hasattr(mock_brain, 'judge_client')
-        assert mock_brain.judge_client is not None
-
-    def test_trinity_brain_no_real_api_calls(self, mock_brain):
-        """Ensure no real API calls are made during initialization."""
-        # If real API calls were made, this would fail in offline mode
-        # The mock_brain fixture ensures all API clients are mocked
-        assert mock_brain.writer_client is not None
-
-    @patch('anthropic.Anthropic')
-    def test_trinity_brain_claude_client_initialization(self, mock_anthropic):
-        """Test Claude (Anthropic) client initialization."""
-        mock_client = MagicMock()
-        mock_anthropic.return_value = mock_client
-
+    def test_trinity_brain_initializes(self):
+        """Test TrinityBrain can be instantiated without any clients."""
         from tatlam.core.brain import TrinityBrain
-        brain = TrinityBrain()
 
-        # Verify Anthropic was called (client initialized)
-        assert brain.writer_client is not None
+        brain = TrinityBrain(auto_initialize=False)
+        assert brain is not None
 
-    @patch('google.generativeai.GenerativeModel')
-    def test_trinity_brain_gemini_client_initialization(self, mock_gemini):
-        """Test Gemini client initialization."""
-        mock_model = MagicMock()
-        mock_gemini.return_value = mock_model
-
+    def test_trinity_brain_has_writer_client_attribute(self):
+        """Verify writer_client attribute exists."""
         from tatlam.core.brain import TrinityBrain
-        brain = TrinityBrain()
 
-        # Verify Gemini model was instantiated
-        assert brain.reviewer_client is not None
+        brain = TrinityBrain(auto_initialize=False)
+        assert hasattr(brain, 'writer_client')
 
-    @patch('openai.OpenAI')
-    def test_trinity_brain_openai_client_initialization(self, mock_openai):
-        """Test OpenAI (GPT-4) client initialization."""
-        mock_client = MagicMock()
-        mock_openai.return_value = mock_client
-
+    def test_trinity_brain_has_judge_client_attribute(self):
+        """Verify judge_client attribute exists."""
         from tatlam.core.brain import TrinityBrain
-        brain = TrinityBrain()
 
-        # Verify OpenAI client was initialized
-        assert brain.judge_client is not None
+        brain = TrinityBrain(auto_initialize=False)
+        assert hasattr(brain, 'judge_client')
 
-    def test_trinity_brain_generate_method_exists(self, mock_brain):
-        """Verify generate method exists on TrinityBrain."""
-        assert hasattr(mock_brain, 'generate') or hasattr(mock_brain, 'generate_scenario')
+    def test_trinity_brain_has_simulator_client_attribute(self):
+        """Verify simulator_client attribute exists."""
+        from tatlam.core.brain import TrinityBrain
 
-    def test_trinity_brain_clients_are_mocked(self, mock_brain):
-        """Verify all clients are properly mocked (no real API keys needed)."""
-        # This test would fail if real API initialization was attempted
-        # The mock_brain fixture ensures everything is mocked
-        assert mock_brain.writer_client is not None
-        assert mock_brain.reviewer_client is not None
-        assert mock_brain.judge_client is not None
+        brain = TrinityBrain(auto_initialize=False)
+        assert hasattr(brain, 'simulator_client')
 
-    def test_trinity_brain_handles_missing_api_keys_gracefully(self):
-        """Test behavior when API keys are missing (should use mocks)."""
-        with patch('config_trinity.ANTHROPIC_API_KEY', ''):
-            with patch('anthropic.Anthropic') as mock_anthropic:
-                mock_anthropic.return_value = MagicMock()
+    def test_trinity_brain_dependency_injection(self):
+        """Test TrinityBrain accepts injected clients."""
+        from tatlam.core.brain import TrinityBrain
 
-                from tatlam.core.brain import TrinityBrain
-                brain = TrinityBrain()
+        mock_writer = MagicMock(name="MockWriter")
+        mock_judge = MagicMock(name="MockJudge")
+        mock_simulator = MagicMock(name="MockSimulator")
 
-                # Should still initialize with mock
-                assert brain is not None
+        brain = TrinityBrain(
+            writer_client=mock_writer,
+            judge_client=mock_judge,
+            simulator_client=mock_simulator,
+            auto_initialize=False
+        )
+
+        assert brain.writer_client is mock_writer
+        assert brain.judge_client is mock_judge
+        assert brain.simulator_client is mock_simulator
+
+    def test_trinity_brain_has_writer_method(self):
+        """Test has_writer() returns correct status."""
+        from tatlam.core.brain import TrinityBrain
+
+        # Without client
+        brain_no_writer = TrinityBrain(auto_initialize=False)
+        assert brain_no_writer.has_writer() is False
+
+        # With client
+        brain_with_writer = TrinityBrain(
+            writer_client=MagicMock(),
+            auto_initialize=False
+        )
+        assert brain_with_writer.has_writer() is True
+
+    def test_trinity_brain_has_judge_method(self):
+        """Test has_judge() returns correct status."""
+        from tatlam.core.brain import TrinityBrain
+
+        # Without client
+        brain_no_judge = TrinityBrain(auto_initialize=False)
+        assert brain_no_judge.has_judge() is False
+
+        # With client
+        brain_with_judge = TrinityBrain(
+            judge_client=MagicMock(),
+            auto_initialize=False
+        )
+        assert brain_with_judge.has_judge() is True
+
+    def test_trinity_brain_has_simulator_method(self):
+        """Test has_simulator() returns correct status."""
+        from tatlam.core.brain import TrinityBrain
+
+        # Without client
+        brain_no_sim = TrinityBrain(auto_initialize=False)
+        assert brain_no_sim.has_simulator() is False
+
+        # With client
+        brain_with_sim = TrinityBrain(
+            simulator_client=MagicMock(),
+            auto_initialize=False
+        )
+        assert brain_with_sim.has_simulator() is True
+
+    def test_trinity_brain_get_status(self):
+        """Test get_status() returns dict with all client statuses."""
+        from tatlam.core.brain import TrinityBrain
+
+        brain = TrinityBrain(
+            writer_client=MagicMock(),
+            judge_client=None,
+            simulator_client=MagicMock(),
+            auto_initialize=False
+        )
+
+        status = brain.get_status()
+        assert isinstance(status, dict)
+        assert status["writer"] is True
+        assert status["judge"] is False
+        assert status["simulator"] is True
+
+    def test_trinity_brain_generate_scenario_stream_exists(self):
+        """Verify generate_scenario_stream method exists."""
+        from tatlam.core.brain import TrinityBrain
+
+        brain = TrinityBrain(auto_initialize=False)
+        assert hasattr(brain, 'generate_scenario_stream')
+        assert callable(getattr(brain, 'generate_scenario_stream'))
+
+    def test_trinity_brain_audit_scenario_exists(self):
+        """Verify audit_scenario method exists."""
+        from tatlam.core.brain import TrinityBrain
+
+        brain = TrinityBrain(auto_initialize=False)
+        assert hasattr(brain, 'audit_scenario')
+        assert callable(getattr(brain, 'audit_scenario'))
+
+    def test_trinity_brain_chat_simulation_stream_exists(self):
+        """Verify chat_simulation_stream method exists."""
+        from tatlam.core.brain import TrinityBrain
+
+        brain = TrinityBrain(auto_initialize=False)
+        assert hasattr(brain, 'chat_simulation_stream')
+        assert callable(getattr(brain, 'chat_simulation_stream'))
+
+    def test_trinity_brain_require_writer_raises_without_client(self):
+        """Test _require_writer raises RuntimeError when client is None."""
+        from tatlam.core.brain import TrinityBrain
+
+        brain = TrinityBrain(auto_initialize=False)
+
+        with pytest.raises(RuntimeError, match="Writer.*not initialized"):
+            brain._require_writer()
+
+    def test_trinity_brain_require_judge_raises_without_client(self):
+        """Test _require_judge raises RuntimeError when client is None."""
+        from tatlam.core.brain import TrinityBrain
+
+        brain = TrinityBrain(auto_initialize=False)
+
+        with pytest.raises(RuntimeError, match="Judge.*not initialized"):
+            brain._require_judge()
+
+    def test_trinity_brain_require_simulator_raises_without_client(self):
+        """Test _require_simulator raises RuntimeError when client is None."""
+        from tatlam.core.brain import TrinityBrain
+
+        brain = TrinityBrain(auto_initialize=False)
+
+        with pytest.raises(RuntimeError, match="Simulator.*not initialized"):
+            brain._require_simulator()

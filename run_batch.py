@@ -11,19 +11,20 @@ from datetime import datetime
 import numpy as np
 from openai import BadRequestError
 
-from config import (
-    DB_PATH,
-    EMB_TABLE,
-    EMBED_MODEL,
-    GEN_MODEL,
-    LOCAL_MODEL,
-    SIM_THRESHOLD,
-    TABLE_NAME,
-    VALIDATOR_MODEL,
-    client_cloud,
-    client_local,
-)
+from tatlam.settings import get_settings
+from tatlam.core.llm_factory import client_cloud, client_local
 from tatlam import configure_logging
+
+# Get settings instance for module-level constants
+_settings = get_settings()
+DB_PATH = _settings.DB_PATH
+EMB_TABLE = _settings.EMB_TABLE
+EMBED_MODEL = _settings.EMBED_MODEL
+GEN_MODEL = _settings.GEN_MODEL
+LOCAL_MODEL = _settings.LOCAL_MODEL
+SIM_THRESHOLD = _settings.SIM_THRESHOLD
+TABLE_NAME = _settings.TABLE_NAME
+VALIDATOR_MODEL = _settings.VALIDATOR_MODEL
 from tatlam.core.bundles import coerce_bundle_shape
 from tatlam.core.prompts import load_system_prompt, memory_addendum
 from tatlam.core.validators import build_validator_prompt

@@ -19,24 +19,24 @@ def in_memory_db(monkeypatch):
     Provides an isolated in-memory SQLite database for testing.
 
     - Creates a temporary database
-    - Monkeypatches config_trinity.DB_PATH
+    - Monkeypatches settings.DB_PATH via cache clear
     - Initializes schema via init_db()
     - Yields connection for tests
     - Cleans up automatically
     """
-    from tatlam.infra.db import init_db
-    import config_trinity
+    from tatlam.settings import get_settings
 
     # Create temporary database
     temp_db = tempfile.NamedTemporaryFile(mode='w', suffix='.db', delete=False)
     temp_db_path = temp_db.name
     temp_db.close()
 
-    # Monkeypatch the config
-    monkeypatch.setattr(config_trinity, 'DB_PATH', temp_db_path)
+    # Clear settings cache and monkeypatch environment
+    get_settings.cache_clear()
+    monkeypatch.setenv('DB_PATH', temp_db_path)
 
-    # Initialize schema
-    init_db()
+    # Re-fetch settings to pick up new DB_PATH
+    settings = get_settings()
 
     # Provide connection to tests
     conn = sqlite3.connect(temp_db_path)
@@ -47,6 +47,7 @@ def in_memory_db(monkeypatch):
     # Cleanup
     conn.close()
     Path(temp_db_path).unlink(missing_ok=True)
+    get_settings.cache_clear()
 
 
 @pytest.fixture

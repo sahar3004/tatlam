@@ -1,33 +1,62 @@
-import os
-from pathlib import Path
+"""
+config_trinity.py - DEPRECATED: Backward compatibility shim
 
-# Base Paths
-BASE_DIR = Path(__file__).resolve().parent
-GOLD_DIR = BASE_DIR / "gold_md"
+This module is DEPRECATED. All configuration now lives in tatlam/settings.py.
 
-# Database Configuration (from existing config.py)
-DB_PATH = os.getenv("DB_PATH", str(BASE_DIR / "db" / "tatlam.db"))
-TABLE_NAME = os.getenv("TABLE_NAME", "scenarios")
-Path(DB_PATH).parent.mkdir(parents=True, exist_ok=True)
+This shim re-exports values from tatlam.settings for backward compatibility.
+New code should import from tatlam.settings directly:
 
-# Scenario approval filtering (default: show all scenarios)
-REQUIRE_APPROVED_ONLY = os.getenv("REQUIRE_APPROVED_ONLY", "").lower() in ("1", "true", "yes")
+    from tatlam.settings import get_settings
+    settings = get_settings()
 
-# 1. The Writer (Claude)
-WRITER_MODEL_PROVIDER = "anthropic"
-WRITER_MODEL_NAME = os.getenv("WRITER_MODEL_NAME", "claude-3-7-sonnet-20250219")
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+Or for direct attribute access (backward compatible):
 
-# 2. The Judge (Gemini)
-JUDGE_MODEL_PROVIDER = "google"
-JUDGE_MODEL_NAME = os.getenv("JUDGE_MODEL_NAME", "gemini-2.0-pro-exp-0205")
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+    from tatlam.settings import DB_PATH, TABLE_NAME
+"""
+from __future__ import annotations
 
-# 3. The Simulator (Local Qwen)
-# Updated to reflect actual model name (Qwen 2.5 32B Instruct)
-LOCAL_MODEL_NAME = os.getenv("LOCAL_MODEL_NAME", "qwen-2.5-32b-instruct")
-LOCAL_BASE_URL = os.getenv("LOCAL_BASE_URL", "http://127.0.0.1:8080/v1")
-LOCAL_API_KEY = os.getenv("LOCAL_API_KEY", "sk-no-key-required")
+import warnings
 
-# App Config
-PAGE_TITLE = "Tatlam Trinity System"
+# Emit deprecation warning on import
+warnings.warn(
+    "config_trinity is deprecated. Use 'from tatlam.settings import get_settings' instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
+# Re-export all settings for backward compatibility
+from tatlam.settings import (
+    BASE_DIR,
+    GOLD_DIR,
+    DB_PATH,
+    TABLE_NAME,
+    REQUIRE_APPROVED_ONLY,
+    WRITER_MODEL_PROVIDER,
+    WRITER_MODEL_NAME,
+    ANTHROPIC_API_KEY,
+    JUDGE_MODEL_PROVIDER,
+    JUDGE_MODEL_NAME,
+    GOOGLE_API_KEY,
+    LOCAL_MODEL_NAME,
+    LOCAL_BASE_URL,
+    LOCAL_API_KEY,
+    PAGE_TITLE,
+)
+
+__all__ = [
+    "BASE_DIR",
+    "GOLD_DIR",
+    "DB_PATH",
+    "TABLE_NAME",
+    "REQUIRE_APPROVED_ONLY",
+    "WRITER_MODEL_PROVIDER",
+    "WRITER_MODEL_NAME",
+    "ANTHROPIC_API_KEY",
+    "JUDGE_MODEL_PROVIDER",
+    "JUDGE_MODEL_NAME",
+    "GOOGLE_API_KEY",
+    "LOCAL_MODEL_NAME",
+    "LOCAL_BASE_URL",
+    "LOCAL_API_KEY",
+    "PAGE_TITLE",
+]
