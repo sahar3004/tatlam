@@ -27,6 +27,8 @@ from tatlam import configure_logging
 from tatlam.core.bundles import coerce_bundle_shape
 from tatlam.core.prompts import load_system_prompt, memory_addendum
 from tatlam.core.validators import build_validator_prompt
+from tatlam.infra.repo import insert_scenario
+from tatlam.infra.db import get_db
 
 configure_logging()
 
@@ -40,6 +42,52 @@ def _dbg(name: str, obj):
     (DEBUG_DIR / f"{name}.json").write_text(
         json.dumps(obj, ensure_ascii=False, indent=2), encoding="utf-8"
     )
+
+
+def strip_markdown_and_parse_json(text: str) -> dict | list | None:
+    """
+    Robust JSON parser that strips markdown code blocks before parsing.
+
+    Handles LLM responses that may contain:
+    - Markdown code blocks: ```json ... ``` or ``` ... ```
+    - Plain JSON objects or arrays
+
+    Returns:
+        Parsed JSON object (dict or list) or None if parsing fails
+    """
+    if not text:
+        return None
+
+    # Step 1: Strip markdown code blocks
+    # Pattern matches: ```json\n{...}\n``` or ```\n{...}\n```
+    cleaned = text.strip()
+
+    # Remove opening markdown fence with optional language specifier
+    if cleaned.startswith("```"):
+        # Find the end of the first line (language specifier)
+        first_line_end = cleaned.find("\n")
+        if first_line_end != -1:
+            cleaned = cleaned[first_line_end + 1:]
+
+    # Remove closing markdown fence
+    if cleaned.endswith("```"):
+        cleaned = cleaned[:-3].strip()
+
+    # Step 2: Try direct JSON parsing
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        pass
+
+    # Step 3: Try regex extraction of JSON object/array
+    m = re.search(r"(\{[\s\S]*\}|\[[\s\S]*\])", cleaned)
+    if m:
+        try:
+            return json.loads(m.group(1))
+        except json.JSONDecodeError:
+            pass
+
+    return None
 
 
 def chat_create_safe(
@@ -356,7 +404,7 @@ def create_scenarios(category: str) -> dict:
         )
         draft_text = (resp_local.choices[0].message.content or "").strip()
     except Exception as e:
-        print(f"WARN: local generation failed, falling back to cloud ({e})")
+        LOGGER.warning("local generation failed, falling back to cloud: %s", e)
         cloud_for_draft = client_cloud()
         resp_local = chat_create_safe(
             cloud_for_draft,
@@ -394,16 +442,7 @@ def create_scenarios(category: str) -> dict:
     refined_text = (resp_refine.choices[0].message.content or "").strip()
 
     # 3) פרסינג ל-bundle; ניסיון נוסף אם נכשל
-    data: dict | list | None = None
-    try:
-        data = json.loads(refined_text)
-    except Exception:
-        m = re.search(r"(\{[\s\S]*\}|\[[\s\S]*\])", refined_text)
-        if m:
-            try:
-                data = json.loads(m.group(1))
-            except Exception:
-                data = None
+    data: dict | list | None = strip_markdown_and_parse_json(refined_text)
 
     if data is None:
         try:
@@ -420,7 +459,7 @@ def create_scenarios(category: str) -> dict:
                 response_format={"type": "json_object"},
             )
             refined_text2 = (resp_refine2.choices[0].message.content or "").strip()
-            data = json.loads(refined_text2)
+            data = strip_markdown_and_parse_json(refined_text2)
         except Exception:
             data = None
 
@@ -538,26 +577,14 @@ def check_and_repair(bundle: dict) -> dict:
             response_format={"type": "json_object"},
         )
     except Exception as e:
-        print(f"WARN: validator call failed ({e}); using original bundle")
+        LOGGER.warning("validator call failed (%s); using original bundle", e)
         return bundle
     text = (resp.choices[0].message.content or "").strip()
-    # ניסיון 1: JSON ישיר
-    try:
-        fixed = json.loads(text)
-        if isinstance(fixed, dict):
-            return fixed
-    except json.JSONDecodeError:
-        pass
-    # ניסיון 2: חילוץ JSON מגוש טקסט/קוד
-    m = re.search(r"(\{[\s\S]*\}|\[[\s\S]*\])", text)
-    if m:
-        try:
-            fixed = json.loads(m.group(1))
-            if isinstance(fixed, dict):
-                return fixed
-        except Exception as exc:
-            LOGGER.debug("post-validate coercion failed: %s", exc)
-    print("⚠️ Validator returned non-JSON; using original bundle")
+    # Use robust JSON parser to handle markdown code blocks
+    fixed = strip_markdown_and_parse_json(text)
+    if fixed and isinstance(fixed, dict):
+        return fixed
+    LOGGER.warning("Validator returned non-JSON; using original bundle")
     return bundle
 
 
@@ -578,55 +605,6 @@ def cosine(a, b):
     return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-8))
 
 
-def ensure_db():
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-    con = sqlite3.connect(DB_PATH)
-    cur = con.cursor()
-    cur.execute(
-        f"""
-    CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        bundle_id TEXT,
-        external_id TEXT,
-        title TEXT UNIQUE,
-        category TEXT,
-        threat_level TEXT,
-        likelihood TEXT,
-        complexity TEXT,
-        location TEXT,
-        background TEXT,
-        steps TEXT,
-        required_response TEXT,
-        debrief_points TEXT,
-        operational_background TEXT,
-        media_link TEXT,
-        mask_usage TEXT,
-        authority_notes TEXT,
-        cctv_usage TEXT,
-        comms TEXT,
-        decision_points TEXT,
-        escalation_conditions TEXT,
-        end_state_success TEXT,
-        end_state_failure TEXT,
-        lessons_learned TEXT,
-        variations TEXT,
-        validation TEXT,
-        owner TEXT,
-        approved_by TEXT,
-        created_at TEXT
-    );
-    """
-    )
-    cur.execute(
-        f"""
-    CREATE TABLE IF NOT EXISTS {EMB_TABLE} (
-        title TEXT PRIMARY KEY,
-        vector_json TEXT
-    );
-    """
-    )
-    con.commit()
-    con.close()
 
 
 def load_all_embeddings():
@@ -724,88 +702,37 @@ def minimal_title_fix(old_title: str) -> str:
         response_format={"type": "json_object"},
     )
     text = (r.choices[0].message.content or "").strip()
-    try:
-        data = json.loads(text)
+    data = strip_markdown_and_parse_json(text)
+    if data and isinstance(data, dict):
         new_title = (data.get("title") or "").strip()
-        return new_title or old_title
-    except json.JSONDecodeError:
-        pass
-    m = re.search(r"(\{[\s\S]*\})", text)
-    if m:
-        try:
-            data = json.loads(m.group(1))
-            new_title = (data.get("title") or "").strip()
-            return new_title or old_title
-        except Exception as exc:  # pragma: no cover - debug only
-            LOGGER.debug("minimal_title_fix JSON parse failed: %s", exc)
+        if new_title:
+            return new_title
+    LOGGER.debug("minimal_title_fix failed to parse JSON response, using old_title")
     return old_title
 
 
-def insert_bundle(bundle: dict, owner="system", approved_by="") -> int:
-    con = sqlite3.connect(DB_PATH)
-    cur = con.cursor()
-    before = con.total_changes
-    now = datetime.now().isoformat()
-    for sc in bundle.get("scenarios", []):
-        cur.execute(
-            f"""
-        INSERT OR IGNORE INTO {TABLE_NAME} (
-            bundle_id, external_id, title, category, threat_level, likelihood, complexity,
-            location, background, steps, required_response, debrief_points,
-            operational_background, media_link, mask_usage, authority_notes, cctv_usage,
-            comms, decision_points, escalation_conditions, end_state_success, end_state_failure,
-            lessons_learned, variations, validation, owner, approved_by, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-            (
-                bundle.get("bundle_id", ""),
-                sc.get("external_id", ""),
-                sc.get("title", ""),
-                sc.get("category", ""),
-                sc.get("threat_level", ""),
-                sc.get("likelihood", ""),
-                sc.get("complexity", ""),
-                sc.get("location", ""),
-                sc.get("background", ""),
-                json.dumps(sc.get("steps", []), ensure_ascii=False),
-                json.dumps(sc.get("required_response", []), ensure_ascii=False),
-                json.dumps(sc.get("debrief_points", []), ensure_ascii=False),
-                sc.get("operational_background", ""),
-                sc.get("media_link", ""),
-                sc.get("mask_usage", ""),
-                sc.get("authority_notes", ""),
-                sc.get("cctv_usage", ""),
-                json.dumps(sc.get("comms", []), ensure_ascii=False),
-                json.dumps(sc.get("decision_points", []), ensure_ascii=False),
-                json.dumps(sc.get("escalation_conditions", []), ensure_ascii=False),
-                sc.get("end_state_success", ""),
-                sc.get("end_state_failure", ""),
-                json.dumps(sc.get("lessons_learned", []), ensure_ascii=False),
-                json.dumps(sc.get("variations", []), ensure_ascii=False),
-                json.dumps(sc.get("validation", []), ensure_ascii=False),
-                owner,
-                approved_by,
-                now,
-            ),
-        )
-    con.commit()
-    inserted = con.total_changes - before
-    con.close()
-    return max(0, inserted)
 
 
 def run_batch(category: str, owner="Sahar"):
-    ensure_db()
+    # DB initialization is handled by get_db() in tatlam.infra.db
     # 1) יצירת מועמדים
     candidates = create_scenarios(category)
     # 2) הערכה ובחירת  K
     bundle = evaluate_and_pick(candidates)
     # 3) דה-דופ ואמבדינגים
     bundle = dedup_and_embed_titles(bundle)
-    # 4) שמירה למסד
-    inserted = insert_bundle(bundle, owner=owner, approved_by="")
-    print(f'✔ נשמרו {inserted} תטל"מים לבסיס הנתונים: {DB_PATH}')
-    print(f"bundle_id: {bundle.get('bundle_id')}")
+    # 4) שמירה למסד - iterate over scenarios and save using insert_scenario
+    inserted = 0
+    for sc in bundle.get("scenarios", []):
+        # Ensure bundle_id is in each scenario for traceability
+        sc.setdefault("bundle_id", bundle.get("bundle_id", ""))
+        try:
+            insert_scenario(sc, owner=owner, pending=False)
+            inserted += 1
+        except ValueError as e:
+            LOGGER.warning("Failed to insert scenario '%s': %s", sc.get("title", ""), e)
+    LOGGER.info('נשמרו %d תטל"מים לבסיס הנתונים: %s', inserted, DB_PATH)
+    LOGGER.info("bundle_id: %s", bundle.get('bundle_id'))
     return bundle
 
 

@@ -1,9 +1,12 @@
 import config_trinity
 import anthropic
 import google.generativeai as genai
+import logging
 from openai import OpenAI
 from typing import Generator
 from tatlam.core.doctrine import get_system_prompt
+
+logger = logging.getLogger(__name__)
 
 
 class TrinityBrain:
@@ -24,9 +27,9 @@ class TrinityBrain:
                     api_key=config_trinity.ANTHROPIC_API_KEY
                 )
             else:
-                print("⚠️  Warning: ANTHROPIC_API_KEY not set. Writer (Claude) will be unavailable.")
+                logger.warning("ANTHROPIC_API_KEY not set. Writer (Claude) will be unavailable.")
         except Exception as e:
-            print(f"⚠️  Warning: Failed to initialize Anthropic client: {e}")
+            logger.error("Failed to initialize Anthropic client", exc_info=True)
 
         # 2. The Judge (Gemini via Google)
         self.judge_client = None
@@ -35,9 +38,9 @@ class TrinityBrain:
                 genai.configure(api_key=config_trinity.GOOGLE_API_KEY)
                 self.judge_client = genai.GenerativeModel(config_trinity.JUDGE_MODEL_NAME)
             else:
-                print("⚠️  Warning: GOOGLE_API_KEY not set. Judge (Gemini) will be unavailable.")
+                logger.warning("GOOGLE_API_KEY not set. Judge (Gemini) will be unavailable.")
         except Exception as e:
-            print(f"⚠️  Warning: Failed to initialize Google client: {e}")
+            logger.error("Failed to initialize Google client", exc_info=True)
 
         # 3. The Simulator (Local Llama via OpenAI-compatible API)
         self.simulator_client = None
@@ -47,7 +50,7 @@ class TrinityBrain:
                 api_key=config_trinity.LOCAL_API_KEY
             )
         except Exception as e:
-            print(f"⚠️  Warning: Failed to initialize local OpenAI client: {e}")
+            logger.error("Failed to initialize local OpenAI client", exc_info=True)
 
     def generate_scenario_stream(self, prompt: str) -> Generator[str, None, None]:
         """
