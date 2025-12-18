@@ -3,6 +3,7 @@ import anthropic
 import google.generativeai as genai
 from openai import OpenAI
 from typing import Generator
+from tatlam.core.doctrine import get_system_prompt
 
 
 class TrinityBrain:
@@ -67,53 +68,8 @@ class TrinityBrain:
         if not self.writer_client:
             raise RuntimeError("Writer (Anthropic) client not initialized. Check ANTHROPIC_API_KEY.")
 
-        # System prompt for security scenario generation in Hebrew
-        system_prompt = """אתה מומחה לכתיבת תרחישי אבטחה למערכות תחבורה ציבורית בישראל.
-
-תפקידך: ליצור תרחישי הכשרה מציאותיים ומפורטים לצוותי אבטחה, בעברית, בפורמט Markdown.
-
-**פורמט חובה:**
-
-```markdown
-# [כותרת התרחיש בעברית]
-
-רמת מורכבות: [נמוכה/בינונית/גבוהה]
-נוהל פתיחה באש: [Yes/No]
-שימוש במסכה: [Yes/No]
-קטגוריה: [שם הקטגוריה]
-רמת סיכון: [נמוכה/בינונית/גבוהה/גבוהה מאוד]
-רמת סבירות: [נמוכה/בינונית/גבוהה]
-
-**📋 סיפור מקרה:**
-
-[תיאור מפורט של האירוע - מי, מה, איפה, מתי, למה. כתוב בפסקאות קצרות וברורות]
-
-**🎯 שלבי תגובה:**
-
-[רשימה ממוספרת או תבליטים של שלבי התגובה הנדרשים]
-
-**🔫 נוהל פתיחה באש:**
-
-[הסבר מתי מותר/אסור לפתוח באש, או "לא רלוונטי"]
-
-**😷 שימוש במסכה:**
-
-[הסבר האם נדרש שימוש במסכת גז ומדוע]
-
-**🎥 רקע מבצעי:**
-
-[מידע רקע רלוונטי, או "ללא"]
-```
-
-**עקרונות חשובים:**
-1. כתוב בעברית תקנית וברורה
-2. תרחישים צריכים להיות מציאותיים ומבוססים על איומים אמיתיים
-3. שלבי התגובה חייבים להיות ספציפיים ומעשיים
-4. הקפד על הפורמט המדויק עם כל השדות
-5. השתמש באימוג'ים המתאימים (📋 🎯 🔫 😷 🎥)
-6. רמות מורכבות/סיכון/סבירות תמיד באחת מהאפשרויות המפורטות
-7. תשובות Yes/No באנגלית בלבד
-8. כלול דילמה משפטית או אתית הקשורה לסמכויות המאבטח (עיכוב/חיפוש/שימוש בכוח) - זה חיוני לצורך הכשרה איכותית"""
+        # Load system prompt from Trinity Doctrine
+        system_prompt = get_system_prompt("writer")
 
         try:
             with self.writer_client.messages.stream(
@@ -148,31 +104,17 @@ class TrinityBrain:
         if not self.judge_client:
             raise RuntimeError("Judge (Gemini) client not initialized. Check GOOGLE_API_KEY.")
 
-        audit_prompt = f"""אתה מבקר מקצועי (auditor) לתרחישי אבטחה בתחבורה ציבורית.
+        # Load system prompt from Trinity Doctrine
+        base_prompt = get_system_prompt("judge")
+        audit_prompt = f"""{base_prompt}
 
-תפקידך: לבדוק ולהעריך את איכות התרחיש הבא ולתת משוב בונה.
-
-**קריטריונים לבדיקה:**
-
-1. **עמידה בפורמט** (0-10): האם כל השדות הנדרשים קיימים ותקינים?
-2. **מציאותיות** (0-10): האם התרחיש סביר ומבוסס על איומים אמיתיים?
-3. **בהירות** (0-10): האם התיאור ברור ומובן לצוות אבטחה?
-4. **מעשיות** (0-10): האם שלבי התגובה ספציפיים וניתנים ליישום?
-5. **שלמות** (0-10): האם כל המידע הדרוש לטיפול באירוע קיים?
-
-**תרחיש לביקורת:**
+**Scenario to Audit:**
 
 {text}
 
 ---
 
-**הוראות לביקורת:**
-- דרג כל קריטריון (0-10)
-- תן ציון כולל (ממוצע)
-- ציין נקודות חוזק
-- ציין נקודות לשיפור
-- המלץ על תיקונים ספציפיים אם נדרש
-- כתוב בעברית תקנית וברורה"""
+**Instructions:** Provide a strict score (0-100) based on the safety protocols, legal framework, and tactical procedures defined in the doctrine. Be especially harsh on safety violations (touching suspicious objects) and legal violations (unjustified force)."""
 
         try:
             response = self.judge_client.generate_content(audit_prompt)
@@ -196,11 +138,24 @@ class TrinityBrain:
         if not self.simulator_client:
             raise RuntimeError("Simulator (Local) client not initialized. Check LOCAL_BASE_URL.")
 
+        # Inject System Doctrine if missing
+        current_messages = list(messages)
+        system_msg = {"role": "system", "content": get_system_prompt("simulator")}
+
+        if not current_messages:
+            current_messages = [system_msg]
+        elif current_messages[0].get("role") != "system":
+            current_messages.insert(0, system_msg)
+        # else: system prompt already exists, keep user's version
+
         try:
             stream = self.simulator_client.chat.completions.create(
                 model=config_trinity.LOCAL_MODEL_NAME,
-                messages=messages,
-                stream=True
+                messages=current_messages,
+                stream=True,
+                temperature=0.4,  # Focused responses, less randomness
+                top_p=0.9,  # Nucleus sampling
+                frequency_penalty=0.2  # Prevent repetitive loops
             )
 
             for chunk in stream:

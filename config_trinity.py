@@ -20,9 +20,9 @@ JUDGE_MODEL_PROVIDER = "google"
 JUDGE_MODEL_NAME = os.getenv("JUDGE_MODEL_NAME", "gemini-2.0-pro-exp-0205")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
-# 3. The Simulator (Local Llama)
-# Updated to reflect actual model name (Llama 3.3 70B Instruct)
-LOCAL_MODEL_NAME = os.getenv("LOCAL_MODEL_NAME", "llama-3.3-70b-instruct")
+# 3. The Simulator (Local Qwen)
+# Updated to reflect actual model name (Qwen 2.5 32B Instruct)
+LOCAL_MODEL_NAME = os.getenv("LOCAL_MODEL_NAME", "qwen-2.5-32b-instruct")
 LOCAL_BASE_URL = os.getenv("LOCAL_BASE_URL", "http://127.0.0.1:8080/v1")
 LOCAL_API_KEY = os.getenv("LOCAL_API_KEY", "sk-no-key-required")
 

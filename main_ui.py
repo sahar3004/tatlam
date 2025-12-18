@@ -29,6 +29,38 @@ st.set_page_config(
 
 
 # ============================================================================
+# RTL STYLING & HEBREW UI
+# ============================================================================
+
+def apply_rtl_style():
+    """Apply RTL styling for Hebrew UI."""
+    st.markdown("""
+        <style>
+        /* Global RTL */
+        .stApp { direction: rtl; text-align: right; }
+
+        /* Headers alignment */
+        h1, h2, h3, h4, h5, h6 { text-align: right; font-family: 'Segoe UI', Tahoma, sans-serif; }
+
+        /* Metrics Styling */
+        [data-testid="stMetricValue"] { direction: ltr; text-align: right; font-weight: bold; }
+        [data-testid="stMetricLabel"] { text-align: right; }
+
+        /* Input Fields */
+        .stTextInput input, .stTextArea textarea { direction: rtl; text-align: right; }
+
+        /* Sidebar */
+        [data-testid="stSidebar"] { direction: rtl; text-align: right; }
+
+        /* Container borders */
+        [data-testid="stVerticalBlock"] > div:has(> div.element-container) {
+            border-radius: 8px;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+
+# ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
 
@@ -129,92 +161,133 @@ def save_chat_log(messages: list[dict], title: str = None) -> tuple[bool, str]:
 # ============================================================================
 
 def home_view():
-    """Display the home page with welcome message and system status."""
-    st.title("🎭 Tatlam Trinity System")
+    """Operational Dashboard - Hebrew metrics-based view."""
+    st.title("🏠 מרכז שליטה - תתל״מ Trinity")
     st.markdown("---")
 
-    st.markdown("""
-    ### Welcome to the Trinity Architecture
+    # Metrics Row
+    col1, col2, col3, col4 = st.columns(4)
 
-    This system uses three specialized AI models working together:
-
-    - **🖊️ The Writer (Claude)**: Generates high-quality scenarios using streaming
-    - **⚖️ The Judge (Gemini)**: Audits and evaluates content quality
-    - **💬 The Simulator (Local Llama)**: Handles interactive chat simulations
-    """)
-
-    st.markdown("---")
-    st.subheader("System Status")
-
-    # Check gold_md directory
-    gold_dir = Path(config_trinity.GOLD_DIR)
-    if gold_dir.exists() and gold_dir.is_dir():
-        md_files = list(gold_dir.glob("*.md"))
-        st.success(f"✓ Gold examples directory found: {len(md_files)} markdown files available")
-    else:
-        st.warning(f"⚠️ Gold examples directory not found at: {gold_dir}")
-
-    # Check database
-    db_path = Path(config_trinity.DB_PATH)
-    if db_path.exists():
-        st.success(f"✓ Database found: {db_path}")
-    else:
-        st.warning(f"⚠️ Database not found at: {db_path}")
-
-    # Check configuration
-    col1, col2, col3 = st.columns(3)
-
+    # Metric 1: Scenarios in gold_md
     with col1:
-        st.info(f"**Writer Model**\n\n{config_trinity.WRITER_MODEL_NAME}")
-        if config_trinity.ANTHROPIC_API_KEY:
-            st.caption("✓ API Key configured")
+        gold_dir = Path(config_trinity.GOLD_DIR)
+        if gold_dir.exists() and gold_dir.is_dir():
+            md_files = list(gold_dir.glob("*.md"))
+            count = len(md_files)
         else:
-            st.caption("⚠️ API Key missing")
+            count = 0
+        st.metric("תרחישים במאגר", count, delta=None)
 
+    # Metric 2: Pending scenarios in DB
     with col2:
-        st.info(f"**Judge Model**\n\n{config_trinity.JUDGE_MODEL_NAME}")
-        if config_trinity.GOOGLE_API_KEY:
-            st.caption("✓ API Key configured")
-        else:
-            st.caption("⚠️ API Key missing")
+        try:
+            pending_scenarios = get_db_scenarios("pending")
+            pending_count = len(pending_scenarios)
+        except:
+            pending_count = 0
+        st.metric("ממתינים לאישור", pending_count, delta=None)
 
+    # Metric 3: Brain status
     with col3:
-        st.info(f"**Simulator Model**\n\n{config_trinity.LOCAL_MODEL_NAME}")
-        st.caption(f"Local server: {config_trinity.LOCAL_BASE_URL}")
+        if "brain" in st.session_state:
+            status = "מחובר ✓"
+            delta_color = "normal"
+        else:
+            status = "מנותק"
+            delta_color = "off"
+        st.metric("סטטוס מוח", status, delta=None)
+
+    # Metric 4: Local model
+    with col4:
+        model_short = config_trinity.LOCAL_MODEL_NAME.split("-")[0].upper()  # "QWEN"
+        st.metric("מודל מקומי", model_short, delta="2.5-32B")
+
+    st.markdown("---")
+
+    # System architecture overview
+    st.subheader("🎯 ארכיטקטורת המערכת")
+
+    col_a, col_b, col_c = st.columns(3)
+
+    with col_a:
+        st.info("""
+        **🖊️ הכותב (Writer)**
+
+        Claude Sonnet 4.5
+
+        תפקיד: יצירת תרחישי אימון מציאותיים
+        """)
+
+    with col_b:
+        st.info("""
+        **⚖️ השופט (Judge)**
+
+        Gemini 2.0 Pro
+
+        תפקיד: ביקורת ודירוג ביצועים
+        """)
+
+    with col_c:
+        st.info("""
+        **💬 הסימולטור (Simulator)**
+
+        Qwen 2.5 32B (Local)
+
+        תפקיד: גילום יריבים ואזרחים
+        """)
+
+    st.markdown("---")
+
+    # Quick status checks
+    st.subheader("📊 סטטוס מערכות")
+
+    status_col1, status_col2 = st.columns(2)
+
+    with status_col1:
+        if config_trinity.ANTHROPIC_API_KEY:
+            st.success("✓ Anthropic API - מחובר")
+        else:
+            st.error("✗ Anthropic API - מנותק")
+
+    with status_col2:
+        if config_trinity.GOOGLE_API_KEY:
+            st.success("✓ Google API - מחובר")
+        else:
+            st.error("✗ Google API - מנותק")
 
 
 def generate_scenario_view():
-    """Generate new scenarios using Claude with streaming and save to database."""
-    st.title("🖊️ Generate Scenario")
+    """Hebrew scenario generation interface."""
+    st.title("⚡ מחולל תרחישים - הכותב")
     st.markdown("---")
 
     # Initialize the brain
     if "brain" not in st.session_state:
-        with st.spinner("Initializing Trinity Brain..."):
+        with st.spinner("מאתחל מערכת Trinity..."):
             try:
                 st.session_state.brain = TrinityBrain()
             except Exception as e:
-                st.error(f"Failed to initialize Trinity Brain: {e}")
+                st.error(f"כשל באתחול המוח: {e}")
                 return
 
     brain = st.session_state.brain
 
-    # Prompt input
-    st.subheader("Scenario Prompt")
+    # Prompt input (Hebrew)
+    st.subheader("הנחיות לתרחיש")
     prompt = st.text_area(
-        "Enter your scenario generation prompt:",
+        "תאר את התרחיש הרצוי:",
         height=150,
-        placeholder="Example: Create a security scenario involving a suspicious package found on a train platform...",
-        help="Describe the scenario you want Claude to generate. Be specific about context, threat level, and desired details."
+        placeholder="דוגמה: צור תרחיש אבטחה הכולל חבילה חשודה שנמצאה ברציף הרכבת...",
+        help="תאר בפירוט את התרחיש שברצונך שהמערכת תייצר. ציין הקשר, רמת סיכון ופרטים נדרשים."
     )
 
     col1, col2 = st.columns([1, 4])
 
     with col1:
-        generate_button = st.button("🚀 Generate", type="primary", use_container_width=True)
+        generate_button = st.button("🚀 צור תרחיש", type="primary", use_container_width=True)
 
     with col2:
-        if st.button("🗑️ Clear", use_container_width=True):
+        if st.button("🗑️ נקה", use_container_width=True):
             if "last_scenario" in st.session_state:
                 del st.session_state.last_scenario
             if "scenario_prompt" in st.session_state:
@@ -225,7 +298,7 @@ def generate_scenario_view():
     if generate_button and prompt:
         logger.info(f"User requested scenario generation with prompt: {prompt[:100]}...")
         st.markdown("---")
-        st.subheader("Generated Scenario")
+        st.subheader("תרחיש שנוצר")
 
         try:
             # Stream the generation
@@ -238,53 +311,53 @@ def generate_scenario_view():
 
         except Exception as e:
             logger.error(f"Error generating scenario: {e}", exc_info=True)
-            st.error(f"❌ Error generating scenario: {e}")
+            st.error(f"❌ שגיאה ביצירת תרחיש: {e}")
             return
 
     # Display saved scenario and actions
     if "last_scenario" in st.session_state:
         st.markdown("---")
-        st.subheader("Actions")
+        st.subheader("פעולות")
 
         col1, col2, col3 = st.columns(3)
 
         with col1:
-            if st.button("💾 Save Scenario to DB", type="primary", use_container_width=True):
-                with st.spinner("Saving scenario..."):
+            if st.button("💾 שמור למאגר", type="primary", use_container_width=True):
+                with st.spinner("שומר תרחיש..."):
                     success, message = save_scenario(st.session_state.last_scenario)
                     if success:
                         st.success(message)
-                        st.balloons()  # Visual celebration
+                        st.balloons()
                         logger.info("Scenario saved successfully, showing balloons")
 
                         # Option to clear for next scenario
-                        st.info("💡 Scenario saved! You can now generate a new one or continue editing.")
+                        st.info("💡 תרחיש נשמר! ניתן לייצר תרחיש חדש או להמשיך לערוך.")
                     else:
                         st.error(message)
                         logger.error(f"Failed to save scenario: {message}")
 
         with col2:
-            if st.button("⚖️ Audit with Judge", use_container_width=True):
+            if st.button("⚖️ ביקורת שופט", use_container_width=True):
                 logger.info("User requested scenario audit")
-                with st.spinner("Auditing scenario..."):
+                with st.spinner("מבצע ביקורת..."):
                     try:
                         audit_result = brain.audit_scenario(st.session_state.last_scenario)
-                        st.info("**Audit Results:**")
+                        st.info("**תוצאות ביקורת:**")
                         st.markdown(audit_result)
                         logger.info("Scenario audit completed successfully")
                     except Exception as e:
                         logger.error(f"Audit failed: {e}", exc_info=True)
-                        st.error(f"❌ Audit failed: {e}")
+                        st.error(f"❌ הביקורת נכשלה: {e}")
 
         with col3:
-            if st.button("📋 Copy to Clipboard", use_container_width=True):
+            if st.button("📋 העתק טקסט", use_container_width=True):
                 st.code(st.session_state.last_scenario, language="markdown")
-                st.caption("Select the text above and copy it manually")
+                st.caption("בחר את הטקסט והעתק ידנית")
 
         # Show the last generated scenario
         st.markdown("---")
-        st.subheader("Last Generated Scenario")
-        with st.expander("View Scenario", expanded=False):
+        st.subheader("תרחיש אחרון שנוצר")
+        with st.expander("הצג תרחיש", expanded=False):
             st.markdown(st.session_state.last_scenario)
 
 
@@ -325,190 +398,108 @@ def get_db_scenarios(status_filter: str = "all") -> list[dict]:
 
 
 def catalog_view():
-    """Display the scenario catalog with file browser and database view."""
-    st.title("📚 Scenario Catalog")
+    """Hebrew card-based catalog view."""
+    st.title("📚 ארכיון מבצעי - תיקי תרחישים")
     st.markdown("---")
 
-    # Source selector
-    source = st.radio(
-        "Select Source:",
-        ["📁 Gold Files (gold_md)", "🗄️ Database Scenarios"],
-        horizontal=True
-    )
+    # Get gold_md files
+    gold_dir = Path(config_trinity.GOLD_DIR)
 
+    if not gold_dir.exists():
+        st.error(f"תיקיית ארכיון לא נמצאה: {gold_dir}")
+        return
+
+    md_files = list(gold_dir.glob("*.md"))
+
+    if not md_files:
+        st.warning("לא נמצאו תרחישים בארכיון.")
+        return
+
+    st.subheader(f"📊 סה״כ תרחישים: {len(md_files)}")
     st.markdown("---")
 
-    if source == "📁 Gold Files (gold_md)":
-        # Original gold_md file browser
-        gold_dir = Path(config_trinity.GOLD_DIR)
+    # Session state for selected scenario
+    if "selected_scenario_path" not in st.session_state:
+        st.session_state.selected_scenario_path = None
 
-        if not gold_dir.exists():
-            st.error(f"Gold examples directory not found at: {gold_dir}")
-            return
+    # Grid layout - 3 cards per row
+    scenarios_data = []
+    for file_path in sorted(md_files):
+        try:
+            content = file_path.read_text(encoding="utf-8")
+            meta = parse_md_to_scenario(content)
+            scenarios_data.append({"path": file_path, "meta": meta, "content": content})
+        except Exception as e:
+            logger.warning(f"Failed to parse {file_path.name}: {e}")
+            continue
 
-        # Get all markdown files
-        md_files = list(gold_dir.glob("*.md"))
+    # Display cards in grid
+    for idx in range(0, len(scenarios_data), 3):
+        cols = st.columns(3)
 
-        if not md_files:
-            st.warning("No markdown files found in the gold examples directory.")
-            return
+        for col_idx, col in enumerate(cols):
+            if idx + col_idx < len(scenarios_data):
+                scenario = scenarios_data[idx + col_idx]
+                meta = scenario["meta"]
+                file_path = scenario["path"]
 
-        st.write(f"Found {len(md_files)} scenario files")
+                with col:
+                    with st.container(border=True):
+                        st.subheader(meta.get('title', 'ללא שם')[:40])
+                        st.caption(f"📁 קטגוריה: {meta.get('category', 'כללי')}")
+                        st.caption(f"⚠️ רמת סיכון: {meta.get('threat_level', 'לא ידוע')}")
 
-        # Create a dataframe with file information
-        file_data = []
-        for file_path in sorted(md_files):
-            file_data.append({
-                "Filename": file_path.name,
-                "Size (KB)": round(file_path.stat().st_size / 1024, 2),
-                "Path": str(file_path)
-            })
+                        if st.button("📂 פתח תיק", key=f"open_{file_path.name}", use_container_width=True):
+                            st.session_state.selected_scenario_path = file_path
+                            st.rerun()
 
-        df = pd.DataFrame(file_data)
+    # Display selected scenario details
+    if st.session_state.selected_scenario_path:
+        st.markdown("---")
+        st.markdown("---")
 
-        # Display the dataframe
-        st.dataframe(df[["Filename", "Size (KB)"]], use_container_width=True, hide_index=True)
+        selected_path = st.session_state.selected_scenario_path
+        selected_content = selected_path.read_text(encoding="utf-8")
+        selected_meta = parse_md_to_scenario(selected_content)
+
+        col_back, col_title = st.columns([1, 5])
+
+        with col_back:
+            if st.button("⬅️ חזרה", use_container_width=True):
+                st.session_state.selected_scenario_path = None
+                st.rerun()
+
+        with col_title:
+            st.title(f"📄 {selected_meta.get('title', 'ללא שם')}")
+
+        # Metrics row
+        metric_col1, metric_col2, metric_col3 = st.columns(3)
+
+        with metric_col1:
+            st.metric("קטגוריה", selected_meta.get("category", "כללי"))
+        with metric_col2:
+            st.metric("רמת סיכון", selected_meta.get("threat_level", "לא ידוע"))
+        with metric_col3:
+            st.metric("מורכבות", selected_meta.get("complexity", "לא ידוע"))
 
         st.markdown("---")
 
-        # File selector
-        selected_file = st.selectbox(
-            "Select a file to view:",
-            options=md_files,
-            format_func=lambda x: x.name
-        )
-
-        if selected_file:
-            st.subheader(f"📄 {selected_file.name}")
-
-            try:
-                content = selected_file.read_text(encoding="utf-8")
-
-                # Display content in markdown
-                with st.container():
-                    st.markdown(content)
-
-            except Exception as e:
-                st.error(f"Error reading file: {e}")
-
-    else:
-        # Database view with status filtering
-        st.subheader("Filter by Status")
-
-        status_filter = st.selectbox(
-            "Status:",
-            ["all", "pending", "approved"],
-            format_func=lambda x: {
-                "all": "🔄 All Scenarios",
-                "pending": "⏳ Pending Review",
-                "approved": "✅ Approved"
-            }[x]
-        )
-
-        scenarios = get_db_scenarios(status_filter)
-
-        if not scenarios:
-            st.warning("No scenarios found in database.")
-            return
-
-        st.write(f"Found {len(scenarios)} scenarios")
-
-        # Create dataframe
-        df_data = []
-        for sc in scenarios:
-            df_data.append({
-                "ID": sc.get("id"),
-                "Title": sc.get("title", "Untitled"),
-                "Category": sc.get("category", "Unknown"),
-                "Status": sc.get("status", "unknown"),
-                "Owner": sc.get("owner", "unknown"),
-                "Created": sc.get("created_at", "")[:10] if sc.get("created_at") else ""
-            })
-
-        df = pd.DataFrame(df_data)
-
-        # Display dataframe with color coding
-        st.dataframe(
-            df,
-            use_container_width=True,
-            hide_index=True,
-            column_config={
-                "Status": st.column_config.TextColumn(
-                    "Status",
-                    help="Approval status"
-                ),
-                "Title": st.column_config.TextColumn(
-                    "Title",
-                    width="large"
-                )
-            }
-        )
-
-        st.markdown("---")
-
-        # Scenario selector
-        selected_id = st.selectbox(
-            "Select a scenario to view:",
-            options=[sc["id"] for sc in scenarios],
-            format_func=lambda x: next((sc["title"] for sc in scenarios if sc["id"] == x), str(x))
-        )
-
-        if selected_id:
-            selected_scenario = next((sc for sc in scenarios if sc["id"] == selected_id), None)
-
-            if selected_scenario:
-                st.subheader(f"📄 {selected_scenario.get('title', 'Untitled')}")
-
-                # Status badge
-                status = selected_scenario.get("status", "unknown")
-                if status == "approved":
-                    st.success(f"✅ Status: Approved")
-                elif status == "pending":
-                    st.warning(f"⏳ Status: Pending Review")
-                else:
-                    st.info(f"Status: {status}")
-
-                # Display metadata
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    st.metric("Category", selected_scenario.get("category", "Unknown"))
-                with col2:
-                    st.metric("Threat Level", selected_scenario.get("threat_level", "Unknown"))
-                with col3:
-                    st.metric("Complexity", selected_scenario.get("complexity", "Unknown"))
-
-                st.markdown("---")
-
-                # Display full scenario content
-                with st.container():
-                    st.markdown(f"**📋 Background:**")
-                    st.write(selected_scenario.get("background", "N/A"))
-
-                    st.markdown(f"**🎯 Response Steps:**")
-                    steps = selected_scenario.get("steps", [])
-                    if isinstance(steps, list):
-                        for i, step in enumerate(steps, 1):
-                            st.write(f"{i}. {step}")
-                    else:
-                        st.write(steps)
-
-                    if selected_scenario.get("operational_background"):
-                        st.markdown(f"**🎥 Operational Background:**")
-                        st.write(selected_scenario.get("operational_background"))
+        # Full content display
+        st.markdown(selected_content)
 
 
 def simulation_view():
-    """Interactive chat simulation interface with streaming."""
-    st.title("💬 Chat Simulation")
+    """Hebrew chat simulation interface with avatars."""
+    st.title("💬 חדר סימולציות - תחנת אלנבי")
     st.markdown("---")
 
     # Initialize the brain
     if "brain" not in st.session_state:
-        with st.spinner("Initializing Trinity Brain..."):
+        with st.spinner("מאתחל מערכת Trinity..."):
             try:
                 st.session_state.brain = TrinityBrain()
             except Exception as e:
-                st.error(f"Failed to initialize Trinity Brain: {e}")
+                st.error(f"כשל באתחול המוח: {e}")
                 return
 
     brain = st.session_state.brain
@@ -517,24 +508,29 @@ def simulation_view():
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
-    # Display chat history
+    # Display chat history with avatars
     for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+        role = message["role"]
+        if role == "user":
+            with st.chat_message("user", avatar="👮‍♂️"):
+                st.markdown(message["content"])
+        elif role == "assistant":
+            with st.chat_message("assistant", avatar="👤"):
+                st.markdown(message["content"])
 
-    # Chat input
-    if prompt := st.chat_input("Type your message here..."):
+    # Chat input (Hebrew placeholder)
+    if prompt := st.chat_input("הקלד את הפעולה שלך כאן..."):
         logger.info(f"User sent chat message: {prompt[:100]}...")
 
         # Add user message to chat history
         st.session_state.messages.append({"role": "user", "content": prompt})
 
-        # Display user message
-        with st.chat_message("user"):
+        # Display user message with avatar
+        with st.chat_message("user", avatar="👮‍♂️"):
             st.markdown(prompt)
 
         # Generate assistant response with streaming
-        with st.chat_message("assistant"):
+        with st.chat_message("assistant", avatar="👤"):
             try:
                 response = st.write_stream(brain.chat_simulation_stream(st.session_state.messages))
 
@@ -544,36 +540,36 @@ def simulation_view():
 
             except Exception as e:
                 logger.error(f"Chat simulation error: {e}", exc_info=True)
-                error_msg = f"Error: {e}"
+                error_msg = f"שגיאה: {e}"
                 st.error(error_msg)
                 st.session_state.messages.append({"role": "assistant", "content": error_msg})
 
-    # Sidebar controls for chat
+    # Sidebar controls for chat (Hebrew)
     with st.sidebar:
-        st.markdown("### Chat Controls")
+        st.markdown("### בקרת שיחה")
 
         col1, col2 = st.columns(2)
 
         with col1:
-            if st.button("🗑️ Clear Chat", use_container_width=True):
+            if st.button("🗑️ נקה שיחה", use_container_width=True):
                 st.session_state.messages = []
                 st.rerun()
 
         with col2:
-            if st.button("💾 Save Log", use_container_width=True):
+            if st.button("💾 שמור לוג", use_container_width=True):
                 if st.session_state.messages:
                     success, message = save_chat_log(st.session_state.messages)
                     if success:
                         st.success(message)
-                        st.balloons()  # Visual celebration
+                        st.balloons()
                         logger.info("Chat log saved successfully, showing balloons")
                     else:
                         st.error(message)
                         logger.error(f"Failed to save chat log: {message}")
                 else:
-                    st.warning("No messages to save")
+                    st.warning("אין הודעות לשמירה")
 
-        st.markdown(f"**Messages:** {len(st.session_state.messages)}")
+        st.markdown(f"**הודעות:** {len(st.session_state.messages)}")
 
 
 # ============================================================================
@@ -583,26 +579,29 @@ def simulation_view():
 def main():
     """Main application entry point."""
 
-    # Sidebar navigation
-    st.sidebar.title("Navigation")
+    # Apply RTL styling
+    apply_rtl_style()
+
+    # Sidebar navigation (Hebrew)
+    st.sidebar.title("🎯 ניווט מערכת")
 
     view = st.sidebar.radio(
-        "Select View:",
-        ["Home", "Generate Scenario", "Scenario Catalog", "Simulation"]
+        "בחר תצוגה:",
+        ["🏠 מרכז שליטה", "⚡ מחולל תרחישים", "📚 ארכיון מבצעי", "💬 סימולטור אימון"]
     )
 
     st.sidebar.markdown("---")
-    st.sidebar.markdown("### About")
-    st.sidebar.info("Tatlam Trinity System - AI-powered scenario generation and simulation")
+    st.sidebar.markdown("### אודות")
+    st.sidebar.info("מערכת Trinity - אימון ביטחוני מבוסס בינה מלאכותית")
 
     # Route to appropriate view
-    if view == "Home":
+    if view == "🏠 מרכז שליטה":
         home_view()
-    elif view == "Generate Scenario":
+    elif view == "⚡ מחולל תרחישים":
         generate_scenario_view()
-    elif view == "Scenario Catalog":
+    elif view == "📚 ארכיון מבצעי":
         catalog_view()
-    elif view == "Simulation":
+    elif view == "💬 סימולטור אימון":
         simulation_view()
 
 
