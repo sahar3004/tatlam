@@ -293,12 +293,11 @@ tatlam/
 ├── main_ui.py                 # Streamlit UI (21KB)
 ├── start_ui.sh               # Launch script
 ├── requirements.txt          # Dependencies
-├── core/
-│   └── brain.py              # TrinityBrain class (7.9KB)
 ├── tatlam/
 │   ├── infra/
 │   │   └── repo.py           # Database operations
 │   ├── core/
+│   │   ├── brain.py          # TrinityBrain class (8.3KB)
 │   │   └── gold_md.py        # Markdown parser
 │   └── logging_setup.py      # Logging configuration
 ├── gold_md/                  # Example scenarios
@@ -315,7 +314,7 @@ Run these checks to verify system health:
 
 ```bash
 # 1. Check files exist
-ls -lh config_trinity.py main_ui.py start_ui.sh core/brain.py
+ls -lh config_trinity.py main_ui.py start_ui.sh tatlam/core/brain.py
 
 # 2. Check Python dependencies
 python -c "import streamlit, anthropic, google.generativeai; print('✅ OK')"

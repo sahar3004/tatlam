@@ -112,7 +112,8 @@ class TrinityBrain:
 4. הקפד על הפורמט המדויק עם כל השדות
 5. השתמש באימוג'ים המתאימים (📋 🎯 🔫 😷 🎥)
 6. רמות מורכבות/סיכון/סבירות תמיד באחת מהאפשרויות המפורטות
-7. תשובות Yes/No באנגלית בלבד"""
+7. תשובות Yes/No באנגלית בלבד
+8. כלול דילמה משפטית או אתית הקשורה לסמכויות המאבטח (עיכוב/חיפוש/שימוש בכוח) - זה חיוני לצורך הכשרה איכותית"""
 
         try:
             with self.writer_client.messages.stream(

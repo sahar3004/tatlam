@@ -12,7 +12,7 @@ configure_logging()
 logger = logging.getLogger(__name__)
 
 # Trinity imports
-from core.brain import TrinityBrain
+from tatlam.core.brain import TrinityBrain
 import config_trinity
 
 # Persistence imports
