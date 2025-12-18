@@ -10,6 +10,9 @@ DB_PATH = os.getenv("DB_PATH", str(BASE_DIR / "db" / "tatlam.db"))
 TABLE_NAME = os.getenv("TABLE_NAME", "scenarios")
 Path(DB_PATH).parent.mkdir(parents=True, exist_ok=True)
 
+# Scenario approval filtering (default: show all scenarios)
+REQUIRE_APPROVED_ONLY = os.getenv("REQUIRE_APPROVED_ONLY", "").lower() in ("1", "true", "yes")
+
 # 1. The Writer (Claude)
 WRITER_MODEL_PROVIDER = "anthropic"
 WRITER_MODEL_NAME = os.getenv("WRITER_MODEL_NAME", "claude-3-7-sonnet-20250219")

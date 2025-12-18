@@ -1,15 +1,14 @@
-Flask==3.0.3
-Jinja2==3.1.6
-openai==1.40.3
-numpy==1.26.4
-python-dotenv==1.0.1
-flask-admin==1.6.1
-SQLAlchemy==2.0.32
-pandas==2.2.2
-openpyxl==3.1.5
-requests==2.32.4
-WTForms==3.1.2
+# Trinity Streamlit System - Core Dependencies
+
+# UI Framework
 streamlit>=1.32.0
-anthropic>=0.18.0
-google-generativeai>=0.4.0
-watchdog>=4.0.0
+pandas>=2.2.0
+
+# AI Model Clients
+openai>=1.40.0              # Local Qwen server (OpenAI-compatible)
+anthropic>=0.18.0           # Claude Writer
+google-generativeai>=0.4.0  # Gemini Judge
+
+# Utilities
+python-dotenv>=1.0.0        # Environment variables
+watchdog>=4.0.0             # File system monitoring

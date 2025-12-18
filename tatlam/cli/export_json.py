@@ -6,7 +6,7 @@ import re
 import sqlite3
 from typing import Any
 
-from config import DB_PATH, TABLE_NAME
+from config_trinity import DB_PATH, TABLE_NAME
 
 
 def _safe_table(name: str) -> str:

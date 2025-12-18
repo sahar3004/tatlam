@@ -5,7 +5,7 @@ import sqlite3
 from datetime import datetime
 from typing import Any
 
-from config import REQUIRE_APPROVED_ONLY, TABLE_NAME
+from config_trinity import REQUIRE_APPROVED_ONLY, TABLE_NAME
 from tatlam.core.categories import CATS, category_to_slug
 from tatlam.infra.db import get_db
 
@@ -19,7 +19,7 @@ def db_has_column(table: str, col: str) -> bool:
         # Resolve DB_PATH at call time to respect tests that reload config
         from importlib import import_module
 
-        cfg = import_module("config")
+        cfg = import_module("config_trinity")
         with sqlite3.connect(cfg.DB_PATH) as _c:
             cur = _c.cursor()
             cur.execute(f"PRAGMA table_info({table})")  # nosec B608 - table is trusted

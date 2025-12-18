@@ -9,7 +9,7 @@ from typing import Any
 
 from jinja2 import Template
 
-from config import DB_PATH, TABLE_NAME
+from config_trinity import DB_PATH, TABLE_NAME
 
 # שדות שמאוחסנים ב-SQLite כמחרוזות JSON, ונרצה להמיר חזרה למבני פייתון
 JSON_LIST_FIELDS = [

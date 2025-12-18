@@ -364,6 +364,7 @@ def generate_scenario_view():
 def get_db_scenarios(status_filter: str = "all") -> list[dict]:
     """
     Fetch scenarios from database with optional status filtering.
+    Uses repo layer instead of raw SQL.
 
     Args:
         status_filter: "all", "pending", or "approved"
@@ -371,27 +372,21 @@ def get_db_scenarios(status_filter: str = "all") -> list[dict]:
     Returns:
         List of scenario dictionaries
     """
-    import sqlite3
-    from tatlam.infra.repo import normalize_row
+    from tatlam.infra.repo import fetch_all
 
     try:
-        db_path = config_trinity.DB_PATH
-        con = sqlite3.connect(db_path)
-        con.row_factory = sqlite3.Row
-        cur = con.cursor()
+        # Fetch all scenarios from repo (already normalized)
+        all_scenarios = fetch_all()
 
-        if status_filter == "all":
-            cur.execute(f"SELECT * FROM {config_trinity.TABLE_NAME} ORDER BY id DESC")
-        elif status_filter == "pending":
-            cur.execute(f"SELECT * FROM {config_trinity.TABLE_NAME} WHERE status='pending' ORDER BY id DESC")
+        # Filter by status if needed
+        if status_filter == "pending":
+            return [s for s in all_scenarios if s.get("status") == "pending"]
         elif status_filter == "approved":
-            cur.execute(f"SELECT * FROM {config_trinity.TABLE_NAME} WHERE status='approved' ORDER BY id DESC")
+            return [s for s in all_scenarios if s.get("status") == "approved"]
         else:
-            cur.execute(f"SELECT * FROM {config_trinity.TABLE_NAME} ORDER BY id DESC")
+            # "all" - return everything
+            return all_scenarios
 
-        rows = [normalize_row(x) for x in cur.fetchall()]
-        con.close()
-        return rows
     except Exception as e:
         logger.error(f"Error fetching scenarios from DB: {e}", exc_info=True)
         return []
