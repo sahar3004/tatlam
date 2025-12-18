@@ -23,6 +23,12 @@ dependencies = [
     "WTForms==3.1.2",
 ]
 
+# Console entry points for stable CLI usage
+[project.scripts]
+tatlam-export-json = "tatlam.cli.export_json:main"
+tatlam-render-cards = "tatlam.cli.render_cards:main"
+tatlam-sim = "tatlam.sim.engine:main"
+
 [project.optional-dependencies]
 dev = [
     "black==24.8.0",
@@ -71,6 +77,7 @@ combine-as-imports = true
 "export_json.py" = ["S608"]
 "render_cards.py" = ["S608"]
 "app.py" = ["UP035"]
+"tatlam/infra/repo.py" = ["S608"]
 
 [tool.pytest.ini_options]
 minversion = "8.0"
@@ -110,4 +117,10 @@ skips = ["B101"]
 exclude_dirs = ["tests", "debug", "gold_md", "templates"]
 
 [tool.setuptools]
-packages = ["tatlam"]
+packages = [
+    "tatlam",
+    "tatlam.core",
+    "tatlam.infra",
+    "tatlam.sim",
+    "tatlam.cli",
+]

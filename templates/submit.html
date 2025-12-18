@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>הוספת תטל״ם חדש</h2>
+{% if error %}
+  <p style="color:#ff6b6b">שגיאה: {{ error }}</p>
+{% endif %}
+{% if success_sid %}
+  <div class="card">
+    <p>✅ תודה! התטל״ם נשמר במצב Pending וממתין לאישור מנהל.</p>
+    <p>קישור ישיר לתצוגה: <a href="{{ url_for('scenario', sid=success_sid) }}">/scenario/{{ success_sid }}</a></p>
+    <p class="muted">הוא יופיע ברשימות הציבוריות רק לאחר אישור.</p>
+  </div>
+{% else %}
+<form method="post" class="card">
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+    <label>כותרת<br><input required name="title" value="{{ form.title if form else '' }}" style="width:100%"></label>
+    <label>קטגוריה<br>
+      <select required name="category" style="width:100%">
+        <option value="">בחרו קטגוריה…</option>
+        {% for slug, title in cats %}
+          <option value="{{ title }}" {% if form and form.category==title %}selected{% endif %}>{{ title }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>רמת סיכון<br><input name="threat_level" value="{{ form.threat_level if form else '' }}" style="width:100%"></label>
+    <label>רמת סבירות<br><input name="likelihood" value="{{ form.likelihood if form else '' }}" style="width:100%"></label>
+    <label>רמת מורכבות<br><input name="complexity" value="{{ form.complexity if form else '' }}" style="width:100%"></label>
+    <label>מיקום<br><input name="location" value="{{ form.location if form else '' }}" style="width:100%"></label>
+  </div>
+  <label>רקע<br><textarea name="background" rows="3" style="width:100%">{{ form.background if form else '' }}</textarea></label>
+  <label>שלבים (שורה לכל שלב)<br><textarea name="steps" rows="5" style="width:100%">{{ form.steps if form else '' }}</textarea></label>
+  <label>הנחיות תגובה (שורה לכל פריט)<br><textarea name="required_response" rows="4" style="width:100%">{{ form.required_response if form else '' }}</textarea></label>
+  <label>נקודות לתחקיר (שורה לכל פריט)<br><textarea name="debrief_points" rows="4" style="width:100%">{{ form.debrief_points if form else '' }}</textarea></label>
+  <div style="margin-top:8px"><button type="submit">שמירה במצב Pending</button></div>
+  <p class="muted">לאחר שמירה, מנהל יאשר דרך /admin → Pending → Approve.</p>
+  <p class="muted">אין תמיכה בהעלאת קבצים/מדיה בשלב זה.</p>
+  <p class="muted">שימו לב: מנגנון רענון חי יעדכן את הדפים אוטומטית לאחר שמירה/אישור.</p>
+  </form>
+{% endif %}
+{% endblock %}
+

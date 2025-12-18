@@ -9,14 +9,14 @@ set -o pipefail
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
-if [[ ! -f .env ]]; then
-  echo "⚠️  .env not found. Create one from .env.template first." >&2
-  exit 1
+# Load environment if present (optional)
+if [[ -f .env ]]; then
+  set -a
+  source .env
+  set +a
+else
+  echo "ℹ️  .env not found. Using defaults + CLI args (see .env.template)." >&2
 fi
-
-set -a
-source .env
-set +a
 
 LLAMA_BIN="${LLAMA_BIN:-llama-server}"
 MODEL_PATH="${MODEL_PATH:-${LOCAL_MODEL_PATH:-}}"
@@ -26,9 +26,14 @@ HOST="${LOCAL_HOST:-127.0.0.1}"
 THREADS="${LLM_THREADS:-8}"
 CONTEXT="${LLM_CONTEXT:-4096}"
 
+# Allow passing -m/--model via CLI args if env not set
 if [[ -z "$MODEL_PATH" ]]; then
-  echo "⚠️  MODEL_PATH or LOCAL_MODEL_PATH must point to a GGUF model file." >&2
-  exit 1
+  if printf '%s\n' "$*" | grep -Eq -- '(^|\s)(-m|--model)\s'; then
+    echo "ℹ️  MODEL_PATH not set; using model path from CLI args (-m/--model)." >&2
+  else
+    echo "❌ MODEL_PATH/LOCAL_MODEL_PATH not set and no -m/--model provided. Set LOCAL_MODEL_PATH in .env or pass -m <model.gguf>." >&2
+    exit 1
+  fi
 fi
 
 if ! command -v "$LLAMA_BIN" >/dev/null 2>&1; then
@@ -41,7 +46,7 @@ mkdir -p "$LOG_DIR"
 LOG_FILE="$LOG_DIR/local_llm.log"
 
 exec "$LLAMA_BIN" \
-  -m "$MODEL_PATH" \
+  ${MODEL_PATH:+-m "$MODEL_PATH"} \
   -hf "$MODEL_ID" \
   -fa \
   --host "$HOST" \

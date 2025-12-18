@@ -2,45 +2,32 @@ name: CI
 
 on:
   push:
-    branches: [ main, master, develop ]
+    branches: [ main, master ]
   pull_request:
-    branches: [ "**" ]
 
 jobs:
-  build:
-    runs-on: macos-latest
+  qa:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Python
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
-      - name: Cache pip
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt', 'requirements-dev.txt') }}
-      - name: Install deps
+          python-version: '3.11'
+          cache: 'pip'
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
-      - name: Lint (ruff)
-        run: ruff check .
-      - name: Format (black)
-        run: black --check .
-      - name: Types (mypy)
-        run: mypy --strict .
-        continue-on-error: true
-      - name: Security (bandit)
-        run: bandit -r . -q
-      - name: Audit (pip-audit)
-        run: pip-audit -r requirements.txt || true
-      - name: Tests
-        run: pytest --cov=tatlam --cov=app --cov=run_batch --cov-report=xml --cov-report=term-missing
-      - name: Upload coverage
+      - name: Run QA (ruff/black/mypy/bandit/pip-audit/pytest)
+        run: |
+          make qa-changed
+      - name: Upload QA artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-xml
-          path: coverage.xml
+          name: qa-artifacts
+          path: |
+            artifacts/runs/**
 

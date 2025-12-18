@@ -12,7 +12,6 @@ import numpy as np
 from openai import BadRequestError
 
 from config import (
-    CHECKER_MODEL,
     DB_PATH,
     EMB_TABLE,
     EMBED_MODEL,
@@ -25,6 +24,9 @@ from config import (
     client_local,
 )
 from tatlam import configure_logging
+from tatlam.core.bundles import coerce_bundle_shape
+from tatlam.core.prompts import load_system_prompt, memory_addendum
+from tatlam.core.validators import build_validator_prompt
 
 configure_logging()
 
@@ -82,17 +84,6 @@ def chat_create_safe(
     if last_err is not None:
         raise last_err
     raise RuntimeError("chat_create_safe failed without raising an exception")
-
-
-def load_system_prompt(path="system_prompt_he.txt"):
-    try:
-        with open(path, encoding="utf8") as f:
-            return f.read()
-    except Exception:
-        return (
-            'אתה מסייע ליצירת תטל"מים מובְנים ואחראיים. שמור על פורמט, עברית תקנית, '
-            "וריאליזם מבצעי. אל תמציא קישורים."
-        )
 
 
 SYSTEM = load_system_prompt()
@@ -323,13 +314,6 @@ def load_gold_from_db(
     return "\n".join(blobs)
 
 
-def memory_addendum():
-    return {
-        "role": "system",
-        "content": "בדוק בזיכרון הארגוני דמיון לתטל״מים קיימים; אם דומה – שנה כותרת/זווית/actors/זמן/סביבה כך שתיווצר שונות. אין להשתמש בכותרת קיימת.",
-    }
-
-
 def create_scenarios(category: str) -> dict:
     """
     ייצור *מועמדים* במודל המקומי → ייצוב כ-JSON בענן → החזרה כ-bundle.
@@ -537,14 +521,6 @@ def evaluate_and_pick(bundle: dict) -> dict:
     return {"bundle_id": bundle.get("bundle_id", ""), "scenarios": best}
 
 
-def build_validator_prompt(bundle: dict) -> str:
-    return (
-        "אתה ולידטור JSON קפדני. בדוק ותקן את המבנה במידת הצורך. "
-        "החזר אך ורק JSON תקין – ללא הסברים/גדרות קוד. "
-        "שמור על העברית בדיוק כפי שהיא.\n\n" + json.dumps(bundle, ensure_ascii=False)
-    )
-
-
 def check_and_repair(bundle: dict) -> dict:
     """
     ולידציה/תיקון בענן, מחזיר תמיד dict; אם נכשל – מחזיר את bundle המקורי.
@@ -586,64 +562,6 @@ def check_and_repair(bundle: dict) -> dict:
 
 
 # New helper: coerce_bundle_shape
-def coerce_bundle_shape(bundle: dict) -> dict:
-    """Normalize scenario fields to expected schema and types.
-    - Ensures all known keys exist
-    - Coerces list-like fields to lists (parsing JSON strings when possible)
-    """
-    expected_list_fields = [
-        "steps",
-        "required_response",
-        "debrief_points",
-        "comms",
-        "decision_points",
-        "escalation_conditions",
-        "lessons_learned",
-        "variations",
-        "validation",
-    ]
-    defaults = {
-        "external_id": "",
-        "title": "",
-        "category": "",
-        "threat_level": "",
-        "likelihood": "",
-        "complexity": "",
-        "location": "",
-        "background": "",
-        "operational_background": "",
-        "media_link": "",
-        "mask_usage": "",
-        "authority_notes": "",
-        "cctv_usage": "",
-        "end_state_success": "",
-        "end_state_failure": "",
-    }
-    scs = bundle.get("scenarios", [])
-    fixed: list[dict] = []
-    for sc in scs:
-        sc = dict(sc or {})
-        # Fill defaults
-        for k, v in defaults.items():
-            sc.setdefault(k, v)
-        # Coerce list-like
-        for k in expected_list_fields:
-            val = sc.get(k, [])
-            if isinstance(val, str):
-                try:
-                    parsed = json.loads(val)
-                    if isinstance(parsed, list):
-                        val = parsed
-                    else:
-                        val = [parsed]
-                except Exception:
-                    val = [val] if val else []
-            elif not isinstance(val, list):
-                val = [val] if val else []
-            sc[k] = val
-        fixed.append(sc)
-    bundle["scenarios"] = fixed
-    return bundle
 
 
 def embed_text(text: str) -> np.ndarray | None:
@@ -761,47 +679,6 @@ def is_duplicate_title(title: str, titles, vecs, threshold: float | None = None)
     return (best >= threshold), v
 
 
-def minimal_title_fix(old_title: str) -> str:
-    """
-    מקבל כותרת קיימת ומבקש מהמודל להחזיר כותרת דומה אך ייחודית.
-    מחזיר תמיד מחרוזת; אם אין JSON תקין – חוזר ל-old_title.
-    """
-    cloud = client_cloud()
-    r = chat_create_safe(
-        cloud,
-        model=os.getenv("CHECKER_MODEL", CHECKER_MODEL),
-        messages=[
-            {
-                "role": "system",
-                "content": "שנה רק את שדה title כדי למנוע דמיון לשמות קיימים; החזר JSON תקין בלבד בפורמט {'title':'...'} ללא טקסט נוסף.",
-            },
-            {
-                "role": "user",
-                "content": json.dumps({"title": old_title}, ensure_ascii=False),
-            },
-        ],
-        response_format={"type": "json_object"},
-    )
-    text = (r.choices[0].message.content or "").strip()
-    # ניסיון 1: JSON ישיר
-    try:
-        data = json.loads(text)
-        new_title = (data.get("title") or "").strip()
-        return new_title or old_title
-    except json.JSONDecodeError:
-        pass
-    # ניסיון 2: חילוץ JSON מגוש טקסט
-    m = re.search(r"(\{[\s\S]*\})", text)
-    if m:
-        try:
-            data = json.loads(m.group(1))
-            new_title = (data.get("title") or "").strip()
-            return new_title or old_title
-        except Exception as exc:
-            LOGGER.debug("minimal_title_fix JSON parse failed: %s", exc)
-    return old_title
-
-
 def dedup_and_embed_titles(bundle: dict):
     mem_titles, mem_vecs = load_all_embeddings()
     for sc in bundle.get("scenarios", []):
@@ -823,6 +700,45 @@ def dedup_and_embed_titles(bundle: dict):
         else:
             mem_vecs.append(None)
     return bundle
+
+
+def minimal_title_fix(old_title: str) -> str:
+    """
+    מקבל כותרת קיימת ומבקש מהמודל להחזיר כותרת דומה אך ייחודית.
+    מחזיר תמיד מחרוזת; אם אין JSON תקין – חוזר ל-old_title.
+    """
+    cloud = client_cloud()
+    r = chat_create_safe(
+        cloud,
+        model=os.getenv("CHECKER_MODEL", os.getenv("CHECKER_MODEL", "")),
+        messages=[
+            {
+                "role": "system",
+                "content": "שנה רק את שדה title כדי למנוע דמיון לשמות קיימים; החזר JSON תקין בלבד בפורמט {'title':'...'} ללא טקסט נוסף.",
+            },
+            {
+                "role": "user",
+                "content": json.dumps({"title": old_title}, ensure_ascii=False),
+            },
+        ],
+        response_format={"type": "json_object"},
+    )
+    text = (r.choices[0].message.content or "").strip()
+    try:
+        data = json.loads(text)
+        new_title = (data.get("title") or "").strip()
+        return new_title or old_title
+    except json.JSONDecodeError:
+        pass
+    m = re.search(r"(\{[\s\S]*\})", text)
+    if m:
+        try:
+            data = json.loads(m.group(1))
+            new_title = (data.get("title") or "").strip()
+            return new_title or old_title
+        except Exception as exc:  # pragma: no cover - debug only
+            LOGGER.debug("minimal_title_fix JSON parse failed: %s", exc)
+    return old_title
 
 
 def insert_bundle(bundle: dict, owner="system", approved_by="") -> int:
