@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
-import sqlite3
 from typing import Any
 
+from sqlalchemy import select
+
+from tatlam.infra.db import get_session
+from tatlam.infra.models import Scenario
 from tatlam.settings import get_settings
 
 # Get settings for module-level constants
@@ -14,30 +16,42 @@ DB_PATH = _settings.DB_PATH
 TABLE_NAME = _settings.TABLE_NAME
 
 
-def _safe_table(name: str) -> str:
-    if not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", name):
-        raise ValueError("Unsafe table name")
-    return name
-
-
 def fetch_rows(category: str | None = None, bundle_id: str | None = None) -> list[dict[str, Any]]:
-    con = sqlite3.connect(DB_PATH)
-    cur = con.cursor()
-    tn = _safe_table(TABLE_NAME)
-    if category:
-        cur.execute(f"SELECT * FROM {tn} WHERE category=?", (category,))  # nosec
-    elif bundle_id:
-        cur.execute(f"SELECT * FROM {tn} WHERE bundle_id=?", (bundle_id,))  # nosec
-    else:
-        cur.execute(f"SELECT * FROM {tn}")  # nosec
-    cols = [c[0] for c in cur.description]
-    rows = [dict(zip(cols, r)) for r in cur.fetchall()]
-    con.close()
-    return rows
+    """Fetch scenarios from the database using SQLAlchemy.
+
+    Parameters
+    ----------
+    category : str | None
+        Filter by category.
+    bundle_id : str | None
+        Filter by bundle ID.
+
+    Returns
+    -------
+    list[dict[str, Any]]
+        List of scenario dictionaries.
+    """
+    with get_session() as session:
+        stmt = select(Scenario)
+
+        if category:
+            stmt = stmt.where(Scenario.category == category)
+        elif bundle_id:
+            stmt = stmt.where(Scenario.bundle_id == bundle_id)
+
+        scenarios = session.scalars(stmt).all()
+        return [s.to_dict() for s in scenarios]
 
 
 def normalize(row: dict[str, Any]) -> dict[str, Any]:
+    """Normalize a scenario row - ensures JSON fields are parsed.
+
+    Note: This is now largely a no-op since Scenario.to_dict() already
+    parses JSON fields. Kept for backward compatibility.
+    """
     def load(x: Any) -> Any:
+        if isinstance(x, (list, dict)):
+            return x
         try:
             return json.loads(x) if x else []
         except Exception:

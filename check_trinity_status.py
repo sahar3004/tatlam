@@ -77,13 +77,37 @@ def main():
     print(f"   Model: {settings.LOCAL_MODEL_NAME}")
     results.append(check_local_server())
 
-    # Database check
+    # Database check - using SQLAlchemy engine for semantic health check
     print("\n4️⃣  DATABASE")
     from pathlib import Path
+    from sqlalchemy import text
+    from sqlalchemy.exc import SQLAlchemyError
+    from tatlam.infra.db import get_engine
+
     db_path = Path(settings.DB_PATH)
     if db_path.exists():
-        print(f"✅ Database found at: {db_path}")
-        results.append(True)
+        print(f"✅ Database file found at: {db_path}")
+        # Perform semantic health check - verify connection works
+        try:
+            engine = get_engine()
+            with engine.connect() as conn:
+                result = conn.execute(text("SELECT 1")).scalar()
+                if result == 1:
+                    print("✅ Database connection healthy (WAL mode enabled)")
+                    # Check if scenarios table exists and count records
+                    try:
+                        count = conn.execute(text("SELECT COUNT(*) FROM scenarios")).scalar()
+                        print(f"   📊 Scenarios in database: {count}")
+                    except SQLAlchemyError:
+                        print("   ⚠️  Scenarios table not yet created")
+                    results.append(True)
+                else:
+                    print("❌ Database connection test failed")
+                    results.append(False)
+        except SQLAlchemyError as e:
+            print(f"❌ Database connection error: {e}")
+            print("   Database may be locked or corrupted")
+            results.append(False)
     else:
         print(f"⚠️  Database not found at: {db_path}")
         print(f"   It will be created on first use")

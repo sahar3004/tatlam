@@ -37,8 +37,8 @@ class TestDatabaseSchema:
 
         column_names = [col[1] for col in columns]
 
-        # Expected columns based on typical scenario structure
-        expected_columns = ['id', 'title', 'category', 'difficulty', 'steps']
+        # Expected columns based on actual schema
+        expected_columns = ['id', 'title', 'category', 'steps']
 
         for expected_col in expected_columns:
             assert expected_col in column_names, f"Column '{expected_col}' missing from scenarios table"
@@ -62,9 +62,9 @@ class TestDatabaseSchema:
         # Insert Hebrew text
         hebrew_text = "בדיקת עברית מלאה עם ניקוד: שָׁלוֹם"
         cursor.execute("""
-            INSERT INTO scenarios (title, category, difficulty, steps)
-            VALUES (?, ?, ?, ?)
-        """, (hebrew_text, "פיננסים", "בינוני", "[]"))
+            INSERT INTO scenarios (title, category, steps)
+            VALUES (?, ?, ?)
+        """, (hebrew_text, "פיגועים פשוטים", "[]"))  # Valid CATS category
 
         # Retrieve it back
         cursor.execute("SELECT title FROM scenarios WHERE id = last_insert_rowid()")
@@ -86,9 +86,9 @@ class TestDatabaseSchema:
         steps_json = json.dumps(steps_data, ensure_ascii=False)
 
         cursor.execute("""
-            INSERT INTO scenarios (title, category, difficulty, steps)
-            VALUES (?, ?, ?, ?)
-        """, ("כותרת בדיקה", "פיננסים", "קל", steps_json))
+            INSERT INTO scenarios (title, category, steps)
+            VALUES (?, ?, ?)
+        """, ("כותרת בדיקה json", "פיגועים פשוטים", steps_json))  # Valid CATS category
 
         cursor.execute("SELECT steps FROM scenarios WHERE id = last_insert_rowid()")
         result = cursor.fetchone()
@@ -107,9 +107,9 @@ class TestDatabaseSchema:
         # Try inserting minimal record
         try:
             cursor.execute("""
-                INSERT INTO scenarios (title, category, difficulty, steps)
-                VALUES (?, ?, ?, ?)
-            """, ("כותרת", "פיננסים", "בינוני", "[]"))
+                INSERT INTO scenarios (title, category, steps)
+                VALUES (?, ?, ?)
+            """, ("כותרת nullable", "פיגועים פשוטים", "[]"))  # Valid CATS category
             in_memory_db.commit()
             success = True
         except sqlite3.IntegrityError:
@@ -124,9 +124,9 @@ class TestDatabaseSchema:
         # Insert various Unicode characters
         unicode_test = "עברית + English + 中文 + 🔥 Emoji"
         cursor.execute("""
-            INSERT INTO scenarios (title, category, difficulty, steps)
-            VALUES (?, ?, ?, ?)
-        """, (unicode_test, "בדיקה", "בינוני", "[]"))
+            INSERT INTO scenarios (title, category, steps)
+            VALUES (?, ?, ?)
+        """, (unicode_test, "פיגועים פשוטים", "[]"))  # Valid CATS category
 
         cursor.execute("SELECT title FROM scenarios WHERE id = last_insert_rowid()")
         result = cursor.fetchone()

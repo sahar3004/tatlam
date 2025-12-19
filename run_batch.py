@@ -1,4 +1,5 @@
 import argparse
+import asyncio
 import json
 import logging
 import os
@@ -7,9 +8,11 @@ import re
 import sqlite3
 import time
 from datetime import datetime
+from functools import partial
 
 import numpy as np
 from openai import BadRequestError
+from sqlalchemy import select
 
 from tatlam.settings import get_settings
 from tatlam.core.llm_factory import client_cloud, client_local
@@ -29,9 +32,53 @@ from tatlam.core.bundles import coerce_bundle_shape
 from tatlam.core.prompts import load_system_prompt, memory_addendum
 from tatlam.core.validators import build_validator_prompt
 from tatlam.infra.repo import insert_scenario
-from tatlam.infra.db import get_db
+from tatlam.infra.db import get_db, init_db, get_session
+from tatlam.infra.models import Scenario
 
 configure_logging()
+
+
+def ensure_db() -> None:
+    """Ensure the database schema exists.
+
+    This function is idempotent - it can be called multiple times safely.
+    Uses the init_db function from tatlam.infra.db which creates the
+    scenarios table if it doesn't exist.
+    """
+    init_db()
+
+
+def insert_bundle(bundle: dict, owner: str = "web", approved_by: str = "") -> dict:
+    """Insert all scenarios from a bundle into the database.
+
+    Parameters
+    ----------
+    bundle : dict
+        Bundle containing scenarios to insert.
+        Expected keys: bundle_id, scenarios (list of dicts)
+    owner : str, default "web"
+        Owner/creator name for all scenarios.
+    approved_by : str, default ""
+        Approver name (if any). When set, scenarios are inserted as approved.
+
+    Returns
+    -------
+    dict
+        The bundle with any modifications (e.g., assigned IDs)
+    """
+    pending = not bool(approved_by)  # If approved_by is set, don't mark as pending
+    inserted = 0
+
+    for sc in bundle.get("scenarios", []):
+        sc.setdefault("bundle_id", bundle.get("bundle_id", ""))
+        try:
+            insert_scenario(sc, owner=owner, pending=pending)
+            inserted += 1
+        except ValueError as e:
+            LOGGER.warning("Failed to insert scenario '%s': %s", sc.get("title", ""), e)
+
+    LOGGER.info('נשמרו %d תטל"מים לבסיס הנתונים: %s', inserted, DB_PATH)
+    return bundle
 
 LOGGER = logging.getLogger(__name__)
 
@@ -309,38 +356,30 @@ def load_gold_from_db(
     if scope is None:
         scope = os.getenv("GOLD_SCOPE", "category").lower().strip()
 
+    rows = []
     try:
-        con = sqlite3.connect(DB_PATH)
-        cur = con.cursor()
-        if category and scope != "all":
-            cur.execute(
-                f"""SELECT title, category, background, steps, required_response, debrief_points,
-                            operational_background, media_link
-                    FROM {TABLE_NAME}
-                    WHERE lower(approved_by)='gold' AND category=?
-                    ORDER BY id DESC
-                    LIMIT ?""",
-                (category, limit),
-            )
-        else:
-            cur.execute(
-                f"""SELECT title, category, background, steps, required_response, debrief_points,
-                            operational_background, media_link
-                    FROM {TABLE_NAME}
-                    WHERE lower(approved_by)='gold'
-                    ORDER BY id DESC
-                    LIMIT ?""",
-                (limit,),
-            )
-        rows = cur.fetchall()
+        with get_session() as session:
+            from sqlalchemy import func
+            stmt = select(
+                Scenario.title,
+                Scenario.category,
+                Scenario.background,
+                Scenario.steps,
+                Scenario.required_response,
+                Scenario.debrief_points,
+                Scenario.operational_background,
+                Scenario.media_link,
+            ).where(
+                func.lower(Scenario.approved_by) == "gold"
+            ).order_by(Scenario.id.desc()).limit(limit)
+
+            if category and scope != "all":
+                stmt = stmt.where(Scenario.category == category)
+
+            rows = session.execute(stmt).fetchall()
     except Exception as exc:
         LOGGER.warning("load_gold_from_db failed: %s", exc)
         rows = []
-    finally:
-        try:
-            con.close()
-        except Exception as exc:
-            LOGGER.debug("failed to close DB connection: %s", exc)
 
     blobs = []
     acc = 0
@@ -737,9 +776,134 @@ def run_batch(category: str, owner="Sahar"):
     return bundle
 
 
+# ============================================================================
+# Async Batch Processing (M4 Pro Optimized)
+# ============================================================================
+
+# Semaphore to limit concurrency (optimized for M4 Pro with 48GB RAM)
+# Increased from 4 to 8 for better parallelism with WAL mode enabled
+_ASYNC_CONCURRENCY = int(os.getenv("BATCH_CONCURRENCY", "8"))
+_async_semaphore: asyncio.Semaphore | None = None
+
+
+def _get_semaphore() -> asyncio.Semaphore:
+    """Get or create the async semaphore."""
+    global _async_semaphore
+    if _async_semaphore is None:
+        _async_semaphore = asyncio.Semaphore(_ASYNC_CONCURRENCY)
+    return _async_semaphore
+
+
+async def _run_in_executor(func, *args, **kwargs):
+    """Run a sync function in the default executor."""
+    loop = asyncio.get_event_loop()
+    if kwargs:
+        func = partial(func, **kwargs)
+    return await loop.run_in_executor(None, func, *args)
+
+
+async def async_score_one_scenario(sc: dict) -> tuple[float, dict]:
+    """Async version of score_one_scenario with semaphore limiting."""
+    async with _get_semaphore():
+        return await _run_in_executor(score_one_scenario, sc)
+
+
+async def async_evaluate_and_pick(bundle: dict) -> dict:
+    """
+    Async version of evaluate_and_pick using asyncio.gather for parallelism.
+    Optimized for M4 Pro with 48GB RAM - uses Semaphore(4) to prevent OOM.
+    """
+    keep_k = int(os.getenv("KEEP_TOP_K", "5"))
+    scenarios = bundle.get("scenarios", [])
+
+    if not scenarios:
+        return {"bundle_id": bundle.get("bundle_id", ""), "scenarios": []}
+
+    # Score all scenarios concurrently with semaphore limiting
+    LOGGER.info("Async scoring %d scenarios with concurrency=%d", len(scenarios), _ASYNC_CONCURRENCY)
+    tasks = [async_score_one_scenario(sc) for sc in scenarios]
+    scored = await asyncio.gather(*tasks)
+
+    # Select top K diverse scenarios
+    best = select_top_k_diverse(list(scored), keep_k)
+    bid = bundle.get("bundle_id", "")
+
+    _dbg(
+        f"03_scored_{bid}",
+        [{"score": s, "title": sc.get("title", "")} for s, sc in scored],
+    )
+    _dbg(
+        f"04_selected_{bid}",
+        {"titles": [sc.get("title", "") for sc in best]},
+    )
+
+    return {"bundle_id": bundle.get("bundle_id", ""), "scenarios": best}
+
+
+async def async_run_batch(category: str, owner: str = "Sahar") -> dict:
+    """
+    Async version of run_batch for better performance on M4 Pro.
+
+    Uses asyncio.gather with Semaphore(4) to limit concurrency and prevent OOM.
+    This provides significant speedup for scoring multiple scenarios.
+
+    Parameters
+    ----------
+    category : str
+        The category for scenario generation.
+    owner : str, default "Sahar"
+        The owner name for inserted scenarios.
+
+    Returns
+    -------
+    dict
+        The processed bundle with scenarios.
+    """
+    LOGGER.info("Starting async batch processing for category: %s", category)
+
+    # 1) Create candidates (sync - single LLM call)
+    candidates = await _run_in_executor(create_scenarios, category)
+
+    # 2) Evaluate and pick (async - parallel scoring)
+    bundle = await async_evaluate_and_pick(candidates)
+
+    # 3) Dedup and embed titles (sync)
+    bundle = await _run_in_executor(dedup_and_embed_titles, bundle)
+
+    # 4) Save to database
+    inserted = 0
+    for sc in bundle.get("scenarios", []):
+        sc.setdefault("bundle_id", bundle.get("bundle_id", ""))
+        try:
+            insert_scenario(sc, owner=owner, pending=False)
+            inserted += 1
+        except ValueError as e:
+            LOGGER.warning("Failed to insert scenario '%s': %s", sc.get("title", ""), e)
+
+    LOGGER.info('נשמרו %d תטל"מים לבסיס הנתונים: %s', inserted, DB_PATH)
+    LOGGER.info("bundle_id: %s", bundle.get("bundle_id"))
+    return bundle
+
+
+def run_batch_async(category: str, owner: str = "Sahar") -> dict:
+    """
+    Convenience wrapper to run async batch from sync code.
+
+    Usage:
+        bundle = run_batch_async("פיגועים פשוטים")
+    """
+    return asyncio.run(async_run_batch(category, owner))
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--category", required=True, help="הכנס קטגוריה מהרשימה")
     parser.add_argument("--owner", default="Sahar")
+    parser.add_argument("--async", dest="use_async", action="store_true",
+                        help="Use async processing (faster on M4 Pro)")
     args = parser.parse_args()
-    run_batch(args.category, owner=args.owner)
+
+    if args.use_async:
+        run_batch_async(args.category, owner=args.owner)
+    else:
+        run_batch(args.category, owner=args.owner)

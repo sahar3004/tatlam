@@ -4,6 +4,42 @@ Based on Deep Security Research 2025.
 Source of Truth for: Writer (Claude), Judge (Gemini), Simulator (Llama/Qwen).
 """
 
+from __future__ import annotations
+
+from functools import lru_cache
+from pathlib import Path
+
+
+@lru_cache(maxsize=1)
+def load_prompt() -> str:
+    """Load the system prompt from system_prompt_he.txt.
+
+    Returns
+    -------
+    str
+        The Hebrew system prompt content.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the system_prompt_he.txt file is not found.
+    """
+    # Try multiple locations for the prompt file
+    possible_paths = [
+        Path("system_prompt_he.txt"),
+        Path(__file__).resolve().parent.parent.parent / "system_prompt_he.txt",
+    ]
+
+    for path in possible_paths:
+        if path.exists():
+            with open(path, "r", encoding="utf-8") as f:
+                return f.read()
+
+    raise FileNotFoundError(
+        "system_prompt_he.txt not found in project root or relative paths"
+    )
+
+
 TRINITY_DOCTRINE = {
     # פרק 1: ניתוח איום הייחוס 2025
     "threat_matrix": {

@@ -20,11 +20,14 @@ def in_memory_db(monkeypatch):
 
     - Creates a temporary database
     - Monkeypatches settings.DB_PATH via cache clear
+    - Resets SQLAlchemy engine to use new database
     - Initializes schema via init_db()
     - Yields connection for tests
     - Cleans up automatically
     """
     from tatlam.settings import get_settings
+    from tatlam.infra.db import init_db, reset_engine
+    from tatlam.infra import repo as repo_module
 
     # Create temporary database
     temp_db = tempfile.NamedTemporaryFile(mode='w', suffix='.db', delete=False)
@@ -34,6 +37,13 @@ def in_memory_db(monkeypatch):
     # Clear settings cache and monkeypatch environment
     get_settings.cache_clear()
     monkeypatch.setenv('DB_PATH', temp_db_path)
+    monkeypatch.setenv('REQUIRE_APPROVED_ONLY', 'false')
+
+    # Reset SQLAlchemy engine to pick up new DB path
+    reset_engine()
+
+    # Reset repo module's cached column checks
+    repo_module._column_cache.clear()
 
     # Re-fetch settings to pick up new DB_PATH
     settings = get_settings()
@@ -42,11 +52,18 @@ def in_memory_db(monkeypatch):
     conn = sqlite3.connect(temp_db_path)
     conn.row_factory = sqlite3.Row
 
+    # Initialize database schema
+    init_db(conn)
+
     yield conn
 
     # Cleanup
     conn.close()
+    reset_engine()  # Clean up SQLAlchemy engine
     Path(temp_db_path).unlink(missing_ok=True)
+    # Also clean up any WAL files
+    Path(temp_db_path + "-wal").unlink(missing_ok=True)
+    Path(temp_db_path + "-shm").unlink(missing_ok=True)
     get_settings.cache_clear()
 
 
@@ -89,10 +106,12 @@ def mock_brain():
 def sample_scenario_data():
     """
     Provides a valid scenario dictionary for testing.
+
+    Uses 'פיגועים פשוטים' as it's a valid category in CATS.
     """
     return {
         "title": "בדיקת תרחיש לדוגמה",
-        "category": "פיננסים",
+        "category": "פיגועים פשוטים",  # Valid category from CATS
         "difficulty": "בינוני",
         "bundle": "חבילה 1",
         "steps": [

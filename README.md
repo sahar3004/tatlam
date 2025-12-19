@@ -1,5 +1,34 @@
 # tatlam (ייצור תטל"מים)
 
+## Architecture Overview
+
+### Database Layer (SQLAlchemy 2.0)
+The project uses SQLAlchemy 2.0 ORM with type-annotated models for robust database operations:
+
+- **WAL Mode**: SQLite Write-Ahead Logging enabled for better concurrent access
+- **Connection Pooling**: Automatic connection management with pool_pre_ping
+- **Indexed Queries**: Performance indexes on `category`, `threat_level`, `status`, `created_at`
+- **Session Management**: Context-managed sessions with auto-commit/rollback
+
+```python
+from tatlam.infra.db import get_session
+from tatlam.infra.models import Scenario
+
+with get_session() as session:
+    scenarios = session.scalars(select(Scenario)).all()
+```
+
+### Trinity Architecture
+Three-model AI system for scenario generation:
+- **Writer** (Claude/Anthropic): Creative scenario drafting
+- **Judge** (Gemini/Google): Quality validation and scoring
+- **Simulator** (Local/OpenAI-compatible): Testing and verification
+
+### Async Processing (M4 Pro Optimized)
+- Semaphore-controlled concurrency (default: 8 parallel tasks)
+- Optimized for 48GB RAM with WAL mode database access
+- `run_batch.py --async` for faster batch processing
+
 ## התקנה מהירה
 1. `python3 -m venv .venv && source .venv/bin/activate`
 2. `pip install -r requirements.txt`

@@ -29,9 +29,9 @@ class TestRepositoryCRUD:
 
         hebrew_scenario = {
             "title": "בדיקת הכנסת עברית",
-            "category": "פיננסים",
+            "category": "פיגועים פשוטים",  # Valid CATS category
             "difficulty": "קשה",
-            "bundle": "חבילת בדיקה",
+            "bundle_id": "חבילת בדיקה",
             "steps": [
                 {"step": 1, "description": "פתח את היישום"},
                 {"step": 2, "description": "בחר באפשרות תשלום"}
@@ -50,7 +50,7 @@ class TestRepositoryCRUD:
 
         assert result is not None
         assert result[0] == "בדיקת הכנסת עברית"
-        assert result[1] == "פיננסים"
+        assert result[1] == "פיגועים פשוטים"
 
     def test_insert_scenario_preserves_json_structure(self, in_memory_db, sample_scenario_data):
         """Test that steps array is properly stored as JSON."""
@@ -108,7 +108,7 @@ class TestRepositoryCRUD:
         hebrew_title = "בדיקת שמירת עברית"
         scenario = {
             "title": hebrew_title,
-            "category": "בריאות",
+            "category": "חפץ חשוד ומטען",  # Valid CATS category
             "difficulty": "בינוני",
             "steps": [{"step": 1, "description": "צעד בעברית"}]
         }
@@ -121,7 +121,7 @@ class TestRepositoryCRUD:
         for s in scenarios:
             if s.get("title") == hebrew_title:
                 found = True
-                assert s["category"] == "בריאות"
+                assert s["category"] == "חפץ חשוד ומטען"
                 break
 
         assert found, f"Scenario with Hebrew title not found in fetch_all results"
@@ -131,18 +131,17 @@ class TestRepositoryCRUD:
         from tatlam.infra.repo import insert_scenario
 
         complete_scenario = {
-            "title": "תרחיש מלא",
-            "category": "חינוך",
+            "title": "תרחיש מלא crud",
+            "category": "בני ערובה",  # Valid CATS category
             "difficulty": "קל",
-            "bundle": "חבילה 1",
+            "bundle_id": "חבילה 1",
             "steps": [
                 {"step": 1, "description": "צעד 1"},
                 {"step": 2, "description": "צעד 2"},
                 {"step": 3, "description": "צעד 3"}
             ],
             "expected_behavior": "התנהגות צפויה",
-            "testing_tips": "טיפים לבדיקה",
-            "notes": "הערות נוספות"
+            "testing_tips": "טיפים לבדיקה"
         }
 
         scenario_id = insert_scenario(complete_scenario)
@@ -152,11 +151,12 @@ class TestRepositoryCRUD:
         """Test inserting scenarios from different categories."""
         from tatlam.infra.repo import insert_scenario, fetch_all
 
-        categories = ["פיננסים", "בריאות", "חינוך", "תחבורה", "קניות"]
+        # Use valid CATS categories
+        categories = ["פיגועים פשוטים", "חפץ חשוד ומטען", "בני ערובה", "אירוע כימי", "תחנות עיליות"]
 
         for i, category in enumerate(categories):
             scenario = {
-                "title": f"תרחיש {i+1}",
+                "title": f"תרחיש category {i+1}",
                 "category": category,
                 "difficulty": "בינוני",
                 "steps": [{"step": 1, "description": f"צעד עבור {category}"}]

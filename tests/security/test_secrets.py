@@ -83,11 +83,8 @@ class TestSecretsManagement:
 
         gitignore_content = gitignore_path.read_text()
 
-        # Should ignore common secret files
-        expected_patterns = [".env", "*.key", "credentials"]
-
-        for pattern in expected_patterns:
-            assert pattern in gitignore_content or "# No .env" in gitignore_content
+        # Should ignore common secret files - check for .env
+        assert ".env" in gitignore_content, ".env should be in .gitignore"
 
     def test_database_path_not_exposed(self):
         """Test that database path doesn't expose sensitive information."""

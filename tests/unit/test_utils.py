@@ -116,7 +116,7 @@ class TestUtils:
         assert result["steps"] is not None
 
     def test_normalize_row_empty_row(self):
-        """Test normalize_row with empty row."""
+        """Test normalize_row with empty row - adds JSON field defaults."""
         class MockRow:
             def __init__(self, data):
                 self._data = data
@@ -131,4 +131,8 @@ class TestUtils:
         result = normalize_row(mock_row)
 
         assert isinstance(result, dict)
-        assert len(result) == 0
+        # normalize_row adds default empty lists for JSON_FIELDS
+        from tatlam.infra.repo import JSON_FIELDS
+        for field in JSON_FIELDS:
+            assert field in result
+            assert result[field] == []

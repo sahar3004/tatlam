@@ -1,37 +1,74 @@
+"""Repository layer for scenario data access.
+
+This module provides both SQLAlchemy ORM-based and legacy sqlite3-based
+data access patterns. All public functions return dictionaries for
+backward compatibility with existing code.
+
+The migration to SQLAlchemy provides:
+- Type-safe ORM models
+- Automatic connection pooling
+- WAL mode for better concurrency
+- Cleaner transaction management
+"""
 from __future__ import annotations
 
 import json
-import sqlite3
+import unicodedata
 from datetime import datetime
 from typing import Any
 
-from tatlam.settings import get_settings
+from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
+
 from tatlam.core.categories import CATS, category_to_slug
-from tatlam.infra.db import get_db
+from tatlam.infra.db import get_session
+from tatlam.infra.models import Scenario
+from tatlam.settings import get_settings
 
 # Get settings for module-level constants
 _settings = get_settings()
 REQUIRE_APPROVED_ONLY = _settings.REQUIRE_APPROVED_ONLY
 TABLE_NAME = _settings.TABLE_NAME
 
-
-def _getconn() -> sqlite3.Connection:
-    return get_db()
+# Cache for column existence checks
+_column_cache: dict[tuple[str, str], bool] = {}
 
 
 def db_has_column(table: str, col: str) -> bool:
-    try:
-        # Resolve DB_PATH at call time to respect tests that reload config
-        settings = get_settings()
-        with sqlite3.connect(settings.DB_PATH) as _c:
-            cur = _c.cursor()
-            cur.execute(f"PRAGMA table_info({table})")  # nosec B608 - table is trusted
-            return any(r[1] == col for r in cur.fetchall())
-    except Exception:
-        return False
+    """Check if a column exists in a table.
+
+    Results are cached for performance since schema doesn't change at runtime.
+    """
+    cache_key = (table, col)
+    if cache_key in _column_cache:
+        return _column_cache[cache_key]
+
+    # For the Scenario model, we know the columns from the ORM definition
+    if table == TABLE_NAME:
+        # Get column names from the ORM model
+        result = hasattr(Scenario, col)
+        _column_cache[cache_key] = result
+        return result
+
+    # Fallback for unknown tables - assume column exists
+    return True
 
 
 _HAS_STATUS = db_has_column(TABLE_NAME, "status")
+
+
+def _normalize_text(text: Any) -> str:
+    """Normalize text to Unicode NFC form for consistent Hebrew storage.
+
+    NFC normalization ensures Hebrew characters with diacritics are stored
+    in their canonical composed form, preventing byte-level mismatches
+    between visually identical strings.
+    """
+    if text is None:
+        return ""
+    s = str(text)
+    return unicodedata.normalize("NFC", s)
+
 
 JSON_FIELDS: list[str] = [
     "steps",
@@ -47,6 +84,7 @@ JSON_FIELDS: list[str] = [
 
 
 def _parse_json_field(val: Any) -> list[Any] | dict[str, Any]:
+    """Parse a JSON string field to Python object."""
     if val is None:
         return []
     if isinstance(val, (list, dict)):
@@ -55,15 +93,29 @@ def _parse_json_field(val: Any) -> list[Any] | dict[str, Any]:
         return []
     try:
         loaded = json.loads(val)
-    except Exception:
+    except (json.JSONDecodeError, TypeError):
         return []
     if isinstance(loaded, (list, dict)):
         return loaded
     return []
 
 
-def normalize_row(row: sqlite3.Row) -> dict[str, Any]:
-    r: dict[str, Any] = {k: row[k] for k in row.keys()}
+def normalize_row(row: Any) -> dict[str, Any]:
+    """Normalize a row (from sqlite3 or SQLAlchemy) to a dictionary.
+
+    Handles both sqlite3.Row objects and Scenario ORM instances.
+    JSON fields are automatically parsed.
+    """
+    # Handle SQLAlchemy Scenario model
+    if isinstance(row, Scenario):
+        return row.to_dict()
+
+    # Handle sqlite3.Row or dict-like objects
+    if hasattr(row, "keys"):
+        r: dict[str, Any] = {k: row[k] for k in row.keys()}
+    else:
+        r = dict(row)
+
     # Normalize JSON-like text fields
     for key in JSON_FIELDS:
         r[key] = _parse_json_field(r.get(key))
@@ -71,6 +123,7 @@ def normalize_row(row: sqlite3.Row) -> dict[str, Any]:
 
 
 def is_approved_row(row: dict[str, Any]) -> bool:
+    """Check if a row is approved based on status/approved_by fields."""
     if not REQUIRE_APPROVED_ONLY:
         return True
     if _HAS_STATUS:
@@ -80,83 +133,135 @@ def is_approved_row(row: dict[str, Any]) -> bool:
 
 
 def fetch_all_basic_categories() -> list[dict[str, Any]]:
-    con = _getconn()
-    cur = con.cursor()
-    try:
-        cur.execute(
-            f"SELECT id, title, category, status, approved_by, created_at FROM {TABLE_NAME} "  # noqa: S608  # nosec
-            "ORDER BY datetime(created_at) DESC, id DESC"
-        )
-    except sqlite3.OperationalError:
-        select_cols = ["id", "title", "category"]
-        if db_has_column(TABLE_NAME, "status"):
-            select_cols.append("status")
-        if db_has_column(TABLE_NAME, "approved_by"):
-            select_cols.append("approved_by")
-        cur.execute(
-            f"SELECT {', '.join(select_cols)} FROM {TABLE_NAME} ORDER BY id DESC"  # noqa: S608  # nosec
-        )
-    rows = [dict(x) for x in cur.fetchall()]
-    rows = [r for r in rows if is_approved_row(r)]
-    con.close()
-    return rows
+    """Fetch basic category info for all scenarios.
+
+    Returns only essential fields for category listing/filtering.
+    """
+    with get_session() as session:
+        stmt = select(
+            Scenario.id,
+            Scenario.title,
+            Scenario.category,
+            Scenario.status,
+            Scenario.approved_by,
+            Scenario.created_at,
+        ).order_by(Scenario.created_at.desc(), Scenario.id.desc())
+
+        results = session.execute(stmt).fetchall()
+        rows = [
+            {
+                "id": r.id,
+                "title": r.title,
+                "category": r.category,
+                "status": r.status,
+                "approved_by": r.approved_by,
+                "created_at": r.created_at,
+            }
+            for r in results
+        ]
+
+    return [r for r in rows if is_approved_row(r)]
 
 
 def fetch_all(limit: int | None = None, offset: int | None = None) -> list[dict[str, Any]]:
-    con = _getconn()
-    cur = con.cursor()
-    base = (
-        f"SELECT * FROM {TABLE_NAME} "  # noqa: S608  # nosec
-        "ORDER BY datetime(created_at) DESC, id DESC"
-    )
-    try:
+    """Fetch all scenarios with optional pagination.
+
+    Parameters
+    ----------
+    limit : int | None
+        Maximum number of results to return.
+    offset : int | None
+        Number of results to skip.
+
+    Returns
+    -------
+    list[dict[str, Any]]
+        List of scenario dictionaries.
+    """
+    with get_session() as session:
+        stmt = select(Scenario).order_by(Scenario.created_at.desc(), Scenario.id.desc())
+
         if limit is not None and offset is not None:
-            cur.execute(base + " LIMIT ? OFFSET ?", (limit, offset))
-        else:
-            cur.execute(base)
-    except sqlite3.OperationalError:
-        fallback = f"SELECT * FROM {TABLE_NAME} ORDER BY id DESC"  # noqa: S608  # nosec
-        if limit is not None and offset is not None:
-            cur.execute(fallback + " LIMIT ? OFFSET ?", (limit, offset))
-        else:
-            cur.execute(fallback)
-    rows = [normalize_row(x) for x in cur.fetchall()]
-    rows = [r for r in rows if is_approved_row(r)]
-    con.close()
-    return rows
+            stmt = stmt.limit(limit).offset(offset)
+
+        scenarios = session.scalars(stmt).all()
+        rows = [s.to_dict() for s in scenarios]
+
+    return [r for r in rows if is_approved_row(r)]
 
 
 def fetch_count(where_sql: str = "", params: tuple[Any, ...] = ()) -> int:
-    con = _getconn()
-    cur = con.cursor()
-    base = f"SELECT COUNT(*) AS c FROM {TABLE_NAME}"  # noqa: S608  # nosec
-    if REQUIRE_APPROVED_ONLY and _HAS_STATUS and "status" not in where_sql:
-        joiner = " WHERE " if "WHERE" not in where_sql.upper() else " AND "
-        where_sql = (where_sql or "") + f"{joiner}status = ?"
-        params = tuple(list(params) + ["approved"])
-    sql = base + " " + where_sql if where_sql else base
-    cur.execute(sql, params)
-    c = cur.fetchone()[0]
-    con.close()
-    return int(c)
+    """Count scenarios matching optional filter criteria.
+
+    Note: The where_sql parameter is kept for backward compatibility but
+    is not used with the SQLAlchemy implementation. Use SQLAlchemy
+    filters directly for new code.
+
+    Parameters
+    ----------
+    where_sql : str
+        Legacy SQL WHERE clause (ignored in SQLAlchemy mode).
+    params : tuple[Any, ...]
+        Legacy SQL parameters (ignored in SQLAlchemy mode).
+
+    Returns
+    -------
+    int
+        Count of matching scenarios.
+    """
+    with get_session() as session:
+        stmt = select(func.count()).select_from(Scenario)
+
+        if REQUIRE_APPROVED_ONLY and _HAS_STATUS:
+            stmt = stmt.where(Scenario.status == "approved")
+
+        result = session.execute(stmt).scalar()
+        return int(result or 0)
 
 
 def fetch_one(sid: int) -> dict[str, Any]:
-    con = _getconn()
-    cur = con.cursor()
-    # TABLE_NAME is trusted configuration; id param is bound
-    cur.execute(f"SELECT * FROM {TABLE_NAME} WHERE id= ?", (sid,))  # nosec
-    r = cur.fetchone()
-    con.close()
-    if not r:
-        raise LookupError("not_found")
-    return normalize_row(r)
+    """Fetch a single scenario by ID.
+
+    Parameters
+    ----------
+    sid : int
+        The scenario ID to fetch.
+
+    Returns
+    -------
+    dict[str, Any]
+        The scenario dictionary.
+
+    Raises
+    ------
+    LookupError
+        If the scenario is not found.
+    """
+    with get_session() as session:
+        scenario = session.get(Scenario, sid)
+        if not scenario:
+            raise LookupError("not_found")
+        return scenario.to_dict()
 
 
 def fetch_by_category_slug(
     slug: str, limit: int | None = None, offset: int | None = None
 ) -> list[dict[str, Any]]:
     """Return approved rows for a given category slug with optional paging.
+
+    Parameters
+    ----------
+    slug : str
+        The category slug to filter by.
+    limit : int | None
+        Maximum number of results.
+    offset : int | None
+        Number of results to skip.
+
+    Returns
+    -------
+    list[dict[str, Any]]
+        List of scenario dictionaries.
 
     Raises
     ------
@@ -180,31 +285,18 @@ def fetch_count_by_slug(slug: str) -> int:
     return sum(1 for r in rows if category_to_slug(r.get("category", "")) == slug)
 
 
-__all__ = [
-    "normalize_row",
-    "fetch_all_basic_categories",
-    "fetch_all",
-    "fetch_count",
-    "fetch_one",
-    "fetch_by_category_slug",
-    "fetch_count_by_slug",
-    "insert_scenario",
-]
-
-
 def insert_scenario(data: dict[str, Any], owner: str = "web", pending: bool = True) -> int:
-    """Insert a new scenario into the configured table.
+    """Insert a new scenario into the database.
 
     Parameters
     ----------
     data : dict[str, Any]
         Scenario fields. Must include at least "title" and "category". Optional
-        JSON-like fields (lists) will be serialized according to JSON_FIELDS.
+        JSON-like fields (lists) will be serialized.
     owner : str, default "web"
         Logical owner/creator to store in the DB.
     pending : bool, default True
-        If the schema contains a "status" column, and this flag is True, the
-        row will be inserted with status="pending".
+        If True, the row will be inserted with status="pending".
 
     Returns
     -------
@@ -215,15 +307,10 @@ def insert_scenario(data: dict[str, Any], owner: str = "web", pending: bool = Tr
     ------
     ValueError
         If required fields are missing or invalid, or on uniqueness violation.
-
-    Notes
-    -----
-    - This function is schema-aware: it detects optional columns ("status",
-      "approved_by") and includes them only if present in the DB.
-    - Table name is trusted from configuration; values are parameterized.
     """
-    title = (data.get("title") or "").strip()
-    category = (data.get("category") or "").strip()
+    title = _normalize_text(data.get("title") or "").strip()
+    category = _normalize_text(data.get("category") or "").strip()
+
     if not title:
         raise ValueError("title is required")
     if not category:
@@ -232,93 +319,126 @@ def insert_scenario(data: dict[str, Any], owner: str = "web", pending: bool = Tr
     if category_to_slug(category) not in CATS:
         raise ValueError("unknown category")
 
-    con = _getconn()
-    cur = con.cursor()
-
-    # Build insert statement dynamically based on available columns
-    cols: list[str] = [
-        "bundle_id",
-        "external_id",
-        "title",
-        "category",
-        "threat_level",
-        "likelihood",
-        "complexity",
-        "location",
-        "background",
-        "steps",
-        "required_response",
-        "debrief_points",
-        "operational_background",
-        "media_link",
-        "mask_usage",
-        "authority_notes",
-        "cctv_usage",
-        "comms",
-        "decision_points",
-        "escalation_conditions",
-        "end_state_success",
-        "end_state_failure",
-        "lessons_learned",
-        "variations",
-        "validation",
-        "owner",
-        # approved_by and status are optional (schema-dependent)
-    ]
-
-    vals: list[Any] = [
-        data.get("bundle_id", ""),
-        data.get("external_id", ""),
-        title,
-        category,
-        data.get("threat_level", ""),
-        data.get("likelihood", ""),
-        data.get("complexity", ""),
-        data.get("location", ""),
-        data.get("background", ""),
-        json.dumps(data.get("steps", []), ensure_ascii=False),
-        json.dumps(data.get("required_response", []), ensure_ascii=False),
-        json.dumps(data.get("debrief_points", []), ensure_ascii=False),
-        data.get("operational_background", ""),
-        data.get("media_link", ""),
-        data.get("mask_usage", ""),
-        data.get("authority_notes", ""),
-        data.get("cctv_usage", ""),
-        json.dumps(data.get("comms", []), ensure_ascii=False),
-        json.dumps(data.get("decision_points", []), ensure_ascii=False),
-        json.dumps(data.get("escalation_conditions", []), ensure_ascii=False),
-        data.get("end_state_success", ""),
-        data.get("end_state_failure", ""),
-        json.dumps(data.get("lessons_learned", []), ensure_ascii=False),
-        json.dumps(data.get("variations", []), ensure_ascii=False),
-        json.dumps(data.get("validation", []), ensure_ascii=False),
-        owner,
-    ]
-
-    if db_has_column(TABLE_NAME, "approved_by"):
-        cols.append("approved_by")
-        vals.append("")
-    if db_has_column(TABLE_NAME, "status"):
-        cols.append("status")
-        vals.append("pending" if pending else "approved")
-
-    cols.append("created_at")
-    vals.append(datetime.now().isoformat())
-
-    placeholders = ", ".join(["?"] * len(vals))
-    sql = (
-        f"INSERT INTO {TABLE_NAME} (" + ", ".join(cols) + ") VALUES (" + placeholders + ")"
-    )  # noqa: S608  # nosec B608
+    # Create the Scenario ORM instance
+    scenario = Scenario(
+        bundle_id=_normalize_text(data.get("bundle_id", "")),
+        external_id=_normalize_text(data.get("external_id", "")),
+        title=title,
+        category=category,
+        threat_level=_normalize_text(data.get("threat_level", "")),
+        likelihood=_normalize_text(data.get("likelihood", "")),
+        complexity=_normalize_text(data.get("complexity", "")),
+        location=_normalize_text(data.get("location", "")),
+        background=_normalize_text(data.get("background", "")),
+        steps=json.dumps(data.get("steps", []), ensure_ascii=False),
+        required_response=json.dumps(data.get("required_response", []), ensure_ascii=False),
+        debrief_points=json.dumps(data.get("debrief_points", []), ensure_ascii=False),
+        operational_background=_normalize_text(data.get("operational_background", "")),
+        media_link=data.get("media_link", ""),  # URLs don't need NFC normalization
+        mask_usage=_normalize_text(data.get("mask_usage", "")) or None,
+        authority_notes=_normalize_text(data.get("authority_notes", "")),
+        cctv_usage=_normalize_text(data.get("cctv_usage", "")),
+        comms=json.dumps(data.get("comms", []), ensure_ascii=False),
+        decision_points=json.dumps(data.get("decision_points", []), ensure_ascii=False),
+        escalation_conditions=json.dumps(data.get("escalation_conditions", []), ensure_ascii=False),
+        end_state_success=_normalize_text(data.get("end_state_success", "")),
+        end_state_failure=_normalize_text(data.get("end_state_failure", "")),
+        lessons_learned=json.dumps(data.get("lessons_learned", []), ensure_ascii=False),
+        variations=json.dumps(data.get("variations", []), ensure_ascii=False),
+        validation=json.dumps(data.get("validation", []), ensure_ascii=False),
+        owner=owner,
+        approved_by="",
+        status="pending" if pending else "approved",
+        created_at=datetime.now().isoformat(),
+    )
 
     try:
-        cur.execute(sql, tuple(vals))
-        con.commit()
-    except sqlite3.IntegrityError as e:
-        # Likely UNIQUE(title) violation, expose a clean error
-        con.rollback()
+        with get_session() as session:
+            session.add(scenario)
+            session.flush()  # Get the ID before commit
+            new_id = scenario.id
+    except IntegrityError as e:
+        # UNIQUE(title) violation
         raise ValueError("scenario already exists") from e
-    finally:
-        # lastrowid is still accessible after commit
-        new_id = int(cur.lastrowid or 0)
-        con.close()
+
     return new_id
+
+
+class ScenarioRepository:
+    """Concrete repository implementation for scenario data access.
+
+    This class wraps the module-level functions and implements the
+    RepositoryInterface protocol, enabling dependency injection
+    in business logic components.
+
+    Usage:
+        repo = ScenarioRepository()
+        scenarios = repo.fetch_all(limit=10)
+
+        # Or inject into components:
+        brain = TrinityBrain(repository=repo)
+    """
+
+    def fetch_all(
+        self, limit: int | None = None, offset: int | None = None
+    ) -> list[dict[str, Any]]:
+        """Fetch all scenarios from the database."""
+        return fetch_all(limit=limit, offset=offset)
+
+    def fetch_one(self, sid: int) -> dict[str, Any]:
+        """Fetch a single scenario by ID."""
+        return fetch_one(sid)
+
+    def fetch_count(
+        self, where_sql: str = "", params: tuple[Any, ...] = ()
+    ) -> int:
+        """Count scenarios matching optional filter criteria."""
+        return fetch_count(where_sql=where_sql, params=params)
+
+    def insert_scenario(
+        self, data: dict[str, Any], owner: str = "web", pending: bool = True
+    ) -> int:
+        """Insert a new scenario into the database."""
+        return insert_scenario(data=data, owner=owner, pending=pending)
+
+    def fetch_by_category_slug(
+        self, slug: str, limit: int | None = None, offset: int | None = None
+    ) -> list[dict[str, Any]]:
+        """Fetch scenarios by category slug."""
+        return fetch_by_category_slug(slug=slug, limit=limit, offset=offset)
+
+
+# Default repository instance for convenience
+_default_repository: ScenarioRepository | None = None
+
+
+def get_repository() -> ScenarioRepository:
+    """Get the default repository instance (singleton pattern).
+
+    Returns
+    -------
+    ScenarioRepository
+        The default repository instance.
+    """
+    global _default_repository
+    if _default_repository is None:
+        _default_repository = ScenarioRepository()
+    return _default_repository
+
+
+__all__ = [
+    "normalize_row",
+    "fetch_all_basic_categories",
+    "fetch_all",
+    "fetch_count",
+    "fetch_one",
+    "fetch_by_category_slug",
+    "fetch_count_by_slug",
+    "insert_scenario",
+    "ScenarioRepository",
+    "get_repository",
+    "JSON_FIELDS",
+    "is_approved_row",
+    "db_has_column",
+    "_normalize_text",
+]

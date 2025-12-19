@@ -3,12 +3,14 @@ from __future__ import annotations
 import argparse
 import json
 import re
-import sqlite3
 from pathlib import Path
 from typing import Any
 
 from jinja2 import Template
+from sqlalchemy import select
 
+from tatlam.infra.db import get_session
+from tatlam.infra.models import Scenario
 from tatlam.settings import get_settings
 
 # Get settings for module-level constants
@@ -111,34 +113,33 @@ def load_template(path: str | None = None) -> Template:
         return Template(f.read())
 
 
-def _safe_table(name: str) -> str:
-    if not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", name):
-        raise ValueError("Unsafe table name")
-    return name
-
-
 def fetch(category: str | None = None, bundle_id: str | None = None) -> list[dict[str, Any]]:
-    # שימוש ב-row_factory כדי לאפשר גישה לשמות עמודות כמו dict
-    with sqlite3.connect(DB_PATH) as con:
-        con.row_factory = sqlite3.Row
-        cur = con.cursor()
+    """Fetch scenarios from the database using SQLAlchemy.
 
-        tn = _safe_table(TABLE_NAME)
+    Parameters
+    ----------
+    category : str | None
+        Filter by category.
+    bundle_id : str | None
+        Filter by bundle ID.
+
+    Returns
+    -------
+    list[dict[str, Any]]
+        List of scenario dictionaries.
+    """
+    with get_session() as session:
+        stmt = select(Scenario).order_by(Scenario.id.desc())
+
         if category and bundle_id:
-            sql = f"SELECT * FROM {tn} WHERE category=? AND bundle_id=? ORDER BY id DESC"  # nosec
-            cur.execute(sql, (category, bundle_id))
+            stmt = stmt.where(Scenario.category == category, Scenario.bundle_id == bundle_id)
         elif category:
-            sql = f"SELECT * FROM {tn} WHERE category=? ORDER BY id DESC"  # nosec
-            cur.execute(sql, (category,))
+            stmt = stmt.where(Scenario.category == category)
         elif bundle_id:
-            sql = f"SELECT * FROM {tn} WHERE bundle_id=? ORDER BY id DESC"  # nosec
-            cur.execute(sql, (bundle_id,))
-        else:
-            sql = f"SELECT * FROM {tn} ORDER BY id DESC"  # nosec
-            cur.execute(sql)
+            stmt = stmt.where(Scenario.bundle_id == bundle_id)
 
-        rows = [dict(r) for r in cur.fetchall()]
-    return rows
+        scenarios = session.scalars(stmt).all()
+        return [s.to_dict() for s in scenarios]
 
 
 _HEB_SAFE = re.compile(r"[^0-9A-Za-z\u0590-\u05FF _.-]")
@@ -226,6 +227,107 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
+def _escape_html(text: str) -> str:
+    """Escape special HTML characters."""
+    return (
+        text.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+        .replace("'", "&#x27;")
+    )
+
+
+def render_html(scenarios: list[dict[str, Any]]) -> str:
+    """Render a list of scenarios as an HTML document.
+
+    Parameters
+    ----------
+    scenarios : list[dict[str, Any]]
+        List of scenario dictionaries to render.
+
+    Returns
+    -------
+    str
+        Complete HTML document with all scenarios rendered as cards.
+    """
+    if not scenarios:
+        return """<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>תרחישים</title>
+    <style>
+        body { font-family: Arial, sans-serif; direction: rtl; }
+    </style>
+</head>
+<body>
+    <p>אין תרחישים להצגה</p>
+</body>
+</html>"""
+
+    cards_html = []
+    for scenario in scenarios:
+        s = coerce_row_types(scenario) if scenario else {}
+        title = _escape_html(str(s.get("title", "ללא כותרת")))
+        category = _escape_html(str(s.get("category", "לא מסווג")))
+        difficulty = _escape_html(str(s.get("difficulty", "לא צוין")))
+
+        # Render steps
+        steps_html = ""
+        steps = s.get("steps", [])
+        if steps:
+            steps_items = []
+            for step in steps:
+                if isinstance(step, dict):
+                    desc = _escape_html(str(step.get("description", "")))
+                    steps_items.append(f"<li>{desc}</li>")
+                else:
+                    steps_items.append(f"<li>{_escape_html(str(step))}</li>")
+            steps_html = f"<ol>{''.join(steps_items)}</ol>"
+
+        card = f"""
+        <div class="card" style="border: 1px solid #ccc; margin: 10px; padding: 15px; border-radius: 8px;">
+            <h2>{title}</h2>
+            <p><strong>קטגוריה:</strong> {category}</p>
+            <p><strong>רמת קושי:</strong> {difficulty}</p>
+            {f'<div class="steps"><h3>צעדים:</h3>{steps_html}</div>' if steps_html else ''}
+        </div>
+        """
+        cards_html.append(card)
+
+    return f"""<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>תרחישים</title>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            direction: rtl;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }}
+        .card {{
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }}
+        .card h2 {{
+            color: #333;
+            margin-top: 0;
+        }}
+        .steps ol {{
+            padding-right: 20px;
+        }}
+    </style>
+</head>
+<body>
+    <h1>תרחישים</h1>
+    {''.join(cards_html)}
+</body>
+</html>"""
+
+
 __all__ = [
     "JSON_LIST_FIELDS",
     "_json_to_list",
@@ -237,4 +339,5 @@ __all__ = [
     "safe_filename",
     "unique_path",
     "main",
+    "render_html",
 ]

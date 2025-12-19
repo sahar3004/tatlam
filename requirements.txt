@@ -12,3 +12,18 @@ google-generativeai>=0.4.0  # Gemini Judge
 # Utilities
 python-dotenv>=1.0.0        # Environment variables
 watchdog>=4.0.0             # File system monitoring
+
+# Database ORM
+SQLAlchemy>=2.0.0           # Modern ORM with type hints
+
+# Local LLM (llama-cpp-python)
+# NOTE: For Apple Silicon (M1/M2/M3/M4) with Metal GPU support,
+# install manually with:
+#
+#   CMAKE_ARGS="-DGGML_METAL=on" pip install --force-reinstall --no-cache-dir llama-cpp-python
+#
+# This enables Metal acceleration for significant performance gains.
+# The standard pip install does NOT include Metal support.
+#
+# Uncomment below for CPU-only installations:
+# llama-cpp-python>=0.2.0

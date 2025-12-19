@@ -24,7 +24,8 @@ Usage:
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, Generator
+from datetime import datetime
+from typing import TYPE_CHECKING, Any, Generator, TypedDict
 
 from tenacity import (
     RetryError,
@@ -76,6 +77,83 @@ class SimulatorUnavailableError(RuntimeError):
 class APICallError(RuntimeError):
     """Raised when an API call fails after all retries."""
     pass
+
+
+# ==== Response Types ====
+
+
+class BrainResponseMetadata(TypedDict, total=False):
+    """Metadata about a brain response."""
+    model: str
+    tokens_used: int
+    finish_reason: str
+    duration_ms: float
+
+
+class BrainResponse(TypedDict):
+    """Standardized response structure from TrinityBrain methods.
+
+    This TypedDict enforces a consistent response format across all
+    brain operations, making the API predictable and type-safe.
+
+    Fields:
+        content: The main response content (generated text, audit result, etc.)
+        metadata: Additional information about the response
+        timestamp: ISO 8601 timestamp of when the response was generated
+
+    Usage:
+        response = brain.think("Generate a security scenario")
+        print(response["content"])
+        print(response["timestamp"])
+    """
+    content: str
+    metadata: BrainResponseMetadata
+    timestamp: str
+
+
+def create_brain_response(
+    content: str,
+    *,
+    model: str = "",
+    tokens_used: int = 0,
+    finish_reason: str = "",
+    duration_ms: float = 0.0,
+) -> BrainResponse:
+    """Factory function to create a BrainResponse with current timestamp.
+
+    Parameters
+    ----------
+    content : str
+        The main response content.
+    model : str, optional
+        The model used to generate the response.
+    tokens_used : int, optional
+        Number of tokens used in generation.
+    finish_reason : str, optional
+        Reason for response completion (e.g., "stop", "max_tokens").
+    duration_ms : float, optional
+        Response generation time in milliseconds.
+
+    Returns
+    -------
+    BrainResponse
+        A fully typed response dictionary.
+    """
+    metadata: BrainResponseMetadata = {}
+    if model:
+        metadata["model"] = model
+    if tokens_used:
+        metadata["tokens_used"] = tokens_used
+    if finish_reason:
+        metadata["finish_reason"] = finish_reason
+    if duration_ms:
+        metadata["duration_ms"] = duration_ms
+
+    return BrainResponse(
+        content=content,
+        metadata=metadata,
+        timestamp=datetime.now().isoformat(),
+    )
 
 
 # ==== Retry Configuration ====
@@ -525,11 +603,69 @@ class TrinityBrain:
             "simulator": self.has_simulator(),
         }
 
+    def think(
+        self,
+        prompt: str,
+        *,
+        max_tokens: int = 4096,
+        temperature: float = 0.8,
+    ) -> BrainResponse:
+        """
+        Generate a response using the Writer (Claude) and return as BrainResponse.
+
+        This is the primary entry point for AI-powered generation, returning
+        a type-safe BrainResponse with content, metadata, and timestamp.
+
+        Args:
+            prompt: The prompt describing what to generate
+            max_tokens: Maximum tokens to generate (default: 4096)
+            temperature: Creativity level 0-1 (default: 0.8)
+
+        Returns:
+            BrainResponse with content, metadata, and timestamp
+
+        Raises:
+            WriterUnavailableError: If writer client is not initialized
+            PromptValidationError: If prompt is empty
+            APICallError: If API call fails after retries
+
+        Example:
+            response = brain.think("Generate a security scenario")
+            print(response["content"])  # The generated text
+            print(response["metadata"]["model"])  # Model used
+            print(response["timestamp"])  # ISO timestamp
+        """
+        import time
+
+        start_time = time.perf_counter()
+
+        # Generate the content
+        content = self.generate_scenario(
+            prompt,
+            max_tokens=max_tokens,
+            temperature=temperature,
+        )
+
+        duration_ms = (time.perf_counter() - start_time) * 1000
+
+        return create_brain_response(
+            content=content,
+            model=self._settings.WRITER_MODEL_NAME,
+            finish_reason="stop",
+            duration_ms=duration_ms,
+        )
+
 
 # ==== Module Exports ====
 
 __all__ = [
+    # Main class
     "TrinityBrain",
+    # Response types
+    "BrainResponse",
+    "BrainResponseMetadata",
+    "create_brain_response",
+    # Exceptions
     "WriterUnavailableError",
     "JudgeUnavailableError",
     "SimulatorUnavailableError",

@@ -78,6 +78,19 @@ def configure_logging(*, structured: bool | None = None, level: str | None = Non
                 "handlers": ["default"],
                 "level": cast("int | str", effective_level),
             },
+            "loggers": {
+                # Silence SQLAlchemy engine logging to prevent console flooding
+                "sqlalchemy.engine": {
+                    "level": "WARNING",
+                    "handlers": ["default"],
+                    "propagate": False,
+                },
+                "sqlalchemy.pool": {
+                    "level": "WARNING",
+                    "handlers": ["default"],
+                    "propagate": False,
+                },
+            },
             "handlers": {
                 "default": {
                     "class": "logging.StreamHandler",

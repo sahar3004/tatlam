@@ -3,6 +3,7 @@
 import os
 import re
 import sys
+import unicodedata
 from datetime import datetime
 
 from run_batch import check_and_repair, dedup_and_embed_titles, ensure_db, insert_bundle
@@ -56,13 +57,26 @@ _EMOJI_RE = re.compile(
 )
 
 
+def _normalize_hebrew(text: str) -> str:
+    """Apply Unicode NFC normalization to Hebrew text.
+
+    NFC (Canonical Decomposition, followed by Canonical Composition) ensures
+    that Hebrew characters with diacritics are stored in their canonical composed form,
+    preventing comparison issues with visually identical but byte-different strings.
+    """
+    if not text:
+        return text
+    return unicodedata.normalize("NFC", text)
+
+
 def _clean_label(s: str) -> str:
     # מסיר אמוג'י, תווי עיצוב, # ו-*, ומשאיר רק טקסט נקי להשוואה מול המפתח העברי
     s = _EMOJI_RE.sub("", s or "")
     s = s.replace("**", "").replace("#", "").strip()
     # נטרול רווחים כפולים
     s = re.sub(r"\s+", " ", s)
-    return s
+    # Apply NFC normalization for consistent Hebrew comparison
+    return _normalize_hebrew(s)
 
 
 def _map_k(k: str) -> str | None:
@@ -161,7 +175,8 @@ def _canon_level(val: str | None) -> str | None:
 
 
 def parse_md_to_scenario(md_text: str) -> dict:
-    md = md_text.replace("\r\n", "\n")
+    # Normalize Unicode to NFC for consistent Hebrew text handling
+    md = _normalize_hebrew(md_text.replace("\r\n", "\n"))
 
     # כותרת: "# ..." או "🧩 כותרת: ..."
     title = None

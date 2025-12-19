@@ -23,7 +23,7 @@ class TestDatabaseLocking:
         for i in range(10):
             insert_scenario({
                 "title": f"תרחיש {i}",
-                "category": "פיננסים",
+                "category": "פיגועים פשוטים",
                 "difficulty": "בינוני",
                 "steps": [{"step": 1, "description": "צעד"}]
             })
@@ -63,7 +63,7 @@ class TestDatabaseLocking:
             try:
                 scenario_id = insert_scenario({
                     "title": f"תרחיש {i}",
-                    "category": "פיננסים",
+                    "category": "פיגועים פשוטים",
                     "difficulty": "בינוני",
                     "steps": [{"step": 1, "description": "צעד"}]
                 })
@@ -91,7 +91,7 @@ class TestDatabaseLocking:
         # Insert initial data
         insert_scenario({
             "title": "תרחיש ראשוני",
-            "category": "פיננסים",
+            "category": "פיגועים פשוטים",
             "difficulty": "בינוני",
             "steps": [{"step": 1, "description": "צעד"}]
         })
@@ -103,7 +103,7 @@ class TestDatabaseLocking:
             for i in range(5):
                 insert_scenario({
                     "title": f"תרחיש {i}",
-                    "category": "פיננסים",
+                    "category": "פיגועים פשוטים",
                     "difficulty": "בינוני",
                     "steps": [{"step": 1, "description": "צעד"}]
                 })
@@ -138,7 +138,7 @@ class TestDatabaseLocking:
         # Perform operation
         insert_scenario({
             "title": "תרחיש",
-            "category": "פיננסים",
+            "category": "פיגועים פשוטים",
             "difficulty": "בינוני",
             "steps": [{"step": 1, "description": "צעד"}]
         })
@@ -150,7 +150,7 @@ class TestDatabaseLocking:
         # And another
         insert_scenario({
             "title": "תרחיש נוסף",
-            "category": "פיננסים",
+            "category": "פיגועים פשוטים",
             "difficulty": "בינוני",
             "steps": [{"step": 1, "description": "צעד"}]
         })
@@ -204,7 +204,7 @@ class TestDatabaseLocking:
         for i in range(100):
             insert_scenario({
                 "title": f"תרחיש {i}",
-                "category": "פיננסים",
+                "category": "פיגועים פשוטים",
                 "difficulty": "בינוני",
                 "steps": [{"step": 1, "description": "צעד"}]
             })
@@ -223,7 +223,7 @@ class TestDatabaseLocking:
         for i in range(100):
             insert_scenario({
                 "title": f"תרחיש {i}",
-                "category": "פיננסים",
+                "category": "פיגועים פשוטים",
                 "difficulty": "בינוני",
                 "steps": [{"step": 1, "description": "צעד"}]
             })

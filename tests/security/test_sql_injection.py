@@ -19,7 +19,7 @@ class TestSQLInjection:
         # SQL injection attempt in title
         malicious_scenario = {
             "title": "'; DROP TABLE scenarios; --",
-            "category": "פיננסים",
+            "category": "פיגועים פשוטים",
             "difficulty": "בינוני",
             "steps": [{"step": 1, "description": "צעד"}]
         }
@@ -41,7 +41,7 @@ class TestSQLInjection:
 
         scenario_with_quotes = {
             "title": "תרחיש עם 'גרשיים' ו-\"מרכאות\"",
-            "category": "בדיקה",
+            "category": "פיגועים פשוטים",
             "difficulty": "בינוני",
             "steps": [{"step": 1, "description": "צעד עם 'גרש'"}]
         }
@@ -80,7 +80,7 @@ class TestSQLInjection:
         for pattern in injection_patterns:
             scenario = {
                 "title": pattern,
-                "category": "בדיקה",
+                "category": "פיגועים פשוטים",
                 "difficulty": "בינוני",
                 "steps": [{"step": 1, "description": "צעד"}]
             }
@@ -111,7 +111,7 @@ class TestSQLInjection:
 
         scenario = {
             "title": "תרחיש",
-            "category": "בדיקה",
+            "category": "פיגועים פשוטים",
             "difficulty": "בינוני",
             "steps": malicious_steps
         }
@@ -136,7 +136,7 @@ class TestSQLInjection:
         # Unicode null byte injection attempt
         unicode_injection = {
             "title": "תרחיש\x00'; DROP TABLE scenarios; --",
-            "category": "בדיקה",
+            "category": "פיגועים פשוטים",
             "difficulty": "בינוני",
             "steps": [{"step": 1, "description": "צעד"}]
         }
@@ -162,7 +162,7 @@ class TestSQLInjection:
         for pattern in comment_patterns:
             scenario = {
                 "title": pattern,
-                "category": "בדיקה",
+                "category": "פיגועים פשוטים",
                 "difficulty": "בינוני",
                 "steps": [{"step": 1, "description": "צעד"}]
             }
@@ -177,22 +177,22 @@ class TestSQLInjection:
         # Store malicious data
         malicious_data = {
             "title": "'; DROP TABLE scenarios; --",
-            "category": "בדיקה",
-            "difficulty": "בינוני",
+            "category": "פיגועים פשוטים",
+            "threat_level": "בינוני",
             "steps": [{"step": 1, "description": "צעד"}]
         }
 
         scenario_id = insert_scenario(malicious_data)
 
-        # Retrieve and re-insert (second order)
+        # Retrieve and re-insert (second order) with a different title
         scenarios = fetch_all()
         retrieved = [s for s in scenarios if s.get("id") == scenario_id][0]
 
-        # Re-inserting should still be safe
+        # Re-inserting should still be safe - use modified title to avoid UNIQUE conflict
         new_scenario = {
-            "title": retrieved["title"],  # Contains malicious string
-            "category": "בדיקה",
-            "difficulty": "בינוני",
+            "title": f"Second order: {retrieved['title']}",  # Contains malicious string
+            "category": "פיגועים פשוטים",
+            "threat_level": "בינוני",
             "steps": [{"step": 1, "description": "צעד"}]
         }
 
@@ -212,7 +212,7 @@ class TestSQLInjection:
         scenarios = [
             {
                 "title": f"תרחיש {i}'; DROP TABLE scenarios; --",
-                "category": "בדיקה",
+                "category": "פיגועים פשוטים",
                 "difficulty": "בינוני",
                 "steps": [{"step": 1, "description": "צעד"}]
             }
