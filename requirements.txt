@@ -3,6 +3,7 @@
 # UI Framework
 streamlit>=1.32.0
 pandas>=2.2.0
+textual>=0.47.0  # TUI framework for ops dashboard
 
 # AI Model Clients
 openai>=1.40.0              # Local Qwen server (OpenAI-compatible)
