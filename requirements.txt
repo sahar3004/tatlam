@@ -13,6 +13,8 @@ google-generativeai>=0.4.0  # Gemini Judge
 # Utilities
 python-dotenv>=1.0.0        # Environment variables
 watchdog>=4.0.0             # File system monitoring
+tenacity>=8.2.0             # Professional retry logic with exponential backoff
+pydantic>=2.0.0             # Strict data validation for LLM outputs
 
 # Database ORM
 SQLAlchemy>=2.0.0           # Modern ORM with type hints
