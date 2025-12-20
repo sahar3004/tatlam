@@ -20,7 +20,6 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 
-from tatlam.core.categories import CATS, category_to_slug
 from tatlam.infra.db import get_session
 from tatlam.infra.models import Scenario
 from tatlam.settings import get_settings
@@ -249,10 +248,13 @@ def fetch_by_category_slug(
 ) -> list[dict[str, Any]]:
     """Return approved rows for a given category slug with optional paging.
 
+    Note: Business logic validation (slug validation) should be done at the
+    service/controller layer. This repository layer only performs data access.
+
     Parameters
     ----------
     slug : str
-        The category slug to filter by.
+        The category slug to filter by (no validation performed).
     limit : int | None
         Maximum number of results.
     offset : int | None
@@ -261,15 +263,11 @@ def fetch_by_category_slug(
     Returns
     -------
     list[dict[str, Any]]
-        List of scenario dictionaries.
-
-    Raises
-    ------
-    LookupError
-        If the slug is unknown.
+        List of scenario dictionaries matching the slug.
     """
-    if slug not in CATS:
-        raise LookupError("not_found")
+    # Import category_to_slug lazily to avoid circular dependency
+    from tatlam.core.categories import category_to_slug
+
     all_rows = fetch_all()
     filtered = [r for r in all_rows if category_to_slug(r.get("category", "")) == slug]
     if limit is not None and offset is not None:
@@ -278,15 +276,23 @@ def fetch_by_category_slug(
 
 
 def fetch_count_by_slug(slug: str) -> int:
-    """Count approved rows for a given category slug."""
-    if slug not in CATS:
-        return 0
+    """Count approved rows for a given category slug.
+
+    Note: No validation performed - business logic should validate slug
+    at the service/controller layer.
+    """
+    # Import category_to_slug lazily to avoid circular dependency
+    from tatlam.core.categories import category_to_slug
+
     rows = fetch_all_basic_categories()
     return sum(1 for r in rows if category_to_slug(r.get("category", "")) == slug)
 
 
 def insert_scenario(data: dict[str, Any], owner: str = "web", pending: bool = True) -> int:
     """Insert a new scenario into the database.
+
+    Note: Business logic validation (category validation) should be done at the
+    service/controller layer. This repository layer only validates data constraints.
 
     Parameters
     ----------
@@ -306,7 +312,7 @@ def insert_scenario(data: dict[str, Any], owner: str = "web", pending: bool = Tr
     Raises
     ------
     ValueError
-        If required fields are missing or invalid, or on uniqueness violation.
+        If required fields are missing or on uniqueness violation.
     """
     title = _normalize_text(data.get("title") or "").strip()
     category = _normalize_text(data.get("category") or "").strip()
@@ -315,9 +321,6 @@ def insert_scenario(data: dict[str, Any], owner: str = "web", pending: bool = Tr
         raise ValueError("title is required")
     if not category:
         raise ValueError("category is required")
-
-    if category_to_slug(category) not in CATS:
-        raise ValueError("unknown category")
 
     # Create the Scenario ORM instance
     scenario = Scenario(

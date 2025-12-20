@@ -34,8 +34,18 @@ run_step pytest "pytest" -q --maxfail=1 \
   --cov-report=xml:"$OUT/reports/coverage.xml" \
   --cov-report=term-missing
 
-# Dependency audit (may require network; tolerated failures)
-run_step pip_audit "pip-audit" -r requirements.txt -f json -o "$OUT/reports/pip-audit.json"
+# Dependency audit (blocking - security vulnerabilities must be fixed)
+# Note: Set SKIP_PIP_AUDIT=1 to bypass in CI environments without network
+if [[ -z "${SKIP_PIP_AUDIT:-}" ]]; then
+  if ! run_step pip_audit "pip-audit" -r requirements.txt -f json -o "$OUT/reports/pip-audit.json"; then
+    echo "❌ CRITICAL: Security vulnerabilities detected by pip-audit"
+    echo "   Review $OUT/reports/pip-audit.json"
+    echo "   To skip this check temporarily, set SKIP_PIP_AUDIT=1"
+    status=1
+  fi
+else
+  echo "⚠️  Skipping pip-audit (SKIP_PIP_AUDIT=1)"
+fi
 
 # Repo sanity scan (untracked backups/temp)
 python - <<'PY'
@@ -62,5 +72,5 @@ print(json.dumps({k: len(v) for k,v in report.items()}, ensure_ascii=False))
 PY
 
 echo "[qa:full] summary status=$status (0=ok,1=issues). Logs at $OUT" | tee -a "$OUT/logs/steps.txt"
-exit 0
+exit $status
 

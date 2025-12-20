@@ -2,23 +2,38 @@
 """
 Trinity System Status Checker
 Verifies that all three AI models are accessible before launching the system.
+
+Security: Never prints API keys or secrets to stdout.
 """
 
+import logging
 import sys
 from openai import OpenAI
 from tatlam.settings import get_settings
+from tatlam.infra.logging import configure_logging
+
+# Configure logging
+configure_logging()
+logger = logging.getLogger(__name__)
 
 # Get settings instance
 settings = get_settings()
 
 
 def check_env_variable(var_name: str, var_value: str | None) -> bool:
-    """Check if an environment variable is set."""
+    """Check if an environment variable is set.
+
+    Security: Logs the actual value at DEBUG level only (never to stdout).
+    """
     if var_value:
         print(f"✅ {var_name}: Configured")
+        # Log the masked value for debugging (only to log file)
+        masked = f"{var_value[:8]}...{var_value[-4:]}" if len(var_value) > 12 else "***"
+        logger.debug(f"{var_name} set to: {masked}")
         return True
     else:
         print(f"❌ {var_name}: Missing")
+        logger.warning(f"{var_name} not configured")
         return False
 
 
