@@ -321,6 +321,118 @@ def client_cloud() -> "OpenAI":
     return client
 
 
+# ==== LLM Router with Gemini Fallback (Phase 2 - Resilience) ====
+
+
+class LLMRouter:
+    """Resilient LLM router with automatic Gemini fallback.
+
+    Phase 2 Addition: Provides automatic fallback from primary LLM
+    (local or Anthropic) to Google Gemini when the primary is unavailable.
+
+    Usage:
+        router = LLMRouter()
+        response = router.chat_complete(
+            messages=[{"role": "user", "content": "Hello"}],
+            model="local"  # or "anthropic"
+        )
+    """
+
+    def __init__(self):
+        """Initialize router with all available clients."""
+        self.local_client = None
+        self.anthropic_client = None
+        self.gemini_client = None
+
+        # Try to initialize all clients
+        try:
+            self.local_client = create_simulator_client()
+        except (ConfigurationError, Exception) as e:
+            logger.debug("Local LLM not available: %s", e)
+
+        try:
+            self.anthropic_client = create_writer_client()
+        except (ConfigurationError, Exception) as e:
+            logger.debug("Anthropic not available: %s", e)
+
+        try:
+            self.gemini_client = create_judge_client()
+        except (ConfigurationError, Exception) as e:
+            logger.debug("Gemini not available: %s", e)
+
+        if not any([self.local_client, self.anthropic_client, self.gemini_client]):
+            logger.warning("LLMRouter: No LLM providers available!")
+
+    def chat_complete(
+        self,
+        messages: list[dict[str, str]],
+        model: str = "local",
+        **kwargs: Any,
+    ) -> Any:
+        """
+        Execute chat completion with automatic Gemini fallback.
+
+        Args:
+            messages: Chat messages in OpenAI format
+            model: Primary model to try ("local", "anthropic", "gemini")
+            **kwargs: Additional parameters for the API call
+
+        Returns:
+            API response from primary or fallback provider
+
+        Raises:
+            ConfigurationError: If all providers fail
+        """
+        # Try primary provider
+        primary_error = None
+        try:
+            if model == "local" and self.local_client:
+                return self.local_client.chat.completions.create(
+                    messages=messages, **kwargs
+                )
+            elif model == "anthropic" and self.anthropic_client:
+                # Convert to Anthropic format
+                system_msg = next(
+                    (m["content"] for m in messages if m["role"] == "system"), None
+                )
+                user_messages = [m for m in messages if m["role"] != "system"]
+                return self.anthropic_client.messages.create(
+                    model=kwargs.get("model", "claude-3-5-sonnet-20241022"),
+                    max_tokens=kwargs.get("max_tokens", 4096),
+                    system=system_msg or "",
+                    messages=user_messages,
+                )
+        except Exception as e:
+            primary_error = e
+            logger.warning(
+                "Primary LLM (%s) unreachable: %s. Switching to Gemini fallback.",
+                model,
+                e,
+            )
+
+        # Fallback to Gemini
+        if self.gemini_client:
+            try:
+                logger.info("🔄 Routing to Gemini fallback")
+                # Convert messages to Gemini format (concatenate with role prefixes)
+                prompt = "\n\n".join(
+                    f"{m['role'].upper()}: {m['content']}" for m in messages
+                )
+                response = self.gemini_client.generate_content(prompt)
+                return response
+            except Exception as e:
+                logger.error("Gemini fallback also failed: %s", e)
+                raise ConfigurationError(
+                    f"All LLM providers failed. Primary: {primary_error}, Fallback: {e}"
+                ) from e
+
+        # No fallback available
+        raise ConfigurationError(
+            f"Primary LLM ({model}) failed and Gemini fallback not configured. "
+            f"Error: {primary_error}"
+        )
+
+
 __all__ = [
     # Protocols
     "WriterClientProtocol",
@@ -337,4 +449,6 @@ __all__ = [
     # Legacy compatibility
     "client_local",
     "client_cloud",
+    # Router (Phase 2)
+    "LLMRouter",
 ]

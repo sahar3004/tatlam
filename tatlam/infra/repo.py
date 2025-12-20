@@ -15,7 +15,7 @@ from __future__ import annotations
 import json
 import unicodedata
 from datetime import datetime
-from typing import Any
+from typing import Any, Generator
 
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
@@ -367,6 +367,40 @@ def insert_scenario(data: dict[str, Any], owner: str = "web", pending: bool = Tr
     return new_id
 
 
+def yield_all_titles_with_embeddings(
+    batch_size: int = 1000,
+) -> Generator[tuple[str, str], None, None]:
+    """
+    Generator that yields scenario titles with embeddings in batches.
+
+    Phase 2 Optimization: Prevents loading all embeddings into RAM.
+    Uses SQLAlchemy's yield_per() for memory-efficient iteration.
+
+    Args:
+        batch_size: Number of rows to fetch per batch
+
+    Yields:
+        Tuple of (title, vector_json_string)
+
+    Usage:
+        for title, vector_json in yield_all_titles_with_embeddings():
+            vec = np.array(json.loads(vector_json))
+            # Process vector...
+    """
+    from tatlam.infra.models import ScenarioEmbedding
+
+    with get_session() as session:
+        # Use yield_per for memory-efficient batching
+        stmt = select(
+            ScenarioEmbedding.title, ScenarioEmbedding.vector_json
+        ).execution_options(yield_per=batch_size)
+
+        for row in session.execute(stmt):
+            title, vector_json = row
+            if title and vector_json:
+                yield (title, vector_json)
+
+
 class ScenarioRepository:
     """Concrete repository implementation for scenario data access.
 
@@ -387,6 +421,16 @@ class ScenarioRepository:
     ) -> list[dict[str, Any]]:
         """Fetch all scenarios from the database."""
         return fetch_all(limit=limit, offset=offset)
+
+    def yield_titles_with_embeddings(
+        self, batch_size: int = 1000
+    ) -> Generator[tuple[str, str], None, None]:
+        """
+        Yield scenario titles with embeddings in batches.
+
+        Phase 2 Optimization: Memory-efficient iterator.
+        """
+        return yield_all_titles_with_embeddings(batch_size=batch_size)
 
     def fetch_one(self, sid: int) -> dict[str, Any]:
         """Fetch a single scenario by ID."""
