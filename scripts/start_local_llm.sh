@@ -1,7 +1,8 @@
 #!/bin/bash
 # start_local_llm.sh - Start the local LLM server with Metal GPU support
 #
-# Optimized for Apple Silicon (M1/M2/M3/M4 Pro)
+# Optimized for Apple Silicon M4 Pro (48GB RAM)
+# Includes hardware parallelism for maximum throughput
 # Includes automatic Metal detection and keep-alive functionality
 
 set -e
@@ -10,12 +11,28 @@ set -e
 # Configuration
 # ============================================================================
 
-MODEL_PATH="${MODEL_PATH:-models/llama-4-70b-instruct.gguf}"
+# Load MODEL_PATH from .env if available
+if [[ -f .env ]]; then
+    # shellcheck disable=SC1091
+    source <(grep -E '^LOCAL_MODEL_PATH=' .env | sed 's/^/export /')
+fi
+
+# Use LOCAL_MODEL_PATH from .env or fall back to argument/default
+MODEL_PATH="${LOCAL_MODEL_PATH:-${1:-}}"
+if [[ -z "$MODEL_PATH" ]]; then
+    echo "❌ Error: MODEL_PATH not defined"
+    echo "   Set LOCAL_MODEL_PATH in .env or pass as argument:"
+    echo "   $0 /path/to/model.gguf"
+    exit 1
+fi
+
 MODEL_ALIAS="${MODEL_ALIAS:-llama-3.3-70b-instruct}"
 HOST="${HOST:-0.0.0.0}"
-PORT="${PORT:-8080}"
+PORT="${PORT:-8000}"
 N_CTX="${N_CTX:-8192}"
-N_GPU_LAYERS="${N_GPU_LAYERS:-99}"
+N_GPU_LAYERS="${N_GPU_LAYERS:--1}"
+N_PARALLEL="${N_PARALLEL:-8}"
+BATCH_SIZE="${BATCH_SIZE:-512}"
 RESTART_DELAY="${RESTART_DELAY:-5}"
 
 # ============================================================================
@@ -75,6 +92,8 @@ start_server() {
     echo "   Host: $HOST:$PORT"
     echo "   Context: $N_CTX tokens"
     echo "   GPU Layers: $N_GPU_LAYERS"
+    echo "   Parallelism: 8 concurrent requests"
+    echo "   Batch Size: 512"
     echo ""
 
     # MPS (Metal Performance Shaders) optimization
@@ -82,12 +101,13 @@ start_server() {
 
     python3 -m llama_cpp.server \
         --model "$MODEL_PATH" \
-        --n_gpu_layers "$N_GPU_LAYERS" \
-        --n_ctx "$N_CTX" \
-        --host "$HOST" \
-        --port "$PORT" \
-        --alias "$MODEL_ALIAS" \
-        --flash_attn True
+        --n_gpu_layers -1 \
+        --n_ctx 8192 \
+        --n_parallel 8 \
+        --batch_size 512 \
+        --host 0.0.0.0 \
+        --port 8000 \
+        --alias "$MODEL_ALIAS"
 }
 
 keep_alive() {
@@ -133,20 +153,27 @@ main() {
             keep_alive
             ;;
         --help|-h)
-            echo "Usage: $0 [OPTIONS]"
+            echo "Usage: $0 [MODEL_PATH] [OPTIONS]"
             echo ""
             echo "Options:"
             echo "  --keep-alive, -k  Automatically restart server on crash"
             echo "  --help, -h        Show this help message"
             echo ""
             echo "Environment Variables:"
-            echo "  MODEL_PATH        Path to GGUF model file"
+            echo "  LOCAL_MODEL_PATH  Path to GGUF model file (required)"
             echo "  MODEL_ALIAS       Model alias for API"
             echo "  HOST              Server host (default: 0.0.0.0)"
-            echo "  PORT              Server port (default: 8080)"
+            echo "  PORT              Server port (default: 8000)"
             echo "  N_CTX             Context window size (default: 8192)"
-            echo "  N_GPU_LAYERS      GPU layers to offload (default: 99)"
+            echo "  N_GPU_LAYERS      GPU layers to offload (default: -1 = all)"
+            echo "  N_PARALLEL        Concurrent request slots (default: 8)"
+            echo "  BATCH_SIZE        Batch size for prompt processing (default: 512)"
             echo "  RESTART_DELAY     Seconds before restart (default: 5)"
+            echo ""
+            echo "Hardware Optimization (M4 Pro):"
+            echo "  -1 GPU layers = offload all layers to Metal"
+            echo "  8 parallel slots = handle 8 concurrent requests"
+            echo "  512 batch size = optimal for 48GB unified memory"
             exit 0
             ;;
         *)

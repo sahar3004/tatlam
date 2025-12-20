@@ -97,7 +97,7 @@ class Settings(BaseSettings):
 
     # ==== Trinity Architecture: Simulator (Local/OpenAI-compatible) ====
     LOCAL_MODEL_NAME: str = Field(default="qwen-2.5-32b-instruct")
-    LOCAL_BASE_URL: str = Field(default="http://127.0.0.1:8080/v1")
+    LOCAL_BASE_URL: str = Field(default="http://127.0.0.1:8000/v1")
     LOCAL_API_KEY: str = Field(default="sk-no-key-required")
 
     # ==== OpenAI Cloud (for batch processing / embeddings) ====

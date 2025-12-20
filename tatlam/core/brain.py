@@ -23,6 +23,7 @@ Usage:
 """
 from __future__ import annotations
 
+import json
 import logging
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Generator, TypedDict
@@ -109,6 +110,173 @@ class BrainResponse(TypedDict):
     content: str
     metadata: BrainResponseMetadata
     timestamp: str
+
+
+# ==== JSON Schema for Deterministic Output ====
+
+# JSON Schema for Trinity Doctrine decision/analysis responses
+# This schema enforces structured output for tactical decision-making
+# with reasoning, council consensus, and doctrinal references
+BRAIN_DECISION_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "role": {
+            "type": "string",
+            "enum": ["BRAIN", "ADJUDICATOR"],
+            "description": "Agent role in the Trinity system"
+        },
+        "threat_level": {
+            "type": "string",
+            "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL", "נמוכה", "בינונית", "גבוהה", "גבוהה מאוד"],
+            "description": "Threat level assessment (supports both English and Hebrew)"
+        },
+        "category": {
+            "type": "string",
+            "enum": ["SECURITY", "SAFETY", "MEDICAL", "SERVICE"],
+            "description": "Incident category classification"
+        },
+        "identified_vector": {
+            "type": "string",
+            "enum": ["FOOT", "VEHICLE", "AERIAL", "NONE"],
+            "description": "Attack vector if identified"
+        },
+        "decision": {
+            "type": "string",
+            "description": "Short description of the recommended action"
+        },
+        "reasoning": {
+            "type": "string",
+            "description": "Doctrine-based explanation for the decision"
+        },
+        "council_consensus": {
+            "type": "string",
+            "description": "Summary of the 3-expert internal debate (Nimrod Shelo, Eli Navarro, Yarden Levi)"
+        },
+        "references": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "List of legal/doctrinal sources used (e.g., authority frameworks, SOPs)"
+        },
+        "doctrine_violation": {
+            "type": "boolean",
+            "description": "Whether the scenario involves a doctrine violation"
+        },
+        "score": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Quality/compliance score (0-100)"
+        },
+        "action_plan": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Step-by-step action plan"
+        },
+        "content": {
+            "type": "string",
+            "description": "Full text response if needed (backward compatibility)"
+        }
+    },
+    "required": ["threat_level", "category", "decision", "reasoning"],
+    "additionalProperties": True  # Allow flexibility for additional context
+}
+
+# JSON Schema for Scenario Bundle Generation (matches system_prompt_he.txt)
+# This is the primary schema for generating training scenarios
+SCENARIO_BUNDLE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "bundle_id": {
+            "type": "string",
+            "description": "Unique identifier for this bundle"
+        },
+        "scenarios": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "external_id": {"type": "string"},
+                    "title": {"type": "string"},
+                    "category": {"type": "string"},
+                    "threat_level": {
+                        "type": "string",
+                        "enum": ["נמוכה", "בינונית", "גבוהה", "גבוהה מאוד"]
+                    },
+                    "likelihood": {
+                        "type": "string",
+                        "enum": ["נמוכה", "בינונית", "גבוהה"]
+                    },
+                    "complexity": {
+                        "type": "string",
+                        "enum": ["נמוכה", "בינונית", "גבוהה"]
+                    },
+                    "location": {"type": "string"},
+                    "background": {"type": "string"},
+                    "steps": {
+                        "type": "array",
+                        "items": {"type": "string"}
+                    },
+                    "required_response": {
+                        "type": "array",
+                        "items": {"type": "string"}
+                    },
+                    "debrief_points": {
+                        "type": "array",
+                        "items": {"type": "string"}
+                    },
+                    "operational_background": {"type": "string"},
+                    "media_link": {
+                        "type": ["string", "null"]
+                    },
+                    "mask_usage": {
+                        "type": ["string", "null"],
+                        "enum": ["כן", "לא", None]
+                    },
+                    "authority_notes": {"type": "string"},
+                    "cctv_usage": {"type": "string"},
+                    "comms": {
+                        "type": "array",
+                        "items": {"type": "string"}
+                    },
+                    "decision_points": {
+                        "type": "array",
+                        "items": {"type": "string"}
+                    },
+                    "escalation_conditions": {
+                        "type": "array",
+                        "items": {"type": "string"}
+                    },
+                    "end_state_success": {"type": "string"},
+                    "end_state_failure": {"type": "string"},
+                    "lessons_learned": {
+                        "type": "array",
+                        "items": {"type": "string"}
+                    },
+                    "variations": {
+                        "type": "array",
+                        "items": {"type": "string"}
+                    },
+                    "validation": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": ["json_valid", "unique_title", "no_fabrication", "ethical_balance_ok"]
+                        }
+                    }
+                },
+                "required": [
+                    "title", "category", "threat_level", "likelihood", "complexity",
+                    "location", "background", "steps", "required_response"
+                ]
+            }
+        }
+    },
+    "required": ["bundle_id", "scenarios"],
+    "additionalProperties": False
+}
+
+# Legacy schema for backward compatibility (simple 3-field structure)
+BRAIN_SCHEMA = BRAIN_DECISION_SCHEMA  # Alias for backward compatibility
 
 
 def create_brain_response(
@@ -655,6 +823,149 @@ class TrinityBrain:
             duration_ms=duration_ms,
         )
 
+    def think_structured(
+        self,
+        prompt: str,
+        *,
+        max_tokens: int = 4096,
+        temperature: float = 0.7,
+    ) -> dict[str, Any]:
+        """
+        Generate a structured JSON response using the Simulator (Local LLM) with Trinity Doctrine schema.
+
+        This method enforces the BRAIN_DECISION_SCHEMA to eliminate parsing errors caused by flaky
+        prompt engineering. It uses response_format to guarantee valid JSON output with threat
+        assessment, decision reasoning, and doctrinal references.
+
+        Args:
+            prompt: The prompt describing what to analyze or generate
+            max_tokens: Maximum tokens to generate (default: 4096)
+            temperature: Creativity level 0-1 (default: 0.7 for focused output)
+
+        Returns:
+            Dict with required keys:
+                - threat_level (str): "נמוכה" | "בינונית" | "גבוהה" | "גבוהה מאוד"
+                - category (str): "SECURITY" | "SAFETY" | "MEDICAL" | "SERVICE"
+                - decision (str): Short action description
+                - reasoning (str): Doctrine-based explanation
+
+            Optional keys:
+                - role (str): "BRAIN" | "ADJUDICATOR"
+                - identified_vector (str): "FOOT" | "VEHICLE" | "AERIAL" | "NONE"
+                - council_consensus (str): Summary of 3-expert debate
+                - references (list[str]): Legal/doctrinal sources
+                - doctrine_violation (bool): Whether doctrine was violated
+                - score (int): Quality score 0-100
+                - action_plan (list[str]): Step-by-step actions
+
+        Raises:
+            SimulatorUnavailableError: If simulator client is not initialized
+            PromptValidationError: If prompt is empty
+            APICallError: If API call fails after retries
+            json.JSONDecodeError: If response is not valid JSON (should never happen with schema)
+
+        Example:
+            result = brain.think_structured("נתח: חפץ חשוד בתחנה")
+            print(result["threat_level"])  # "גבוהה"
+            print(result["category"])  # "SECURITY"
+            print(result["decision"])  # "בידוד ופינוי מיידי"
+            print(result["reasoning"])  # "לפי נוהל חפץ חשוד..."
+            print(result.get("council_consensus", ""))  # Council debate summary
+
+        Note:
+            This method is recommended over think() when you need guaranteed structured output
+            with reasoning and doctrinal references. It uses the local LLM (simulator) with
+            OpenAI-compatible response_format and BRAIN_DECISION_SCHEMA.
+        """
+        # Validate input
+        if not prompt or not prompt.strip():
+            raise PromptValidationError("Prompt cannot be empty")
+
+        client = self._require_simulator()
+        system_prompt = get_system_prompt("writer")
+
+        # Enhance the prompt to request JSON output with Trinity Doctrine structure
+        enhanced_prompt = f"""{prompt}
+
+החזר את התשובה בפורמט JSON עם השדות הבאים (חובה):
+- threat_level: רמת האיום (נמוכה/בינונית/גבוהה/גבוהה מאוד)
+- category: קטגוריית האבטחה (SECURITY/SAFETY/MEDICAL/SERVICE)
+- decision: תיאור קצר של הפעולה המומלצת
+- reasoning: הסבר מבוסס דוקטרינה
+
+שדות נוספים (רצויים):
+- role: תפקיד בקואליציה (BRAIN/ADJUDICATOR)
+- identified_vector: וקטור התקפה (FOOT/VEHICLE/AERIAL/NONE)
+- council_consensus: סיכום הדיון הפנימי של 3 המומחים
+- references: רשימת מקורות חוקיים/דוקטרינליים
+- action_plan: רשימת צעדים
+
+דוגמה למבנה:
+{{
+  "role": "BRAIN",
+  "threat_level": "גבוהה",
+  "category": "SECURITY",
+  "identified_vector": "FOOT",
+  "decision": "בידוד ופינוי מיידי",
+  "reasoning": "לפי נוהל חפץ חשוד - בידוד רדיוס 100 מטר",
+  "council_consensus": "נמרוד שלו: סמכות עיכוב מוצדקת; אלי נבארו: מזעור סיכון ציבור; ירדן לוי: הבהרת הוראות",
+  "references": ["נוהל חפץ חשוד", "סמכויות עיכוב"],
+  "action_plan": ["בידוד", "דיווח למוקד", "פינוי קהל", "המתנה לחבלן"]
+}}"""
+
+        @retry(**_RETRY_STRATEGY)
+        def _call_api() -> Any:
+            return client.chat.completions.create(
+                model=self._settings.LOCAL_MODEL_NAME,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": enhanced_prompt}
+                ],
+                max_tokens=max_tokens,
+                temperature=temperature,
+                response_format={
+                    "type": "json_object",
+                    "schema": BRAIN_SCHEMA
+                },
+            )
+
+        try:
+            response = _call_api()
+            content = response.choices[0].message.content or "{}"
+
+            # Parse JSON response
+            result = json.loads(content)
+
+            # Validate required fields per BRAIN_DECISION_SCHEMA
+            required_fields = ["threat_level", "category", "decision", "reasoning"]
+            missing_fields = [f for f in required_fields if f not in result]
+
+            if missing_fields:
+                logger.warning("Response missing required fields: %s. Got keys: %s", missing_fields, result.keys())
+                # Fallback to ensure required fields exist
+                result.setdefault("threat_level", "בינונית")
+                result.setdefault("category", "SECURITY")
+                result.setdefault("decision", "המתן להנחיות נוספות")
+                result.setdefault("reasoning", "מידע לא מספיק להערכה מלאה")
+
+            return result
+
+        except json.JSONDecodeError as e:
+            logger.error("Failed to parse JSON response: %s", e)
+            raise APICallError(f"Invalid JSON response from simulator: {e}") from e
+        except RetryError as e:
+            logger.error("Simulator API call failed after retries: %s", e.last_attempt.exception())
+            raise APICallError(f"Simulator API call failed: {e.last_attempt.exception()}") from e
+        except Exception as e:
+            # Check for auth errors (don't retry)
+            error_str = str(e).lower()
+            if "authentication" in error_str or "401" in error_str:
+                logger.error("Simulator authentication failed: %s", e)
+                raise APICallError(f"Simulator authentication failed: {e}") from e
+
+            logger.error("Failed to generate structured response: %s", e)
+            raise APICallError(f"Failed to generate structured response: {e}") from e
+
 
 # ==== Module Exports ====
 
@@ -665,6 +976,10 @@ __all__ = [
     "BrainResponse",
     "BrainResponseMetadata",
     "create_brain_response",
+    # JSON Schemas
+    "BRAIN_SCHEMA",  # Alias for BRAIN_DECISION_SCHEMA
+    "BRAIN_DECISION_SCHEMA",  # Decision/analysis with reasoning
+    "SCENARIO_BUNDLE_SCHEMA",  # Scenario generation (matches system_prompt_he.txt)
     # Exceptions
     "WriterUnavailableError",
     "JudgeUnavailableError",
