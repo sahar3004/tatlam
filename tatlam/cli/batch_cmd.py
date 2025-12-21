@@ -9,6 +9,7 @@ import argparse
 import sys
 
 from tatlam import configure_logging
+from tatlam.core.batch_logic import run_batch, run_batch_async
 
 
 def main() -> None:
@@ -49,9 +50,6 @@ Environment Variables:
     )
 
     args = parser.parse_args()
-
-    # Import here to avoid circular dependencies and keep startup fast
-    from run_batch import run_batch, run_batch_async
 
     # Execute batch processing
     try:

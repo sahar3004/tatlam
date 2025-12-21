@@ -108,6 +108,15 @@ class Scenario(Base):
         "validation",
     ]
 
+    def __init__(self, **kwargs):
+        """Initialize with defaults for JSON fields to avoid None."""
+        super().__init__(**kwargs)
+        for field in self._JSON_FIELDS:
+            if getattr(self, field) is None:
+                setattr(self, field, "[]")
+        if self.status is None:
+            self.status = "pending"
+
     def _parse_json_field(self, val: str | None) -> list[Any] | dict[str, Any]:
         """Parse a JSON string field to Python object."""
         if val is None:

@@ -30,7 +30,7 @@ run_step bandit "bandit" -r tatlam -q
 
 # Tests + coverage
 run_step pytest "pytest" -q --maxfail=1 \
-  --cov=tatlam --cov=app --cov=run_batch \
+  --cov=tatlam --cov=app --cov=tatlam/core/batch_logic.py \
   --cov-report=xml:"$OUT/reports/coverage.xml" \
   --cov-report=term-missing
 
