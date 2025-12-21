@@ -50,9 +50,9 @@ class TestDoctrine:
 
         prompt = load_prompt()
 
-        # Check for common instruction patterns (adjust based on actual content)
-        # These are examples - adjust to match actual doctrine content
-        expected_patterns = ["תרחיש", "בדיקה", "QA"]  # Scenario, Test, QA
+        # Check for common instruction patterns based on actual doctrine content
+        # Trinity Core doctrine includes security, legal framework, and threat analysis
+        expected_patterns = ["תתל\"מ", "מועצה", "איום", "דוקטרינה", "JSON"]
 
         found_patterns = [pattern for pattern in expected_patterns if pattern in prompt]
         assert len(found_patterns) > 0, f"Doctrine missing expected instruction patterns"

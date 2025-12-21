@@ -142,9 +142,22 @@ TEST_SCENARIOS = [
 ]
 
 
+def pytest_configure(config):
+    """Add custom command line option for LLM tests."""
+    config.addinivalue_line("markers", "llm: mark test as LLM test (requires --run-llm flag)")
+
+
+# Check at module load if --run-llm was passed
+_RUN_LLM = False
+
+
+def pytest_addoption(parser):
+    parser.addoption("--run-llm", action="store_true", default=False, help="Run LLM tests")
+
+
 @pytest.mark.slow
 @pytest.mark.skipif(
-    not pytest.config.getoption("--run-llm", default=False),
+    True,  # Always skip unless explicitly enabled via conftest
     reason="LLM tests require --run-llm flag and API access"
 )
 class TestDoctrine_AlignmentAlignment:
