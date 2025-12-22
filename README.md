@@ -27,7 +27,7 @@ Three-model AI system for scenario generation:
 ### Async Processing (M4 Pro Optimized)
 - Semaphore-controlled concurrency (default: 8 parallel tasks)
 - Optimized for 48GB RAM with WAL mode database access
-- `run_batch.py --async` for faster batch processing
+- `run_batch_new.py --async` for faster batch processing
 
 ## התקנה מהירה
 1. `python3 -m venv .venv && source .venv/bin/activate`
@@ -41,9 +41,9 @@ Three-model AI system for scenario generation:
 - לחיצה כפולה ב‑Finder: `start_flask.command` (מקים venv, מתקין תלויות במידת הצורך, ומעלה Flask)
 - Flask דרך CLI: `./scripts/start_flask.sh` או `make run`
 - מודל מקומי (llama.cpp): `./scripts/start_local_llm.sh` או לחיצה כפולה `start_local_llm.command`
-- באצ' יצירת תטל"מים: `python run_batch.py --category "כבודה עזובה / חפץ חשוד / מטען"`
-- ייצוא JSON: `python export_json.py --category "כבודה עזובה / חפץ חשוד / מטען" --out out.json`
-- רנדר Markdown: `python render_cards.py --category "כבודה עזובה / חפץ חשוד / מטען" --out ./cards/`
+- באצ' יצירת תטל"מים: `python run_batch_new.py --category "כבודה עזובה / חפץ חשוד / מטען"`
+- ייצוא JSON: `python -m tatlam.cli.export_json --category "כבודה עזובה / חפץ חשוד / מטען" --out out.json`
+- רנדר Markdown: `python -m tatlam.cli.render_cards --category "כבודה עזובה / חפץ חשוד / מטען" --out ./cards/`
 
 ### CLI מותקנים (Console Scripts)
 לאחר `pip install -e .` ניתן להשתמש בפקודות הבאות במקום `python <script>.py`:

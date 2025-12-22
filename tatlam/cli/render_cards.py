@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -341,3 +342,7 @@ __all__ = [
     "main",
     "render_html",
 ]
+
+
+if __name__ == "__main__":
+    sys.exit(main())

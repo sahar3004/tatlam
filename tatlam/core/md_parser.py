@@ -306,7 +306,7 @@ def parse_md_to_scenario(md_text: str) -> dict:
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python import_gold_md.py <folder_with_md>")
+        print("Usage: python -m tatlam.core.md_parser <folder_with_md>")
         sys.exit(1)
 
     folder = sys.argv[1]

@@ -6,7 +6,8 @@ import sys
 from unittest.mock import MagicMock
 
 # --- ARCHITECTURAL ISOLATION ---
-# 'import_gold_md' imports 'tatlam.core.batch_logic'.
+# 'import_gold_md' was moved to 'tatlam.core.md_parser'.
+# It imports 'tatlam.core.batch_logic'.
 # We mock it to prevent side effects and improve test speed.
 mock_batch_logic = MagicMock()
 sys.modules["tatlam.core.batch_logic"] = mock_batch_logic

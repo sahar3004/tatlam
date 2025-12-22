@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from typing import Any
 
 from sqlalchemy import select
@@ -88,3 +89,7 @@ def main(argv: list[str] | None = None) -> int:
 
 
 __all__ = ["fetch_rows", "normalize", "main"]
+
+
+if __name__ == "__main__":
+    sys.exit(main())
