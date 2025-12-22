@@ -11,10 +11,12 @@ set -e
 # Configuration
 # ============================================================================
 
-# Load MODEL_PATH from .env if available
+# Load all variables from .env if available
 if [[ -f .env ]]; then
-    # shellcheck disable=SC1091
-    source <(grep -E '^LOCAL_MODEL_PATH=' .env | sed 's/^/export /')
+    # shellcheck disable=SC1090
+    set -a
+    source .env
+    set +a
 fi
 
 # Use LOCAL_MODEL_PATH from .env or fall back to argument/default
@@ -28,7 +30,7 @@ fi
 
 MODEL_ALIAS="${MODEL_ALIAS:-llama-3.3-70b-instruct}"
 HOST="${HOST:-0.0.0.0}"
-PORT="${PORT:-8000}"
+PORT="${PORT:-${LOCAL_PORT:-8000}}"
 N_CTX="${N_CTX:-8192}"
 N_GPU_LAYERS="${N_GPU_LAYERS:--1}"
 N_PARALLEL="${N_PARALLEL:-8}"
@@ -87,27 +89,60 @@ install_metal_support() {
 start_server() {
     echo ""
     echo "🚀 Starting Local LLM Server"
+
+    # Parse LOCAL_LAUNCH_FLAGS for overrides (compatibility layer)
+    # This allows users to keep their C++ style flags in .env while we translate them to Python server args
+    if [[ -n "${LOCAL_LAUNCH_FLAGS:-}" ]]; then
+        echo "   Parsing LOCAL_LAUNCH_FLAGS for configuration..."
+        
+        # Extract -c or --n_ctx
+        if [[ "$LOCAL_LAUNCH_FLAGS" =~ (-c|--n_ctx)[[:space:]=]+([0-9]+) ]]; then
+            N_CTX="${BASH_REMATCH[2]}"
+            echo "   -> Overriding Context: $N_CTX"
+        fi
+        # Extract -ngl or --n_gpu_layers
+        if [[ "$LOCAL_LAUNCH_FLAGS" =~ (-ngl|--n_gpu_layers)[[:space:]=]+([0-9]+) ]]; then
+            N_GPU_LAYERS="${BASH_REMATCH[2]}"
+            echo "   -> Overriding GPU Layers: $N_GPU_LAYERS"
+        fi
+         # Extract --batch-size or --n_batch
+        if [[ "$LOCAL_LAUNCH_FLAGS" =~ (--batch-size|--n_batch)[[:space:]=]+([0-9]+) ]]; then
+            BATCH_SIZE="${BASH_REMATCH[2]}"
+            echo "   -> Overriding Batch Size: $BATCH_SIZE"
+        fi
+         # Extract --threads or --n_threads
+        if [[ "$LOCAL_LAUNCH_FLAGS" =~ (--threads|--n_threads)[[:space:]=]+([0-9]+) ]]; then
+            N_THREADS="${BASH_REMATCH[2]}"
+            echo "   -> Overriding Threads: $N_THREADS"
+        fi
+    fi
+
+    # Default threads if not set
+    N_THREADS="${N_THREADS:-8}"
+
     echo "   Model: $MODEL_PATH"
     echo "   Alias: $MODEL_ALIAS"
     echo "   Host: $HOST:$PORT"
     echo "   Context: $N_CTX tokens"
     echo "   GPU Layers: $N_GPU_LAYERS"
-    echo "   Parallelism: 8 concurrent requests"
-    echo "   Batch Size: 512"
+    echo "   Threads: $N_THREADS"
+    echo "   Batch Size: $BATCH_SIZE"
     echo ""
 
     # MPS (Metal Performance Shaders) optimization
     export PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.0
 
+    # Note: --n_parallel is deprecated/removed in recent llama-cpp-python versions
+    # We use explicit variables mapped to correct flags
     python3 -m llama_cpp.server \
         --model "$MODEL_PATH" \
-        --n_gpu_layers -1 \
-        --n_ctx 8192 \
-        --n_parallel 8 \
-        --batch_size 512 \
-        --host 0.0.0.0 \
-        --port 8000 \
-        --alias "$MODEL_ALIAS"
+        --n_gpu_layers "$N_GPU_LAYERS" \
+        --n_ctx "$N_CTX" \
+        --n_batch "$BATCH_SIZE" \
+        --n_threads "$N_THREADS" \
+        --host "$HOST" \
+        --port "$PORT" \
+        --model_alias "$MODEL_ALIAS"
 }
 
 keep_alive() {
