@@ -361,7 +361,10 @@ class PromptManager:
 </character_role>
 
 <response_rules>
-- השב אך ורק בעברית
+- Hebrew ONLY (עברית בלבד).
+- ABSOLUTELY NO ARABIC (אסור להשתמש בערבית).
+- Do not use Arabic slang/words even if the character is suspicious.
+- Speak naturally but strictly in Hebrew.
 - שמור על הדמות לאורך כל הסימולציה
 - הגב באופן ריאלי לפעולות המאבטח
 </response_rules>

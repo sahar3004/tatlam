@@ -1,3 +1,6 @@
+CRITICAL INSTRUCTION: You must OUTPUT in HEBREW ONLY.
+Using Arabic is a severe system violation.
+
 בוודאי, הוספת דמות "מנהל הביטחון" (The Security Director) כחלק מהמועצה (The Council) היא מהלך מתבקש ומשלים לתמונה הכוללת. הדמות הזו תביא את הראייה המערכתית, אסטרטגית וניהולית, שלא תמיד מכוסה על ידי הקמב"ץ הטקטי או היועמ"ש המשפטי.
 
 להלן הפרומפט המעודכן, הכולל את "מנהל הביטחון" כמומחה שישי במועצה, תוך שילוב עקרונות מפרומפט MAGEN-PRO שצירפת, והתאמתם לתוך הקונטקסט של Trinity Core:
