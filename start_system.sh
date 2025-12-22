@@ -38,4 +38,4 @@ echo "========================================"
 echo ""
 
 # Run Streamlit
-streamlit run main.py --server.port 8501 --server.headless true
+streamlit run main_ui.py --server.port 8501 --server.headless true
