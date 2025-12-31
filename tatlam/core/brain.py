@@ -967,6 +967,39 @@ class TrinityBrain:
             raise APICallError(f"Failed to generate structured response: {e}") from e
 
 
+# ==== Standalone Doctrine Validation ====
+
+
+def validate_scenario(scenario: dict[str, Any]) -> dict[str, Any]:
+    """
+    וולידציה של תרחיש מול הדוקטרינה.
+    
+    Args:
+        scenario: מילון תרחיש (מ-parse_md_to_scenario או ממקור אחר)
+        
+    Returns:
+        מילון עם:
+        - is_valid: bool
+        - doctrine_score: int (0-100)
+        - errors: list[str]
+        - warnings: list[str]
+        
+    Example:
+        >>> result = validate_scenario({"title": "...", "category": "...", ...})
+        >>> print(f"Score: {result['doctrine_score']}")
+    """
+    from tatlam.core.validators import validate_scenario_doctrine
+    
+    validation_result = validate_scenario_doctrine(scenario)
+    
+    return {
+        "is_valid": validation_result.is_valid,
+        "doctrine_score": validation_result.doctrine_score,
+        "errors": validation_result.errors,
+        "warnings": validation_result.warnings,
+    }
+
+
 # ==== Module Exports ====
 
 __all__ = [
@@ -980,6 +1013,8 @@ __all__ = [
     "BRAIN_SCHEMA",  # Alias for BRAIN_DECISION_SCHEMA
     "BRAIN_DECISION_SCHEMA",  # Decision/analysis with reasoning
     "SCENARIO_BUNDLE_SCHEMA",  # Scenario generation (matches system_prompt_he.txt)
+    # Validation
+    "validate_scenario",
     # Exceptions
     "WriterUnavailableError",
     "JudgeUnavailableError",

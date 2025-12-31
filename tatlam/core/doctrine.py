@@ -235,8 +235,16 @@ TRINITY_DOCTRINE = {
 
 def get_system_prompt(role: str) -> str:
     """
-    בונה את הנחיית המערכת (System Prompt) באופן דינמי מתוך הדוקטרינה.
-    עבור simulator משתמש ב-system_prompt_he.txt המלא.
+    בונה את הנחיית המערכת (System Prompt) באופן דינמי.
+    
+    כל התפקידים מקבלים את system_prompt_he.txt המלא (עם המועצה והדוקטרינה)
+    בתוספת הנחיות ספציפיות לתפקיד.
+    
+    Args:
+        role: אחד מ-"writer", "judge", "simulator"
+        
+    Returns:
+        הפרומפט המלא לתפקיד המבוקש
     """
     # Critical language guardrails to prevent hallucinations
     language_guard = (
@@ -247,52 +255,80 @@ def get_system_prompt(role: str) -> str:
         "4. שמור על דמות אמינה ומקצועית."
     )
 
-    # For simulator, use the full system_prompt_he.txt
-    if role == "simulator":
-        try:
-            full_prompt = load_prompt()
-            return full_prompt + language_guard
-        except FileNotFoundError:
-            # Fallback to dynamic prompt if file not found
-            pass
+    # Load full system prompt for ALL roles
+    try:
+        full_prompt = load_prompt()
+    except FileNotFoundError:
+        # Fallback if file not found
+        full_prompt = (
+            "אתה חלק ממערכת 'תתל\"מ Trinity' לאימון ביטחוני.\n"
+            "עליך לפעול אך ורק לפי 'תורת ההפעלה' (Doctrine) המוגדרת להלן.\n"
+            "כל חריגה מהנהלים, המשקלים או הסמכויות תחשב לכישלון.\n\n"
+        )
 
-    base = (
-        "אתה חלק ממערכת 'תתל\"מ Trinity' לאימון ביטחוני.\n"
-        "עליך לפעול אך ורק לפי 'תורת ההפעלה' (Doctrine) המוגדרת להלן.\n"
-        "כל חריגה מהנהלים, המשקלים או הסמכויות תחשב לכישלון.\n\n"
-    )
+    # Role-specific addendums
+    role_addendum = {
+        "writer": """
 
-    if role == "writer":
-        return base + f"""
-        תפקידך: הכותב (The Architect).
-        עליך לייצר תרחישים המבוססים על:
-        1. איומים: {TRINITY_DOCTRINE['threat_matrix']}
-        2. זירה (תחנת אלנבי): {TRINITY_DOCTRINE['venue_allenby']}
+*** תפקיד: הכותב (The Architect) ***
 
-        השתמש בנתונים המדויקים (למשל: משקל מטען, גובה רחפן, שמות הקומות).
-        נצל את השטחים המתים של התחנה.
-        """ + language_guard
+אתה יוצר תרחישי אימון (תתל"מים) מקצועיים. כל תרחיש חייב לכלול:
 
-    elif role == "judge":
-        return base + f"""
-        תפקידך: השופט (The Adjudicator).
-        עליך לבקר את ביצועי המאבטח לפי:
-        1. מסגרת משפטית וסמכויות: {TRINITY_DOCTRINE['legal_framework']}
-        2. נהלי פעולה (SOPs): {TRINITY_DOCTRINE['procedures']}
-        3. טבלת ניקוד: {TRINITY_DOCTRINE['scoring_logic']}
+📋 שדות חובה:
+1. כותרת - ייחודית ותיאורית (3-8 מילים)
+2. קטגוריה - אחת מ: חפץ חשוד, אדם חשוד, רכב חשוד, איום אווירי, הפרת סדר, חירום
+3. רמת איום - LOW / MEDIUM / HIGH / CRITICAL
+4. מיקום - מפלס (-3 עד 0) + אזור (רציף/כרטוס/מבואה/חדר טכני)
+5. רקע/סיפור מקרה - 50-200 מילים
+6. שלבי תגובה - 4-8 שלבים מפורטים לפי הנהלים
+7. נקודות הכרעה - 2-4 דילמות עם הפניות חוקיות
+8. מצב סיום מוצלח
+9. מצב כשל
+10. לקחים - 2-4 נקודות
 
-        החמר מאוד בענייני בטיחות (נגיעה בחפץ) וחוקיות (ירי לא מוצדק).
-        """ + language_guard
+🚨 כללי ברזל (הפרה = כישלון):
+- אין לגעת בחפץ חשוד! טווח מינימלי: 50 מ'
+- טווחי רכב: אופנוע 100 מ', רכב 200 מ', משאית 400 מ'
+- פתיחה באש: רק לפי Ultima Ratio (אמצעי + כוונה + סכנת חיים מיידית)
+- כל פעולה לפי חוק הסמכויות 2005
 
-    elif role == "simulator":
-        # Fallback if load_prompt() failed
-        return base + f"""
-        תפקידך: הסימולטור (היריב/האזרח).
-        עליך לגלם דמויות הפועלות לפי הפרופילים ב-Threat Matrix:
-        {TRINITY_DOCTRINE['threat_matrix']}
+השתמש בנתונים מדויקים מהדוקטרינה: משקלי מטענים, גבהי רחפנים, שמות קומות.
+""",
+        "judge": """
 
-        אם אתה אזרח: דרוש את זכויותיך (סירוב לחיפוש ללא חשד סביר).
-        אם אתה מחבל: פעל לפי האינדיקטורים (לבוש חריג, לחץ) ונצל את חולשות המבנה.
-        """ + language_guard
+*** תפקיד: השופט (The Adjudicator) ***
 
-    return base + language_guard
+עליך לבקר תרחישים ופעולות מאבטחים בחומרה מקסימלית.
+
+📊 קריטריוני ניקוד (0-100):
+
+1. בטיחות (Safety) - משקל 30%
+   - נגיעה בחפץ חשוד = ציון 0 מיידי
+   - אי-שמירה על טווחים = הפחתה חמורה
+   
+2. חוקיות (Legality) - משקל 30%
+   - ירי לא מוצדק = ציון 0 מיידי
+   - חיפוש ללא עילה = הפחתה חמורה
+   - אפליה/פרופיילינג = ציון 0 מיידי
+   
+3. טקטיקה (Tactics) - משקל 20%
+   - ניצול מחסות
+   - חתירה למגע
+   - עבודת צוות
+   
+4. ניהול (Management) - משקל 20%
+   - עבודה לפי פק"מ
+   - דיווח תקין
+   - רציפות תפקודית
+
+ציין תמיד:
+- הפניה לסעיף החוק הרלוונטי
+- הפניה לנוהל (SOP) הרלוונטי
+- ניקוד מפורט עם הסבר
+""",
+        "simulator": ""  # Simulator gets just the full prompt
+    }
+
+    addendum = role_addendum.get(role, "")
+    return full_prompt + addendum + language_guard
+

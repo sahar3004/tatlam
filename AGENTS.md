@@ -1,262 +1,216 @@
-# Repository Guidelines
+# AGENTS.md — Tatlam Project
 
-## Project Structure & Module Organization
-- Core domain: `tatlam/` (categories, logging, simulations).
-- Web app entry: `app.py`; views in `templates/` (Jinja2).
-- CLI tools: `run_batch.py`, `export_json.py`, `render_cards.py`, `import_gold_md.py`.
-- Tests: `tests/` (unit, integration, property‑based).
-- Scripts: `scripts/` (`start_flask.sh`, `start_local_llm.sh`, `qa_baseline.sh`, `qa_changed.sh`).
-- Assets & docs: `gold_md/`, `schema/`, `artifacts/`, `docs/`.
-Pattern: Functional Core (`tatlam/`) with Imperative Shell (Flask/CLI).
+> Hebrew security scenario generation system using Trinity AI architecture (Writer→Judge→Simulator).
 
-## Build, Test, and Development Commands
-- `make dev` — create venv and install deps.
-- `make run` or `./start_flask.command` — run Flask locally (uses `.env`).
-- `make llm` — start local OpenAI‑compatible server wrapper.
-- `make qa-changed` — lint (ruff/black), types (mypy on core), security (bandit), audit, tests.
-- `make qa-baseline` — snapshot tests + smoke + CLI outputs to `artifacts/baseline/`.
-Examples: `./scripts/start_flask.sh`, `pytest -q`.
+## Stack
+- **Core**: Python 3.9+ | SQLite+WAL | Pydantic 2.0 | SQLAlchemy 2.0
+- **UI**: Streamlit
+- **AI**: Claude (Writer) → Gemini (Judge) → Local LLM/llama.cpp (Simulator)
 
-## Coding Style & Naming Conventions
-- Python 3.13, 4‑space indent, type hints throughout core; unions as `X | Y`.
-- Black (line length 100), Ruff for lint/import‑sorting; MyPy (strict) on `tatlam/`.
-- Naming: modules_snake_case, functions_snake_case, ClassesCamelCase.
+## Commands
 
-## Testing Guidelines
-- Frameworks: Pytest (+ Hypothesis where relevant). Tests under `tests/` as `test_*.py`.
-- Run: `pytest -q` or `make qa-changed`.
-- Coverage target: ≥85% overall (tracked in CI). Prefer unit tests for core, integration for routes/CLI.
+| Action | Command |
+|--------|---------|
+| Install | `pip install -e .` |
+| Test (fast) | `pytest -m "not slow" -v` |
+| Test (unit) | `pytest tests/unit/` |
+| Coverage | `pytest --cov=tatlam --cov-report=html` |
+| Lint | `ruff check . && black --check .` |
+| Type check | `mypy --strict tatlam/` |
+| Security | `bandit -r tatlam/` |
+| All QA | `make qa-changed` |
+| Run UI | `streamlit run main_ui.py` |
+| Run batch | `python run_batch.py --category "חפץ חשוד ומטען" --async` |
 
-## Commit & Pull Request Guidelines
-- Commits: imperative subject; optional scope (e.g., `feat(app): add admin action`). Keep diffs small.
-- PRs: clear summary, rationale, steps to verify, linked issues/ADR, screenshots (if UI).
-- CI must be green (lint/type/test/audit) before merge.
+## Project Structure
 
-## Security & Configuration Tips
-- Never commit secrets. Use `.env.template` → `.env` locally.
-- Important flags: `REQUIRE_APPROVED_ONLY`, `LOG_STRUCTURED`, `LOG_FILE`.
-- Prefer parameterized SQL; table names come only from trusted config.
+```
+tatlam/
+├── settings.py      # Pydantic config (SINGLE SOURCE OF TRUTH)
+├── core/            # Pure logic (NO I/O) ← NEVER import infra here
+│   ├── brain.py     # TrinityBrain orchestration
+│   ├── llm_factory.py  # Client protocols + DI
+│   └── categories.py   # Hebrew normalization
+├── infra/           # I/O layer
+│   ├── db.py        # SQLAlchemy engine (WAL mode)
+│   ├── models.py    # Scenario ORM
+│   └── repo.py      # CRUD
+└── cli/             # Entry points
 
-## Architecture Overview
-- Functional core (`tatlam/`) exposes small, pure helpers.
-- Flask/CLI wrap the core to handle HTTP, persistence, and side‑effects.
+tests/
+├── conftest.py      # Fixtures: in_memory_db, mock_brain
+├── unit/            # Fast, isolated
+├── integration/     # DB tests
+└── llm_evals/       # @pytest.mark.slow
+```
 
-Recommended Sections
-▌
-▌ Project Structure & Module Organization
-▌
-▌ - Outline the project structure, including where the source code, tests, and
-▌ assets are located.
-▌
-▌ Build, Test, and Development Commands
-▌
-▌ - List key commands for building, testing, and running locally (e.g., npm
-▌ test, make build).
-▌ - Briefly explain what each command does.
-▌
-▌ Coding Style & Naming Conventions
-▌
-▌ - Specify indentation rules, language-specific style preferences, and naming
-▌ patterns.
-▌ - Include any formatting or linting tools used.
-▌
-▌ Testing Guidelines
-▌
-▌ - Identify testing frameworks and coverage requirements.
-▌ - State test naming conventions and how to run tests.
-▌
-▌ Commit & Pull Request Guidelines
-▌
-▌ - Summarize commit message conventions found in the project’s Git history.
-▌ - Outline pull request requirements (descriptions, linked issues, screenshots,
-▌ etc.).
-▌
-▌ (Optional) Add other sections if relevant, such as Security & Configuration
-▌ Tips, Architecture Overview, or Agent-Specific Instructions.
+## Code Style
 
-# Project Brief — Professional Python/Polyglot Codebase QA & Upgrade
-# (Safe Slow-Mode, Baseline Parity, Change-by-Change QA; apply changes on real files)
-# Creative-Latitude Edition — the model has freedom to choose & justify the project structure
+| Rule | Spec |
+|------|------|
+| Types | `from __future__ import annotations` + `mypy --strict` |
+| Format | `black` line-length=100, `ruff` for linting |
+| Docstrings | Google/NumPy style, public APIs only |
+| Naming | `snake_case` functions, `PascalCase` classes, `SCREAMING_SNAKE` constants |
+| Logging | `logging.getLogger(__name__)` + structlog context |
+| Coverage | ≥85% or documented exception |
 
-ROLE & MISSION
-אתם צוות ToT Ultra Software Engineer (Python/JS/AI/Apps Script) הפועל באיטיות מבוקרת (Slow-Mode) עם “דגל אדום” על כל סטייה, כדי:
-1) לשפר מקצועיות הקוד (Python-first, אך פוליגלוט) לרמת מוצר.
-2) לבצע QA עמוק לפני כל שינוי, אחרי כל שינוי, ובסיום — תוך שמירה שהפרויקט רץ “בדיוק אותו דבר” (Baseline Parity) אלא אם הוחלט אחרת ומתועד.
-3) להחזיק **חופש יצירתי מבוקר**: בחירת ארכיטקטורה ומבנה תיקיות לפי שיקול דעת מקצועי — בתנאי שמוצדקים ומתועדים.
+## Key Patterns
 
-SCOPE
-- עבודה בתיקייה הנוכחית (`./`) עם קריאה/כתיבה לקבצים והרצת shell כאשר מותר.
-- הסברים/תכניות בעברית; קוד/פקודות/קונפיג באנגלית.
-- מיקוד: ארכיטקטורה נקייה, טיפוסים חזקים, structured logging, ולידציה, בדיקות (unit/integration/property), אבטחה, reproducibility ו-CI.
+```python
+# Config access
+from tatlam.settings import get_settings
+settings = get_settings()
 
-TOOLS MISSING FALLBACK
-אם כלי חסר (fs/shell/python/node/web):
-- להפיק קבצים מלאים ופקודות מדויקות; לסמלץ ריצות; לציין מגבלות.
-- אם המבנה אינו מקצועי — ניתן לשכתב/לפצל למבנה מוצדק חדש (בחירה חופשית עם נימוק).
+# Trinity Brain
+from tatlam.core.brain import TrinityBrain
+brain = TrinityBrain()  # auto-init
+brain = TrinityBrain(writer_client=mock, auto_initialize=False)  # testing
 
-FIRST ACTION (short)
-- דווח אילו כלים זמינים (filesystem, shell, python, node, web). אשר עבודה על `./` עם הרשאת שינוי. אם אין — עבור ל-fallback.
+# Categories (Hebrew normalization)
+from tatlam.core.categories import category_to_slug, CATS
+slug = category_to_slug("חפץ חשוד ומטען")  # → "chefetz-chashud"
 
-SLOW-MODE & RED-FLAG (חובה)
-- Slow-Mode ON: צעדים קטנים, הפיכים, עם QA מקומי אחרי כל שינוי.
-- **Baseline Snapshot לפני כל שינוי**: להריץ smoke/CLI/REST/DB/Jobs הרלוונטיים + כל הבדיקות; לשמור ארטיפקטים ב-`./artifacts/baseline/<timestamp>/`:
-  - פלטי CLI “golden” (stdout/stderr/exit codes), קבצי תוצאות, hash-ים, metrics (p50/p95/errors), לוגים, עקבות HTTP (VCR), סכימות/גרפים.
-- **Change Gate לכל שינוי**: אחרי כל diff, להריץ “qa:changed” (בדיקות מושפעות, golden-diff, type/lint/security). אם יש:
-  - אי-שוויון התנהגותי לא מכוון, חריגות חדשות, ירידת כיסוי/ביצועים מעבר לתקציב — **להרים דגל אדום, לעצור, ולחזור**.
-- **Final Parity Check**: בסוף — “qa:full:compare” מול baseline:
-  - פלטים/קודי יציאה/תופעות לוואי/trace HTTP/DB זהים סמי-בייט (אלא אם שינוי מכוון), וביצועים בתוך תקציב ±5%. אחרת — דגל אדום.
-- **Break-Glass (שינוי מכוון)**: אם נדרש שינוי התנהגות, לתעד ב-CHANGELOG עם תוכנית מיגרציה, לעדכן golden files, ולהעלות גרסה (semver).
+# Database
+from tatlam.infra.db import get_session
+with get_session() as session:
+    rows = session.scalars(select(Scenario)).all()
+```
 
-GOALS
-1) מקצועיות קוד: type hints מלאים, docstrings (NumPy/Google), חריגות מודולריות, logging מובנה, מורכבויות נשלטות.
-2) QA מלא לפני/אחרי כל שינוי ובסוף, ללא פגיעה בהתנהגות קיימת (Baseline Parity).
-3) אינטגרציות: חוזים ברורים בין מודולים; ולידציה ודטרמיניזם.
-4) סימולציות עם seeds קבועים למדדי תפעול.
-5) שדרוגים בטוחים: typing/logging/tooling/CI, ו-refactors עם ROI ברור.
-6) **חופש יצירתי במבנה**: לבחור Pattern (Hexagonal / Clean Architecture / Functional Core & Imperative Shell / DDD-lite / Monorepo-modules / Minimal-single-pkg) — בתנאי להצדקה מקצועית ובדיקות.
+## Never Do
 
-PROFESSIONAL CODING STANDARDS (Polyglot)
+- Import `infra/` in `core/` (except `interfaces.py`)
+- Hardcode secrets (use `.env`)
+- Use `print()` in business logic
+- Skip type hints on public APIs
+- Commit without running `make qa-changed`
 
-General
-- Public API יציב; semver; שינוי שובר → release notes + migration.
-- Complexity: CC ≤ 10 לפונקציה; SRP; פונקציות קצרות; דומיין טהור, side-effects בשכבות I/O בלבד.
-- Error Handling: ללא `print/exit` בלוגיקה; custom exceptions; מיפוי error→exit-code/HTTP.
-- Logging: structured (JSON-ready), levels, context, correlation/idempotency keys; ללא סודות.
-- Config: `.env`/ENV בלבד; ולידציה טיפוסית.
-- Docs: docstrings + README/CONTRIBUTING עם דוגמאות.
+## Environment
 
-Python (3.13 יעד)
-- Packaging: `pyproject.toml`; בחירת layout גמישה (ראה “Structure — Creative Latitude”).
-- Typing: `from __future__ import annotations`; `mypy --strict`; להימנע מ-`Any` לא מוצדק.
-- Style: `ruff` + `black`.
-- Data Contracts: `pydantic`/`dataclasses` לשכבת קלט/פלט.
-- HTTP: `httpx` עם timeouts/retries+jitter, idempotency keys, circuit-breaker.
-- CLI: `typer`/`argparse`; `__main__`; exit codes עקביים.
-- Tests: `pytest`, `hypothesis`, fixtures, coverage HTML, property-based לממירים/חוקי עסק.
-- Golden Tests: `pytest-regressions`/VCR עבור CLI/HTTP.
+```bash
+ANTHROPIC_API_KEY=       # Writer
+GOOGLE_API_KEY=          # Judge
+DB_PATH=db/tatlam.db
+WRITER_MODEL_NAME=claude-sonnet-4-20250514
+JUDGE_MODEL_NAME=gemini-2.0-flash
+LOCAL_MODEL=qwen-2.5-32b-instruct
+LOCAL_BASE_URL=http://127.0.0.1:8000/v1
+```
 
-JS/TS (Node LTS)
-- העדפת TypeScript `"strict": true`; `eslint`/`prettier`; `vitest`/`jest`; lockfile.
+---
 
-Shell/Infra
-- `set -Eeuo pipefail`; `shellcheck`.
-- GitHub Actions: lint/type/test/audit/coverage artifacts.
+## ⚠️ Common Gotchas (CRITICAL)
 
-SQL/Data
-- מיגרציות; בדיקות שאילתות; גבולות טרנזקציות וכשל.
+### 1. Settings Cache
+Settings are cached! After changing `.env`, call:
+```python
+from tatlam.settings import get_settings
+get_settings.cache_clear()  # Required after env changes
+```
 
-STRUCTURE — CREATIVE LATITUDE (בחירה חופשית עם נימוק)
-- אין חובה ל-`src/` או לעץ קבצים קבוע. בחרו **אחד**:
-  - **A. src-layout מודרני**: בידוד imports, חבילה אחת מרכזית.
-  - **B. Multi-package (apps/libs)**: הפרדה בין ספריות לשירותים/כלים.
-  - **C. Hexagonal/Clean**: domain/services/adapters/entrypoints.
-  - **D. Minimalist Single-module**: רק אם היקף מצדיק — עם מסלול צמיחה.
-  - **E. Monorepo מודולרי**: מספר חבילות עם workspace/lock משותף.
-- דרישות מינימום לכל בחירה:
-  - **Import Reliability**: או `src/` או editable install/paths מתועדים.
-  - **Contracts**: שכבה המפרידה דומיין מ-I/O; DTOs/validators.
-  - **Docs**: תרשים מודולים + הסבר בחירות (ADR-000-structure).
-  - **DevX**: פקודות make/uv/npm להפעלה/בדיקות/לינטים.
+### 2. Database Engine Cache
+Tests may fail if engine isn't reset:
+```python
+from tatlam.infra.db import reset_engine
+reset_engine()  # Call before switching DB paths
+```
 
-CONTRACTS & INVARIANTS
-- לכל מודול Interface מפורש (types + docstrings “Parameters/Returns/Raises”).
-- Pre/Post Conditions: ולידציה לקלטים; הבטחת פלט.
-- Idempotency: בפעולות מרוחקות עם retries.
+### 3. Trinity Brain Initialization
+```python
+# ❌ WRONG - will fail if API keys missing
+brain = TrinityBrain()
 
-WORKFLOW (חובה; סדר קפדני)
-0) LEARN
-   - CodeMap: עץ קבצים, entry points, זרימות נתונים, תלויות חיצוניות.
-   - Integration Matrix: מי קורא למי; חוזים; אינווריאנטים.
-   - Smell Scan: typing, שגיאות, I/O, מצב, אבטחה, חוב בדיקות.
-   - לגזור Acceptance Criteria ממוספרים ומדידים.
+# ✅ CORRECT - for tests without real API
+brain = TrinityBrain(auto_initialize=False)
+brain = TrinityBrain(writer_client=mock_client, auto_initialize=False)
+```
 
-0.5) BASELINE (לפני כל שינוי)
-   - להריץ `qa:baseline`: כל הבדיקות + smoke/CLI/HTTP/DB רלוונטיות.
-   - לשמור ארטיפקטים: פלטים “golden”, hashes, metrics, לוגים, VCR cassettes.
+### 4. Hebrew Categories
+Always use the normalization function:
+```python
+# ❌ WRONG - string comparison fails
+if category == "חפץ חשוד":
 
-1) PLAN
-   - עיצוב מינימלי: רכיבים/ממשקים/חוזים; לבחור **מבנה/Pattern** חופשי + ADR קצר המצדיק את הבחירה (trade-offs).
-   - כלים/גרסאות תואמי Python 3.13/Node LTS.
-   - תכנית refactor בטוחה (צעדים קטנים/הפיכים).
+# ✅ CORRECT - use slug
+from tatlam.core.categories import category_to_slug
+slug = category_to_slug(category)
+if slug == "chefetz-chashud":
+```
 
-2) FRESHNESS (Web אם זמין)
-   - אימות גרסאות/שבירות (3–5 ציטוטים). אם לא — נעילה שמרנית והצהרת סיכון.
+### 5. Import Rules
+```python
+# ❌ NEVER do this in tatlam/core/*.py
+from tatlam.infra.db import get_session
 
-3) IMPLEMENT (שינויים קטנים, כל אחד עם Gate)
-   - לכל שינוי: תקציר diff → כתיבה לדיסק → `qa:changed` (unit/integration המושפעים, golden-diff, type/lint/security).
-   - כישלון כלשהו → **RED FLAG** → עצירה/חזרה.
-   - הוספות אופייניות: `pyproject.toml` (ruff/black/mypy/pytest), `.env.template`, תלותים נעולים (ללא “latest”), לוגינג, pre-commit (אופציונלי).
-   - טיפוסים ודוקסטרינג לכל API ציבורי; קומפוזיציה מעל ירושה.
+# ✅ Core must stay pure - infra imports only in entry points
+```
 
-4) SIMULATE (Deterministic; seeds קבועים)
-   - ליצור `./artifacts/runs/` עם קלטים/לוגים; להריץ DSL:
-     {
-       "scenarios": [
-         {
-           "name": "api_rate_limit_spike",
-           "seed": 1337,
-           "inputs": {"requests_per_min": 600, "payload": "valid"},
-           "failures": [{"t": 45, "type": "remote_429"}],
-           "expected": {
-             "success_rate_pct": ">=99",
-             "max_p95_latency_ms": "<=800",
-             "retry_policy": "exponential_backoff_jitter",
-             "idempotency_keys_used": true,
-             "circuit_breaker_engaged": true
-           }
-         },
-         {
-           "name": "gsheets_quota_boundary",
-           "seed": 2025,
-           "inputs": {"batch_size": 5000, "range": "A1:G"},
-           "failures": [],
-           "expected": {"requests_batched": true, "quota_safe": true}
-         }
-       ],
-       "metrics": ["p50_ms","p95_ms","errors","retries","cost_usd","tokens_in","tokens_out"]
-     }
+---
 
-5) QA (סופי + השוואה ל-Baseline)
-   - `qa:full`: unit+integration+property; סטטיים: ruff, black, mypy --strict, bandit, pip-audit / npm audit.
-   - `qa:full:compare`: דוח דלתא מול baseline (פלטים/קודים/לוגים/HTTP/ביצועים).
-   - כיסוי ≥85% (או הצדקה מדויקת) והדגשת פערים.
+## Testing Patterns
 
-6) PACKAGE
-   - שלבי רפרודוקציה (macOS Apple Silicon), פקודות מדויקות, מטריצת גרסאות, caveats.
-   - ADR קצר (החלטות מפתח, כולל **ADR-000-structure**). עדכון README/CHANGELOG.
+### Required Fixtures (from `tests/conftest.py`)
 
-7) DELIVER (פורמט קבוע)
-   - Section A — תכנית/סיכום בעברית (CodeMap, Risks, Criteria).
-   - Section B — “File Tree” + תוכן מלא לקבצים שנכתבו.
-   - Section C — “Tests & Commands” (bash, npm, python) + CI snippet.
-   - Section D — “Citations” (3–5 פריטים) או “offline freeze”.
-   - Section E — “Assumptions & Open Items”.
+```python
+def test_with_db(in_memory_db):
+    """Use for any DB-related test."""
+    pass
 
-ACCEPTANCE CRITERIA (חייבים)
-1) **Baseline Parity**: לפני/אחרי — פלטים/קודי יציאה/תופעות לוואי זהים (או שינוי מכוון עם CHANGELOG+goldens מעודכנים).
-2) כל פונקציה ציבורית: type hints מלאים + docstring (Params/Returns/Raises/Examples).
-3) מורכבות CC ≤ 10; 0 אזהרות ruff/mypy; ללא `print` בלוגיקה.
-4) חריגות מודולריות; מיפוי עקבי ל-exit codes/HTTP.
-5) Structured logging עם context ו-error IDs; ללא הדלפות סוד.
-6) ולידציה לכל קלט API/CLI (`pydantic`/`dataclasses`).
-7) בדיקות unit+integration+property; כיסוי ≥85% או נימוק מפורט.
-8) Repro מלא: נעילת תלויות (`uv`/`pip-tools`), CI ירוק.
-9) **מבנה הפרויקט נבחר בחופשיות אך**: מוצדק ב-ADR, אמין ל-imports, תומך בהפרדת דומיין/-I/O, ומתועד בתרשים/טקסט.
-10) דוח דלתא סופי מול baseline + “דגלים אדומים” (אם היו) וטיפול בהם.
+def test_with_brain(mock_brain):
+    """Use for tests involving TrinityBrain without API calls."""
+    pass
 
-CHANGE-POLICY (בטוח)
-- אם git קיים: ליצור ענף `feat/agent-qa-upgrade`.
-- לכל שינוי: תקציר diff קצר → כתיבה לדיסק → `qa:changed`. כישלון → **RED FLAG** והחזרה.
-- קומיטים קטנים, לוגיים; תכנית קומיטים מינימלית בסוף הדוח.
+@pytest.mark.slow
+def test_real_api():
+    """Mark tests that hit real APIs - skipped by default."""
+    pass
+```
 
-ToT DISCIPLINE (Decision Trace; ≤8 lines)
-- בכל תת-בעיה: ≥3 גישות, ניקוד 0–5 (correctness/maintainability/performance/feasibility), שמירת טופ-2, מיזוג לתכנית אחת; הוכחות חיצוניות מצוטטות; אם לא ודאי — לציין אי-ידיעה ולהציע A/B/C.
+### Test File Naming
+- Unit tests: `tests/unit/test_<module>.py`
+- Integration tests: `tests/integration/test_<feature>.py`
+- LLM evals: `tests/llm_evals/test_<eval>.py`
 
-DEFAULT TOOLING (override with rationale)
-- Python: `uv` או `pip-tools`; `ruff`, `black`, `mypy`, `pytest`, `hypothesis`, `bandit`, `pip-audit`.
-- HTTP: `httpx` עם timeouts/retries/jitter/circuit-breaker; idempotency keys.
-- CLI: `typer` (או `argparse`).
-- JS/TS: Node LTS, `vite`/`tsc`, `eslint`, `prettier`, `vitest`/`jest`.
-- Golden/Determinism: `pytest-regressions`, `vcrpy`/`pytest-recording`.
-- Docs: `mkdocs`/`Sphinx` (אופציונלי).
-- אין סודות בקוד; `.env.template` בלבד.
+---
+
+## Error Handling
+
+### Custom Exceptions (from `tatlam.core.brain`)
+```python
+WriterUnavailableError   # Claude not configured
+JudgeUnavailableError    # Gemini not configured
+SimulatorUnavailableError  # Local LLM offline
+APICallError             # API call failed after retries
+```
+
+### Configuration Errors (from `tatlam.settings`)
+```python
+ConfigurationError  # Missing required API keys when STRICT_API_VALIDATION=True
+```
+
+---
+
+## Common Tasks
+
+### Add a New Category
+1. Edit `tatlam/core/categories.py`
+2. Add to `CATS` dict with Hebrew name and slug
+3. Add aliases if needed
+
+### Add a New Endpoint (UI)
+1. Edit `main_ui.py`
+2. Use dependency injection for `TrinityBrain`
+3. Validate input with Pydantic
+
+### Modify Database Schema
+1. Edit `tatlam/infra/models.py`
+2. Update `to_dict()` method if JSON field
+3. Add migration if production data exists
+
+### Clear All Caches
+```python
+from tatlam.settings import get_settings
+from tatlam.infra.db import reset_engine
+get_settings.cache_clear()
+reset_engine()
+```

@@ -1,8 +1,0 @@
-{
-  "status": 200,
-  "json": {
-    "db_file": true,
-    "db_query": true,
-    "ok": true
-  }
-}

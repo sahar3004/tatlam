@@ -96,7 +96,7 @@ class Settings(BaseSettings):
     GOOGLE_API_KEY: str | None = Field(default=None)
 
     # ==== Trinity Architecture: Simulator (Local/OpenAI-compatible) ====
-    LOCAL_MODEL_NAME: str = Field(default="qwen-2.5-32b-instruct")
+    LOCAL_MODEL_NAME: str = Field(default="llama-3.3-70b-instruct")
     LOCAL_BASE_URL: str = Field(default="http://127.0.0.1:8080/v1")
     LOCAL_API_KEY: str = Field(default="sk-no-key-required")
 
@@ -201,7 +201,7 @@ def get_settings() -> Settings:
 # These allow: from tatlam.settings import DB_PATH, TABLE_NAME
 # Instead of: from tatlam.settings import get_settings; settings = get_settings(); settings.DB_PATH
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> Any:
     """
     Module-level attribute access for backward compatibility.
 

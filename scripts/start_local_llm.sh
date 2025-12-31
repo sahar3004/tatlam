@@ -34,7 +34,7 @@ PORT="${PORT:-${LOCAL_PORT:-8080}}"
 N_CTX="${N_CTX:-8192}"
 N_GPU_LAYERS="${N_GPU_LAYERS:--1}"
 N_PARALLEL="${N_PARALLEL:-8}"
-BATCH_SIZE="${BATCH_SIZE:-512}"
+BATCH_SIZE="${BATCH_SIZE:-1024}"
 RESTART_DELAY="${RESTART_DELAY:-5}"
 
 # ============================================================================
@@ -199,7 +199,7 @@ main() {
             echo "  LOCAL_MODEL_PATH  Path to GGUF model file (required)"
             echo "  MODEL_ALIAS       Model alias for API"
             echo "  HOST              Server host (default: 0.0.0.0)"
-            echo "  PORT              Server port (default: 8000)"
+            echo "  PORT              Server port (default: 8080)"
             echo "  N_CTX             Context window size (default: 8192)"
             echo "  N_GPU_LAYERS      GPU layers to offload (default: -1 = all)"
             echo "  N_PARALLEL        Concurrent request slots (default: 8)"
@@ -209,7 +209,7 @@ main() {
             echo "Hardware Optimization (M4 Pro):"
             echo "  -1 GPU layers = offload all layers to Metal"
             echo "  8 parallel slots = handle 8 concurrent requests"
-            echo "  512 batch size = optimal for 48GB unified memory"
+            echo "  1024 batch size = balanced for 48GB unified memory"
             exit 0
             ;;
         *)

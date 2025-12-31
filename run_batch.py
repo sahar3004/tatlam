@@ -37,6 +37,7 @@ TABLE_NAME = _settings.TABLE_NAME
 VALIDATOR_MODEL = _settings.VALIDATOR_MODEL
 from tatlam.infra.db import get_session, init_db_sqlalchemy
 from tatlam.infra.models import Scenario, ScenarioEmbedding
+from tatlam.core.prompts import load_system_prompt, memory_addendum
 
 configure_logging()
 

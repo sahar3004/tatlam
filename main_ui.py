@@ -22,6 +22,9 @@ settings = get_settings()
 from tatlam.infra.repo import insert_scenario
 from tatlam.core.gold_md import parse_md_to_scenario
 
+# Premium UI styles
+from tatlam.ui.styles import get_full_stylesheet
+
 
 # Page Configuration
 st.set_page_config(
@@ -32,35 +35,12 @@ st.set_page_config(
 
 
 # ============================================================================
-# RTL STYLING & HEBREW UI
+# PREMIUM THEME APPLICATION
 # ============================================================================
 
-def apply_rtl_style():
-    """Apply RTL styling for Hebrew UI."""
-    st.markdown("""
-        <style>
-        /* Global RTL */
-        .stApp { direction: rtl; text-align: right; }
-
-        /* Headers alignment */
-        h1, h2, h3, h4, h5, h6 { text-align: right; font-family: 'Segoe UI', Tahoma, sans-serif; }
-
-        /* Metrics Styling */
-        [data-testid="stMetricValue"] { direction: ltr; text-align: right; font-weight: bold; }
-        [data-testid="stMetricLabel"] { text-align: right; }
-
-        /* Input Fields */
-        .stTextInput input, .stTextArea textarea { direction: rtl; text-align: right; }
-
-        /* Sidebar */
-        [data-testid="stSidebar"] { direction: rtl; text-align: right; }
-
-        /* Container borders */
-        [data-testid="stVerticalBlock"] > div:has(> div.element-container) {
-            border-radius: 8px;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+def apply_premium_theme() -> None:
+    """Apply premium dark theme with RTL support and modern styling."""
+    st.markdown(get_full_stylesheet(), unsafe_allow_html=True)
 
 
 # ============================================================================
@@ -113,7 +93,7 @@ def save_scenario(markdown_text: str) -> tuple[bool, str]:
         return False, f"❌ Unexpected error: {str(e)}"
 
 
-def save_chat_log(messages: list[dict], title: str = None) -> tuple[bool, str]:
+def save_chat_log(messages: list[dict[str, str]], title: str | None = None) -> tuple[bool, str]:
     """
     Save chat conversation log to a JSON file.
 
@@ -163,12 +143,12 @@ def save_chat_log(messages: list[dict], title: str = None) -> tuple[bool, str]:
 # VIEW FUNCTIONS
 # ============================================================================
 
-def home_view():
-    """Operational Dashboard - Hebrew metrics-based view."""
+def home_view() -> None:
+    """Operational Dashboard - Hebrew metrics-based view with premium styling."""
     st.title("🏠 מרכז שליטה - תתל״מ Trinity")
     st.markdown("---")
 
-    # Metrics Row
+    # Metrics Row with enhanced styling
     col1, col2, col3, col4 = st.columns(4)
 
     # Metric 1: Scenarios in gold_md
@@ -179,87 +159,118 @@ def home_view():
             count = len(md_files)
         else:
             count = 0
-        st.metric("תרחישים במאגר", count, delta=None)
+        st.metric("📁 תרחישים במאגר", count, delta=None)
 
     # Metric 2: Pending scenarios in DB
     with col2:
         try:
             pending_scenarios = get_db_scenarios("pending")
             pending_count = len(pending_scenarios)
-        except:
+        except Exception:
             pending_count = 0
-        st.metric("ממתינים לאישור", pending_count, delta=None)
+        delta_str = "ממתינים" if pending_count > 0 else None
+        st.metric("⏳ ממתינים לאישור", pending_count, delta=delta_str)
 
     # Metric 3: Brain status
     with col3:
         if "brain" in st.session_state:
             status = "מחובר ✓"
-            delta_color = "normal"
         else:
             status = "מנותק"
-            delta_color = "off"
-        st.metric("סטטוס מוח", status, delta=None)
+        st.metric("🧠 סטטוס מוח", status, delta=None)
 
     # Metric 4: Local model
     with col4:
-        model_short = settings.LOCAL_MODEL_NAME.split("-")[0].upper()  # "QWEN"
-        st.metric("מודל מקומי", model_short, delta="2.5-32B")
+        model_short = settings.LOCAL_MODEL_NAME.split("-")[0].upper()
+        st.metric("🤖 מודל מקומי", model_short, delta="3.3-70B")
 
     st.markdown("---")
 
-    # System architecture overview
+    # System architecture overview with enhanced cards
     st.subheader("🎯 ארכיטקטורת המערכת")
 
     col_a, col_b, col_c = st.columns(3)
 
     with col_a:
-        st.info("""
-        **🖊️ הכותב (Writer)**
+        with st.container(border=True):
+            st.markdown("""
+            ### 🖊️ הכותב (Writer)
 
-        Claude Sonnet 4.5
+            **Claude Sonnet 4.5**
 
-        תפקיד: יצירת תרחישי אימון מציאותיים
-        """)
+            תפקיד: יצירת תרחישי אימון מציאותיים
+            """)
 
     with col_b:
-        st.info("""
-        **⚖️ השופט (Judge)**
+        with st.container(border=True):
+            st.markdown("""
+            ### ⚖️ השופט (Judge)
 
-        Gemini 2.0 Pro
+            **Gemini 2.0 Pro**
 
-        תפקיד: ביקורת ודירוג ביצועים
-        """)
+            תפקיד: ביקורת ודירוג ביצועים
+            """)
 
     with col_c:
-        st.info("""
-        **💬 הסימולטור (Simulator)**
+        with st.container(border=True):
+            st.markdown("""
+            ### 💬 הסימולטור (Simulator)
 
-        Qwen 2.5 32B (Local)
-
-        תפקיד: גילום יריבים ואזרחים
-        """)
+            **Llama 3.3 70B (Local)**
+            
+            תפקיד: גילום יריבים ואזרחים
+            """)
 
     st.markdown("---")
 
-    # Quick status checks
+    # Quick status checks with LED indicators
     st.subheader("📊 סטטוס מערכות")
 
-    status_col1, status_col2 = st.columns(2)
+    status_col1, status_col2, status_col3 = st.columns(3)
 
     with status_col1:
         if settings.has_writer():
-            st.success("✓ Anthropic API - מחובר")
+            st.markdown("""
+            <div style="display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(34, 197, 94, 0.1); border-radius: 8px; border: 1px solid rgba(34, 197, 94, 0.3);">
+                <div style="width: 12px; height: 12px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 10px #22c55e;"></div>
+                <span style="color: #4ade80; font-weight: 500;">Anthropic API - מחובר</span>
+            </div>
+            """, unsafe_allow_html=True)
         else:
-            st.error("✗ Anthropic API - מנותק")
+            st.markdown("""
+            <div style="display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(239, 68, 68, 0.1); border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.3);">
+                <div style="width: 12px; height: 12px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 10px #ef4444;"></div>
+                <span style="color: #f87171; font-weight: 500;">Anthropic API - מנותק</span>
+            </div>
+            """, unsafe_allow_html=True)
 
     with status_col2:
         if settings.has_judge():
-            st.success("✓ Google API - מחובר")
+            st.markdown("""
+            <div style="display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(34, 197, 94, 0.1); border-radius: 8px; border: 1px solid rgba(34, 197, 94, 0.3);">
+                <div style="width: 12px; height: 12px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 10px #22c55e;"></div>
+                <span style="color: #4ade80; font-weight: 500;">Google API - מחובר</span>
+            </div>
+            """, unsafe_allow_html=True)
         else:
-            st.error("✗ Google API - מנותק")
+            st.markdown("""
+            <div style="display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(239, 68, 68, 0.1); border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.3);">
+                <div style="width: 12px; height: 12px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 10px #ef4444;"></div>
+                <span style="color: #f87171; font-weight: 500;">Google API - מנותק</span>
+            </div>
+            """, unsafe_allow_html=True)
+
+    with status_col3:
+        # Local model status (always show as available since it's configured)
+        st.markdown("""
+        <div style="display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(59, 130, 246, 0.1); border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.3);">
+            <div style="width: 12px; height: 12px; border-radius: 50%; background: #3b82f6; box-shadow: 0 0 10px #3b82f6;"></div>
+            <span style="color: #60a5fa; font-weight: 500;">מודל מקומי - מוגדר</span>
+        </div>
+        """, unsafe_allow_html=True)
 
 
-def generate_scenario_view():
+def generate_scenario_view() -> None:
     """Hebrew scenario generation interface."""
     st.title("⚡ מחולל תרחישים - הכותב")
     st.markdown("---")
@@ -364,7 +375,7 @@ def generate_scenario_view():
             st.markdown(st.session_state.last_scenario)
 
 
-def get_db_scenarios(status_filter: str = "all") -> list[dict]:
+def get_db_scenarios(status_filter: str = "all") -> list[dict[str, Any]]:
     """
     Fetch scenarios from database with optional status filtering.
     Uses repo layer instead of raw SQL.
@@ -395,7 +406,7 @@ def get_db_scenarios(status_filter: str = "all") -> list[dict]:
         return []
 
 
-def catalog_view():
+def catalog_view() -> None:
     """Hebrew card-based catalog view."""
     st.title("📚 ארכיון מבצעי - תיקי תרחישים")
     st.markdown("---")
@@ -444,12 +455,36 @@ def catalog_view():
                 with col:
                     with st.container(border=True):
                         st.subheader(meta.get('title', 'ללא שם')[:40])
-                        st.caption(f"📁 קטגוריה: {meta.get('category', 'כללי')}")
-                        st.caption(f"⚠️ רמת סיכון: {meta.get('threat_level', 'לא ידוע')}")
+
+                        # Category tag
+                        category = meta.get('category', 'כללי')
+                        st.markdown(f"""
+                        <span style="display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 500; background: rgba(129, 140, 248, 0.15); color: #a5b4fc; border: 1px solid rgba(129, 140, 248, 0.3); margin-left: 8px;">
+                            📁 {category}
+                        </span>
+                        """, unsafe_allow_html=True)
+
+                        # Threat level with color coding
+                        threat = meta.get('threat_level', 'לא ידוע')
+                        if threat in ['גבוהה', 'גבוהה מאוד']:
+                            badge_style = "background: rgba(239, 68, 68, 0.15); color: #f87171; border-color: rgba(239, 68, 68, 0.3);"
+                        elif threat == 'בינונית':
+                            badge_style = "background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3);"
+                        else:
+                            badge_style = "background: rgba(34, 197, 94, 0.15); color: #4ade80; border-color: rgba(34, 197, 94, 0.3);"
+
+                        st.markdown(f"""
+                        <span style="display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 500; {badge_style} border: 1px solid; margin-top: 8px;">
+                            ⚠️ {threat}
+                        </span>
+                        """, unsafe_allow_html=True)
+
+                        st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
 
                         if st.button("📂 פתח תיק", key=f"open_{file_path.name}", use_container_width=True):
                             st.session_state.selected_scenario_path = file_path
                             st.rerun()
+
 
     # Display selected scenario details
     if st.session_state.selected_scenario_path:
@@ -486,7 +521,7 @@ def catalog_view():
         st.markdown(selected_content)
 
 
-def simulation_view():
+def simulation_view() -> None:
     """Hebrew chat simulation interface with avatars."""
     st.title("💬 חדר סימולציות - תחנת אלנבי")
     st.markdown("---")
@@ -574,11 +609,11 @@ def simulation_view():
 # MAIN APPLICATION
 # ============================================================================
 
-def main():
+def main() -> None:
     """Main application entry point."""
 
-    # Apply RTL styling
-    apply_rtl_style()
+    # Apply premium theme (includes RTL styling)
+    apply_premium_theme()
 
     # Sidebar navigation (Hebrew)
     st.sidebar.title("🎯 ניווט מערכת")

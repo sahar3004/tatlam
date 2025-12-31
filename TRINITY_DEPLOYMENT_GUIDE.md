@@ -13,7 +13,7 @@ All phases completed successfully. The Trinity architecture is fully implemented
 **Commit:** `f138db1`
 
 **Files Created:**
-- `config_trinity.py` - Trinity configuration (DB, API keys, models)
+- `tatlam/settings.py` - Centralized configuration (DB, API keys, models)
 - `requirements.txt` - Updated with Trinity dependencies
 
 **Features:**
@@ -289,7 +289,7 @@ mkdir -p db
 
 ```
 tatlam/
-├── config_trinity.py          # Trinity configuration
+
 ├── main_ui.py                 # Streamlit UI (21KB)
 ├── start_ui.sh               # Launch script
 ├── requirements.txt          # Dependencies
@@ -314,7 +314,7 @@ Run these checks to verify system health:
 
 ```bash
 # 1. Check files exist
-ls -lh config_trinity.py main_ui.py start_ui.sh tatlam/core/brain.py
+ls -lh main_ui.py start_ui.sh tatlam/core/brain.py
 
 # 2. Check Python dependencies
 python -c "import streamlit, anthropic, google.generativeai; print('✅ OK')"

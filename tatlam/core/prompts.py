@@ -232,25 +232,53 @@ class PromptManager:
         safe_input = _sanitize_user_input(user_input)
         safe_category = _sanitize_user_input(category) if category else None
 
+        # Get valid categories from the doctrine
+        from tatlam.core.categories import CATS
+        valid_categories = ", ".join([meta.get("title", "") for meta in CATS.values() if meta.get("title") != "לא מסווג"][:8])
+
         # Build the prompt with clear demarcation
         category_clause = ""
         if safe_category:
             category_clause = f"\n- הקטגוריה המבוקשת: {safe_category}"
 
         prompt = f"""
-<system_context>
-הנך מייצר תרחישי תטל"ם לפי התורה המבצעית. יש לייצר {count} תרחישים ייחודיים.
-</system_context>
+<doctrine_compliance>
+כל תרחיש חייב לעמוד בתורת ההפעלה (Trinity Doctrine).
+</doctrine_compliance>
 
 <user_request>
 {safe_input}
 </user_request>
 
+<required_format>
+📋 שדות חובה בכל תרחיש:
+1. title - כותרת ייחודית ותיאורית (3-8 מילים)
+2. category - אחת מ: {valid_categories}
+3. threat_level - LOW / MEDIUM / HIGH / CRITICAL
+4. location - מפלס (-3 עד 0) + אזור ספציפי בתחנת אלנבי
+5. background - סיפור מקרה (50-200 מילים)
+6. steps - 4-8 שלבי תגובה מפורטים לפי הנהלים
+7. decision_points - 2-4 נקודות הכרעה עם הפניות חוקיות
+8. escalation_conditions - תנאי הסלמה
+9. end_state_success - מצב סיום מוצלח
+10. end_state_failure - מצב כשל
+11. lessons_learned - 2-4 לקחים
+</required_format>
+
+<safety_rules>
+🚨 כללי ברזל (הפרה = תרחיש פסול):
+- אין לגעת בחפץ חשוד! טווח מינימלי 50 מ'
+- טווחי רכב חשוד: אופנוע 100 מ', רכב 200 מ', משאית 400 מ'
+- פתיחה באש: רק לפי Ultima Ratio (אמצעי + כוונה + סכנת חיים מיידית)
+- חיפוש: רק בחשד סביר לפי חוק הסמכויות 2005
+- איסור אפליה: ללא פרופיילינג גזעי/דתי
+</safety_rules>
+
 <constraints>
-- מספר תרחישים לייצור: {count}{category_clause}
-- יש להקפיד על שונות בין התרחישים (שחקנים, זמן, סביבה, טריגר)
-- אל תמציא עובדות או קישורים
-- החזר JSON תקין בלבד לפי הסכימה המוגדרת
+- מספר תרחישים: {count}{category_clause}
+- שונות: שחקנים, זמן, סביבה, טריגר שונים בכל תרחיש
+- אותנטיות: השתמש בנתונים מדויקים מהדוקטרינה (משקלי מטענים, שמות קומות)
+- פורמט: Markdown מובנה עם כל השדות הנדרשים
 </constraints>
 """
         return prompt.strip()

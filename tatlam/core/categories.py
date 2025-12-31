@@ -20,6 +20,81 @@ class CatMeta(TypedDict, total=False):
 
 
 CATS: dict[str, CatMeta] = {
+    # === Doctrine-aligned categories (from system_prompt_he.txt) ===
+    "chefetz-chashud": {
+        "title": "חפץ חשוד ומטען",
+        "aliases": [
+            "חפץ חשוד ומטען",
+            "חפץ חשוד",
+            "כבודה עזובה / חפץ חשוד / מטען",
+            "כבודה עזובה/חפץ חשוד/מטען",
+            "כבודה עזובה",
+            "מטען",
+            "IED",
+        ],
+    },
+    "adam-chashud": {
+        "title": "אדם חשוד",
+        "aliases": [
+            "אדם חשוד",
+            "מחבל",
+            "מפגע בודד",
+            "מתאבד",
+            "חשוד",
+            "suspect",
+        ],
+    },
+    "rechev-chashud": {
+        "title": "רכב חשוד",
+        "aliases": [
+            "רכב חשוד",
+            "רכב תופת",
+            "VBIED",
+            "דריסה",
+            "ramming",
+            "משאית",
+            "אופנוע תופת",
+        ],
+    },
+    "iyum-aviri": {
+        "title": "איום אווירי",
+        "aliases": [
+            "איום אווירי",
+            "רחפן",
+            "drone",
+            "UAV",
+            "ירי תלול מסלול",
+        ],
+    },
+    "hafarat-seder": {
+        "title": "הפרת סדר",
+        "aliases": [
+            "הפרת סדר",
+            "הפרות סדר",
+            "מחאה",
+            "התפרעות",
+        ],
+    },
+    "cherum": {
+        "title": "חירום",
+        "aliases": [
+            "חירום",
+            "שריפה",
+            "פינוי",
+            "אזעקה",
+            "רעידת אדמה",
+        ],
+    },
+    "hadira-razishim": {
+        "title": "חדירה לחדרים רגישים",
+        "aliases": [
+            "חדירה לחדרים רגישים",
+            "חדירה",
+            "פריצה",
+            "insider threat",
+        ],
+    },
+    # === Legacy categories (backward compatibility) ===
     "piguim-peshutim": {
         "title": "פיגועים פשוטים",
         "aliases": ["פיגועים פשוטים", "פיגועים פשוטים (דקירה/ירי)"],
@@ -28,26 +103,32 @@ CATS: dict[str, CatMeta] = {
         "title": "אזרחי מורכב",
         "aliases": ["אזרחי מורכב", "אירועים מורכבים עם אזרחים"],
     },
-    "hadira-razishim": {
-        "title": "חדירה לחדרים רגישים",
-        "aliases": ["חדירה לחדרים רגישים"],
-    },
     "tachanot-iliyot": {"title": "תחנות עיליות", "aliases": ["תחנות עיליות"]},
     "iyumim-tech": {"title": "איומים טכנולוגיים", "aliases": ["איומים טכנולוגיים"]},
-    "eiroa-kimi": {"title": "אירוע כימי", "aliases": ["אירוע כימי"]},
+    "eiroa-kimi": {"title": "אירוע כימי", "aliases": ["אירוע כימי", "חומ\"ס", "HazMat"]},
     "bnei-aruba": {"title": "בני ערובה", "aliases": ["בני ערובה"]},
-    "chefetz-chashud": {
-        "title": "חפץ חשוד ומטען",
-        "aliases": [
-            "חפץ חשוד ומטען",
-            "כבודה עזובה / חפץ חשוד / מטען",
-            "כבודה עזובה/חפץ חשוד/מטען",
-        ],
-    },
     "uncategorized": {
         "title": "לא מסווג",
         "aliases": ["לא מסווג", "ללא קטגוריה", "לא-מסווג"],
     },
+}
+
+# Mapping from category slug to threat vector (from Trinity Doctrine)
+CATEGORY_TO_THREAT_VECTOR: dict[str, str] = {
+    "chefetz-chashud": "FOOT",
+    "adam-chashud": "FOOT",
+    "piguim-peshutim": "FOOT",
+    "rechev-chashud": "VEHICLE",
+    "iyum-aviri": "AERIAL",
+    "hafarat-seder": "NONE",
+    "cherum": "NONE",
+    "hadira-razishim": "INSIDER",
+    "ezrahi-murkav": "NONE",
+    "eiroa-kimi": "HAZMAT",
+    "bnei-aruba": "FOOT",
+    "iyumim-tech": "CYBER",
+    "tachanot-iliyot": "NONE",
+    "uncategorized": "NONE",
 }
 
 _ZW_CHARS = "\u200e\u200f\u200d\u202a\u202b\u202c\u202d\u202e"
@@ -106,4 +187,5 @@ def category_to_slug(category: str | None) -> str | None:
     return None
 
 
-__all__ = ["CATS", "normalize_hebrew", "category_to_slug"]
+__all__ = ["CATS", "CATEGORY_TO_THREAT_VECTOR", "normalize_hebrew", "category_to_slug"]
+
