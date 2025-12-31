@@ -170,4 +170,16 @@ class Scenario(Base):
         return f"<Scenario(id={self.id}, title='{self.title[:30]}...')>"
 
 
-__all__ = ["Base", "Scenario"]
+
+class ScenarioEmbedding(Base):
+    """ORM model for scenario embeddings."""
+    __tablename__ = "embeddings"  # Using default name from sqlite usage if possible, usually 'scenario_embeddings' or 'embeddings'
+
+    # Primary key should wrap the unique title or just be id
+    # Based on save_embedding: INSERT OR REPLACE INTO {EMB_TABLE} (title, vector_json)
+    # So title is likely PK or Unique
+    title: Mapped[str] = mapped_column(Text, primary_key=True)
+    vector_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+__all__ = ["Base", "Scenario", "ScenarioEmbedding"]

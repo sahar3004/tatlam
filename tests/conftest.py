@@ -26,8 +26,9 @@ def in_memory_db(monkeypatch):
     - Cleans up automatically
     """
     from tatlam.settings import get_settings
-    from tatlam.infra.db import init_db, reset_engine
+    from tatlam.infra.db import get_engine, reset_engine, init_db_sqlalchemy
     from tatlam.infra import repo as repo_module
+    from tatlam.infra.models import Base
 
     # Create temporary database
     temp_db = tempfile.NamedTemporaryFile(mode='w', suffix='.db', delete=False)
@@ -45,15 +46,17 @@ def in_memory_db(monkeypatch):
     # Reset repo module's cached column checks
     repo_module._column_cache.clear()
 
-    # Re-fetch settings to pick up new DB_PATH
+    # Re-fetch settings - handled by get_engine internal call but good to ensure
     settings = get_settings()
 
-    # Provide connection to tests
+    # Initialize database schema using SQLAlchemy
+    # This will use get_engine() which uses the monkeypatched DB_PATH
+    init_db_sqlalchemy()
+
+    # Provide raw connection to tests if they need it (for verification)
+    # Using WAL mode ensures we can read while writing
     conn = sqlite3.connect(temp_db_path)
     conn.row_factory = sqlite3.Row
-
-    # Initialize database schema
-    init_db(conn)
 
     yield conn
 

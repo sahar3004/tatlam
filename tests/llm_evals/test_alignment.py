@@ -143,18 +143,16 @@ TEST_SCENARIOS = [
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(
-    not pytest.config.getoption("--run-llm", default=False),
-    reason="LLM tests require --run-llm flag and API access"
-)
+@pytest.mark.slow
 class TestDoctrine_AlignmentAlignment:
     """
     Test alignment between LLM decisions and Doctrine deterministic rules.
-
-    These tests run actual LLM calls to verify that the model follows the
-    documented rules in TRINITY_DOCTRINE. Failures indicate the need for
-    better system prompt engineering.
     """
+
+    @pytest.fixture(autouse=True)
+    def check_llm_flag(self, request):
+        if not request.config.getoption("--run-llm", default=False):
+            pytest.skip("LLM tests require --run-llm flag and API access")
 
     @pytest.fixture(scope="class")
     def brain(self):

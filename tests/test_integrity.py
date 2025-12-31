@@ -149,11 +149,11 @@ def test_db_schema_consistency(in_memory_db):
         f"Schema mismatch. Missing columns: {expected_columns - columns}"
 
 
-def test_db_schema_with_get_db(temp_db_path, monkeypatch):
+def test_db_schema_with_get_engine(temp_db_path, monkeypatch):
     """
-    Test 2.1 (Extended): Verify DB initialization through get_db().
+    Test 2.1 (Extended): Verify DB initialization through get_engine().
 
-    Tests that tatlam.infra.db.get_db works correctly with schema initialization.
+    Tests that tatlam.infra.db.get_engine correctly initializes persistence.
     """
     # Mock the config to use our temp DB
     monkeypatch.setenv("DB_PATH", temp_db_path)
@@ -161,26 +161,23 @@ def test_db_schema_with_get_db(temp_db_path, monkeypatch):
 
     # Need to reload config modules to pick up env vars
     import sys
-    if 'config' in sys.modules:
-        del sys.modules['config']
-    if 'config_trinity' in sys.modules:
-        del sys.modules['config_trinity']
+    # Clear relevant modules
+    for mod in list(sys.modules.keys()):
+        if mod.startswith("tatlam.infra") or mod in ['tatlam.settings']:
+            del sys.modules[mod]
+    
+    from tatlam.infra.db import get_engine, init_db_sqlalchemy
+    from sqlalchemy import inspect as sa_inspect
 
-    from tatlam.infra.db import get_db
-
-    # Get connection and initialize schema
-    con = get_db()
-    init_test_schema(con, table_name="scenarios")
+    # Initialize schema
+    init_db_sqlalchemy()
 
     # Verify we can query the schema
-    cur = con.cursor()
-    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='scenarios'")
-    result = cur.fetchone()
+    engine = get_engine()
+    inspector = sa_inspect(engine)
+    
+    assert "scenarios" in inspector.get_table_names()
 
-    assert result is not None
-    assert result['name'] == 'scenarios'
-
-    con.close()
 
 
 # ==============================================================================
@@ -192,11 +189,6 @@ def test_insert_scenario_json_serialization(temp_db_path, monkeypatch):
     Test 2.2: Repository Integration Test
 
     Goal: Verify insert_scenario correctly handles JSON serialization.
-    Method:
-    - Create a dummy scenario dictionary with a list object in the steps field
-    - Call insert_scenario(dummy_data)
-    - Read the row back
-    - Assert that steps comes back as a list (via normalize_row) and not as a string
     """
     # Setup: Mock config to use temp DB
     monkeypatch.setenv("DB_PATH", temp_db_path)
@@ -204,17 +196,15 @@ def test_insert_scenario_json_serialization(temp_db_path, monkeypatch):
 
     # Reload modules to pick up new config
     import sys
-    for mod in ['config', 'config_trinity', 'tatlam.infra.db', 'tatlam.infra.repo']:
-        if mod in sys.modules:
+    for mod in list(sys.modules.keys()):
+        if mod.startswith("tatlam.infra") or mod in ['tatlam.settings']:
             del sys.modules[mod]
 
-    from tatlam.infra.db import get_db
-    from tatlam.infra.repo import insert_scenario, normalize_row
+    from tatlam.infra.db import init_db_sqlalchemy
+    from tatlam.infra.repo import insert_scenario, fetch_one
 
     # Initialize schema
-    con = get_db()
-    init_test_schema(con, table_name="scenarios")
-    con.close()
+    init_db_sqlalchemy()
 
     # Create dummy scenario with list in steps field
     dummy_scenario = {
@@ -247,37 +237,36 @@ def test_insert_scenario_json_serialization(temp_db_path, monkeypatch):
     assert scenario_id > 0, "insert_scenario should return valid row ID"
 
     # Read back the row
-    con = get_db()
-    cur = con.cursor()
-    cur.execute("SELECT * FROM scenarios WHERE id = ?", (scenario_id,))
-    row = cur.fetchone()
-    con.close()
-
+    row = fetch_one(scenario_id)
     assert row is not None, "Inserted row should be retrievable"
 
-    # Normalize the row (this should parse JSON fields back to lists)
-    normalized = normalize_row(row)
+    # fetch_one returns dict via to_dict, which handles JSON parsing if implemented in model to_dict
+    # But repo.fetch_one returns dict calling scenario.to_dict().
+    # scenario.to_dict() might parse JSON or return string.
+    # repo.normalize_row handles parsing. Does fetch_one use normalize_row?
+    # fetch_one uses scalar().to_dict().
+    # Let's check model to_dict behavior. If it doesn't parse, we rely on normalize_row usage or check raw.
+    # Actually, repo.fetch_one returns "The scenario dictionary."
+    # If using repo.fetch_one, it returns scenario.to_dict(). I should check if that parses.
+    # But wait, repo fetch_one docstring says "Returns dict".
+    # Assuming standard behavior, let's verify.
 
     # Verify steps field
-    assert 'steps' in normalized
-    assert isinstance(normalized['steps'], list), \
-        f"steps should be a list, got {type(normalized['steps'])}"
-    assert len(normalized['steps']) == 3
-    assert normalized['steps'][0] == "שלב ראשון - זיהוי חפץ חשוד"
+    assert isinstance(row['steps'], list), f"Expected list, got {type(row['steps'])}"
+    assert len(row['steps']) == 3
+    assert row['steps'][0] == "שלב ראשון - זיהוי חפץ חשוד"
 
     # Verify other JSON fields
-    assert isinstance(normalized['required_response'], list)
-    assert isinstance(normalized['debrief_points'], list)
-    assert isinstance(normalized['decision_points'], list)
-    assert isinstance(normalized['escalation_conditions'], list)
-    assert isinstance(normalized['lessons_learned'], list)
-    assert isinstance(normalized['variations'], list)
+    assert isinstance(row['required_response'], list)
+    assert isinstance(row['debrief_points'], list)
+    assert isinstance(row['decision_points'], list)
+    assert isinstance(row['escalation_conditions'], list)
+    assert isinstance(row['lessons_learned'], list)
+    assert isinstance(row['variations'], list)
 
     # Verify non-JSON fields remain as strings
-    assert isinstance(normalized['title'], str)
-    assert normalized['title'] == "Test Scenario - JSON Serialization"
-    assert isinstance(normalized['category'], str)
-    assert normalized['category'] == "חפץ חשוד"
+    assert row['title'] == "Test Scenario - JSON Serialization"
+    assert row['category'] == "חפץ חשוד"
 
 
 def test_insert_scenario_duplicate_title(temp_db_path, monkeypatch):
@@ -291,17 +280,15 @@ def test_insert_scenario_duplicate_title(temp_db_path, monkeypatch):
     monkeypatch.setenv("TABLE_NAME", "scenarios")
 
     import sys
-    for mod in ['config', 'config_trinity', 'tatlam.infra.db', 'tatlam.infra.repo']:
-        if mod in sys.modules:
+    for mod in list(sys.modules.keys()):
+        if mod.startswith("tatlam.infra") or mod in ['tatlam.settings']:
             del sys.modules[mod]
 
-    from tatlam.infra.db import get_db
+    from tatlam.infra.db import init_db_sqlalchemy
     from tatlam.infra.repo import insert_scenario
 
     # Initialize schema
-    con = get_db()
-    init_test_schema(con, table_name="scenarios")
-    con.close()
+    init_db_sqlalchemy()
 
     # Insert first scenario
     scenario1 = {
@@ -454,48 +441,35 @@ def test_json_fields_empty_handling(temp_db_path, monkeypatch):
     """
     Test that normalize_row correctly handles empty/null JSON fields.
     """
+    monkeypatch.setenv("DB_PATH", temp_db_path)
+
+    import sys
+    for mod in list(sys.modules.keys()):
+        if mod.startswith("tatlam.infra") or mod in ['tatlam.settings']:
+            del sys.modules[mod]
     from tatlam.settings import get_settings
     get_settings.cache_clear()
 
-    monkeypatch.setenv("DB_PATH", temp_db_path)
-    monkeypatch.setenv("TABLE_NAME", "scenarios")
+    from tatlam.infra.db import init_db_sqlalchemy
+    from tatlam.infra.repo import insert_scenario, fetch_one
 
-    import sys
-    for mod in ['tatlam.settings', 'tatlam.infra.db', 'tatlam.infra.repo']:
-        if mod in sys.modules:
-            del sys.modules[mod]
-
-    # Re-import to pick up new env vars
-    from tatlam.settings import get_settings as get_new_settings
-    get_new_settings.cache_clear()
-
-    from tatlam.infra.db import get_db
-    from tatlam.infra.repo import insert_scenario, normalize_row
-
-    con = get_db()
-    init_test_schema(con, table_name="scenarios")
-    con.close()
+    init_db_sqlalchemy()
 
     # Scenario with minimal fields (no steps, etc.)
     minimal_scenario = {
         "title": "Minimal Scenario",
-        "category": "חפץ חשוד"  # Valid category
+        "category": "חפץ חשוד"
     }
 
     scenario_id = insert_scenario(minimal_scenario, owner="test")
 
-    con = get_db()
-    cur = con.cursor()
-    cur.execute("SELECT * FROM scenarios WHERE id = ?", (scenario_id,))
-    row = cur.fetchone()
-    con.close()
+    # Read back
+    row = fetch_one(scenario_id)
 
-    normalized = normalize_row(row)
-
-    # Empty JSON fields should be empty lists, not strings or None
-    assert normalized['steps'] == []
-    assert normalized['required_response'] == []
-    assert normalized['debrief_points'] == []
+    # Empty JSON fields should be empty lists (handled by model defaults and to_dict)
+    assert row['steps'] == []
+    assert row['required_response'] == []
+    assert row['debrief_points'] == []
 
 
 if __name__ == "__main__":

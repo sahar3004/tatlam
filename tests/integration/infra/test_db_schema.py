@@ -62,9 +62,9 @@ class TestDatabaseSchema:
         # Insert Hebrew text
         hebrew_text = "בדיקת עברית מלאה עם ניקוד: שָׁלוֹם"
         cursor.execute("""
-            INSERT INTO scenarios (title, category, steps)
-            VALUES (?, ?, ?)
-        """, (hebrew_text, "פיגועים פשוטים", "[]"))  # Valid CATS category
+            INSERT INTO scenarios (title, category, steps, bundle_id, external_id)
+            VALUES (?, ?, ?, ?, ?)
+        """, (hebrew_text, "פיגועים פשוטים", "[]", "bundle-1", "ext-1"))  # Valid CATS category
 
         # Retrieve it back
         cursor.execute("SELECT title FROM scenarios WHERE id = last_insert_rowid()")
@@ -86,9 +86,9 @@ class TestDatabaseSchema:
         steps_json = json.dumps(steps_data, ensure_ascii=False)
 
         cursor.execute("""
-            INSERT INTO scenarios (title, category, steps)
-            VALUES (?, ?, ?)
-        """, ("כותרת בדיקה json", "פיגועים פשוטים", steps_json))  # Valid CATS category
+            INSERT INTO scenarios (title, category, steps, bundle_id, external_id)
+            VALUES (?, ?, ?, ?, ?)
+        """, ("כותרת בדיקה json", "פיגועים פשוטים", steps_json, "bundle-1", "ext-1"))  # Valid CATS category
 
         cursor.execute("SELECT steps FROM scenarios WHERE id = last_insert_rowid()")
         result = cursor.fetchone()
@@ -107,9 +107,9 @@ class TestDatabaseSchema:
         # Try inserting minimal record
         try:
             cursor.execute("""
-                INSERT INTO scenarios (title, category, steps)
-                VALUES (?, ?, ?)
-            """, ("כותרת nullable", "פיגועים פשוטים", "[]"))  # Valid CATS category
+                INSERT INTO scenarios (title, category, steps, bundle_id, external_id)
+                VALUES (?, ?, ?, ?, ?)
+            """, ("כותרת nullable", "פיגועים פשוטים", "[]", "bundle-1", "ext-1"))  # Valid CATS category
             in_memory_db.commit()
             success = True
         except sqlite3.IntegrityError:
@@ -124,9 +124,9 @@ class TestDatabaseSchema:
         # Insert various Unicode characters
         unicode_test = "עברית + English + 中文 + 🔥 Emoji"
         cursor.execute("""
-            INSERT INTO scenarios (title, category, steps)
-            VALUES (?, ?, ?)
-        """, (unicode_test, "פיגועים פשוטים", "[]"))  # Valid CATS category
+            INSERT INTO scenarios (title, category, steps, bundle_id, external_id)
+            VALUES (?, ?, ?, ?, ?)
+        """, (unicode_test, "פיגועים פשוטים", "[]", "bundle-1", "ext-1"))  # Valid CATS category
 
         cursor.execute("SELECT title FROM scenarios WHERE id = last_insert_rowid()")
         result = cursor.fetchone()
@@ -134,11 +134,11 @@ class TestDatabaseSchema:
         assert result[0] == unicode_test
 
     def test_init_db_is_idempotent(self, in_memory_db):
-        """Test that calling init_db multiple times is safe."""
-        from tatlam.infra.db import init_db
+        """Test that calling init_db_sqlalchemy multiple times is safe."""
+        from tatlam.infra.db import init_db_sqlalchemy
 
-        # Call init_db again
-        init_db()
+        # Call init_db_sqlalchemy again
+        init_db_sqlalchemy()
 
         # Should not crash, table should still exist
         cursor = in_memory_db.cursor()

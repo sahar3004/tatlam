@@ -5,7 +5,7 @@ import logging
 import os
 import pathlib
 import re
-import sqlite3
+
 import time
 from datetime import datetime
 from functools import partial
@@ -35,12 +35,8 @@ LOCAL_MODEL = _settings.LOCAL_MODEL
 SIM_THRESHOLD = _settings.SIM_THRESHOLD
 TABLE_NAME = _settings.TABLE_NAME
 VALIDATOR_MODEL = _settings.VALIDATOR_MODEL
-from tatlam.core.bundles import coerce_bundle_shape
-from tatlam.core.prompts import load_system_prompt, memory_addendum
-from tatlam.core.validators import build_validator_prompt
-from tatlam.infra.repo import insert_scenario
-from tatlam.infra.db import get_db, init_db, get_session
-from tatlam.infra.models import Scenario
+from tatlam.infra.db import get_session, init_db_sqlalchemy
+from tatlam.infra.models import Scenario, ScenarioEmbedding
 
 configure_logging()
 
@@ -49,10 +45,51 @@ def ensure_db() -> None:
     """Ensure the database schema exists.
 
     This function is idempotent - it can be called multiple times safely.
-    Uses the init_db function from tatlam.infra.db which creates the
-    scenarios table if it doesn't exist.
+    Uses SQLAlchemy initialization.
     """
-    init_db()
+    init_db_sqlalchemy()
+
+# ... (skip insert_bundle as it uses insert_scenario which is already pure repo)
+
+# ...
+
+def load_all_embeddings():
+    """Load all embeddings from DB used for duplicate detection."""
+    titles, vecs = [], []
+    try:
+        with get_session() as session:
+            stmt = select(ScenarioEmbedding.title, ScenarioEmbedding.vector_json)
+            for title, vjson in session.execute(stmt):
+                if not title or not vjson:
+                    continue
+                try:
+                    vec = np.array(json.loads(vjson), dtype=np.float32)
+                    if vec.size:
+                        titles.append(title)
+                        vecs.append(vec)
+                except Exception as exc:
+                    LOGGER.debug("embedding parse failed for %s: %s", title, exc)
+    except Exception as exc:
+        LOGGER.warning("Failed to load embeddings: %s", exc)
+        return [], []
+        
+    return titles, vecs
+
+
+def save_embedding(title: str, vec: np.ndarray):
+    """Save or update an embedding."""
+    try:
+        with get_session() as session:
+            # Use merge logic (upsert)
+            emb = session.get(ScenarioEmbedding, title)
+            if not emb:
+                emb = ScenarioEmbedding(title=title, vector_json=json.dumps(vec.tolist()))
+                session.add(emb)
+            else:
+                emb.vector_json = json.dumps(vec.tolist())
+            session.commit()
+    except Exception as e:
+        LOGGER.warning("Failed to save embedding for '%s': %s", title, e)
 
 
 def insert_bundle(bundle: dict, owner: str = "web", approved_by: str = "") -> dict:
@@ -99,43 +136,7 @@ def _dbg(name: str, obj):
     )
 
 
-def strip_markdown_and_parse_json(text: str) -> dict | list | None:
-    """
-    Secure JSON parser that strips markdown code blocks before parsing.
-
-    Security: Uses only json.loads() without regex extraction to prevent
-    injection vulnerabilities. Handles LLM responses that may contain:
-    - Markdown code blocks: ```json ... ``` or ``` ... ```
-    - Plain JSON objects or arrays
-
-    Returns:
-        Parsed JSON object (dict or list) or None if parsing fails
-    """
-    if not text:
-        return None
-
-    # Step 1: Strip markdown code blocks
-    # Pattern matches: ```json\n{...}\n``` or ```\n{...}\n```
-    cleaned = text.strip()
-
-    # Remove opening markdown fence with optional language specifier
-    if cleaned.startswith("```"):
-        # Find the end of the first line (language specifier)
-        first_line_end = cleaned.find("\n")
-        if first_line_end != -1:
-            cleaned = cleaned[first_line_end + 1:]
-
-    # Remove closing markdown fence
-    if cleaned.endswith("```"):
-        cleaned = cleaned[:-3].strip()
-
-    # Step 2: Try direct JSON parsing (secure - no regex)
-    try:
-        return json.loads(cleaned)
-    except json.JSONDecodeError as e:
-        LOGGER.debug("JSON parsing failed: %s", e)
-        return None
-
+from tatlam.core.utils import strip_markdown_and_parse_json
 
 @retry(
     stop=stop_after_attempt(5),

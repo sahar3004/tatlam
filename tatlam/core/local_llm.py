@@ -37,12 +37,27 @@ class LocalQwenProvider:
     def generate(self, prompt: str, max_tokens: int = 512, temperature: float = 0.7) -> str:
         """
         Generate text completion for the given prompt.
+        Uses the full Trinity system prompt from system_prompt_he.txt.
         """
         start_t = time.time()
         
-        # Qwen2.5 instruct format
+        # Load the full Trinity doctrine system prompt
+        from tatlam.core.doctrine import load_prompt
+        try:
+            system_prompt = load_prompt()
+        except FileNotFoundError:
+            # Fallback to Hebrew-only instruction if file not found
+            system_prompt = (
+                "אתה עוזר AI מועיל שעונה תמיד בעברית בלבד.\n"
+                "כל תשובותיך חייבות להיות בעברית תקנית וברורה.\n"
+                "אל תערבב שפות - השתמש רק בעברית."
+            )
+        
+        # Qwen2.5 instruct format with Trinity system prompt
         formatted_prompt = (
-            "<|im_start|>system\nYou are a helpful assistant.\n<|im_end|>\n"
+            "<|im_start|>system\n"
+            f"{system_prompt}\n"
+            "<|im_end|>\n"
             f"<|im_start|>user\n{prompt}<|im_end|>\n"
             "<|im_start|>assistant\n"
         )

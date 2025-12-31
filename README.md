@@ -38,8 +38,7 @@ Three-model AI system for scenario generation:
 6. אפשר גם להשתמש בפקודות Make: `make dev`
 
 ## הרצה
-- לחיצה כפולה ב‑Finder: `start_flask.command` (מקים venv, מתקין תלויות במידת הצורך, ומעלה Flask)
-- Flask דרך CLI: `./scripts/start_flask.sh` או `make run`
+- ממשק משתמש (Streamlit): `./start_ui.sh`
 - מודל מקומי (llama.cpp): `./scripts/start_local_llm.sh` או לחיצה כפולה `start_local_llm.command`
 - באצ' יצירת תטל"מים: `python run_batch.py --category "כבודה עזובה / חפץ חשוד / מטען"`
 - ייצוא JSON: `python export_json.py --category "כבודה עזובה / חפץ חשוד / מטען" --out out.json`

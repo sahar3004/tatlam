@@ -30,7 +30,7 @@ fi
 
 MODEL_ALIAS="${MODEL_ALIAS:-llama-3.3-70b-instruct}"
 HOST="${HOST:-0.0.0.0}"
-PORT="${PORT:-${LOCAL_PORT:-8000}}"
+PORT="${PORT:-${LOCAL_PORT:-8080}}"
 N_CTX="${N_CTX:-8192}"
 N_GPU_LAYERS="${N_GPU_LAYERS:--1}"
 N_PARALLEL="${N_PARALLEL:-8}"
@@ -48,13 +48,14 @@ detect_metal_support() {
     if [[ "$(uname -s)" == "Darwin" && "$(uname -m)" == "arm64" ]]; then
         echo "✅ Apple Silicon detected (M-series chip)"
 
-        # Check if llama-cpp-python has Metal support
-        if python3 -c "import llama_cpp; print(getattr(llama_cpp.llama_cpp, 'GGML_USE_METAL', False))" 2>/dev/null | grep -q "True"; then
-            echo "✅ Metal GPU support is enabled"
+        # Check if llama-cpp-python is installed and can import successfully
+        # Modern versions have Metal compiled in by default on Apple Silicon
+        if python3 -c "import llama_cpp" 2>/dev/null; then
+            echo "✅ llama-cpp-python is installed (Metal support built-in on Apple Silicon)"
             return 0
         else
-            echo "⚠️  Metal GPU support NOT detected in llama-cpp-python"
-            echo "   Reinstalling with Metal support..."
+            echo "⚠️  llama-cpp-python not found or broken"
+            echo "   Installing with Metal support..."
             install_metal_support
             return $?
         fi

@@ -7,7 +7,7 @@ from tatlam.core.brain import (
     SimulatorUnavailableError,
     APICallError
 )
-from tatlam.core.batch_logic import strip_markdown_and_parse_json
+from tatlam.core.utils import strip_markdown_and_parse_json
 
 class TestGapFillers:
     """

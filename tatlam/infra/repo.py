@@ -1,8 +1,7 @@
 """Repository layer for scenario data access.
 
-This module provides both SQLAlchemy ORM-based and legacy sqlite3-based
-data access patterns. All public functions return dictionaries for
-backward compatibility with existing code.
+This module provides SQLAlchemy ORM-based data access patterns.
+All public functions return dictionaries for backward compatibility with existing code.
 
 The migration to SQLAlchemy provides:
 - Type-safe ORM models
@@ -100,9 +99,9 @@ def _parse_json_field(val: Any) -> list[Any] | dict[str, Any]:
 
 
 def normalize_row(row: Any) -> dict[str, Any]:
-    """Normalize a row (from sqlite3 or SQLAlchemy) to a dictionary.
+    """Normalize a row (from SQLAlchemy) to a dictionary.
 
-    Handles both sqlite3.Row objects and Scenario ORM instances.
+    Handles Scenario ORM instances and dict-like objects.
     JSON fields are automatically parsed.
     """
     # Handle SQLAlchemy Scenario model
@@ -192,16 +191,15 @@ def fetch_all(limit: int | None = None, offset: int | None = None) -> list[dict[
 def fetch_count(where_sql: str = "", params: tuple[Any, ...] = ()) -> int:
     """Count scenarios matching optional filter criteria.
 
-    Note: The where_sql parameter is kept for backward compatibility but
-    is not used with the SQLAlchemy implementation. Use SQLAlchemy
-    filters directly for new code.
+    Note: The `where_sql` and `params` arguments are legacy artifacts and are ignored
+    in this implementation.
 
     Parameters
     ----------
     where_sql : str
-        Legacy SQL WHERE clause (ignored in SQLAlchemy mode).
+        Ignored.
     params : tuple[Any, ...]
-        Legacy SQL parameters (ignored in SQLAlchemy mode).
+        Ignored.
 
     Returns
     -------

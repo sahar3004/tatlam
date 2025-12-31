@@ -236,13 +236,8 @@ TRINITY_DOCTRINE = {
 def get_system_prompt(role: str) -> str:
     """
     בונה את הנחיית המערכת (System Prompt) באופן דינמי מתוך הדוקטרינה.
+    עבור simulator משתמש ב-system_prompt_he.txt המלא.
     """
-    base = (
-        "אתה חלק ממערכת 'תתל\"מ Trinity' לאימון ביטחוני.\n"
-        "עליך לפעול אך ורק לפי 'תורת ההפעלה' (Doctrine) המוגדרת להלן.\n"
-        "כל חריגה מהנהלים, המשקלים או הסמכויות תחשב לכישלון.\n\n"
-    )
-
     # Critical language guardrails to prevent hallucinations
     language_guard = (
         "\n\n*** הנחיות קריטיות לשפה (CRITICAL LANGUAGE INSTRUCTIONS) ***\n"
@@ -250,6 +245,21 @@ def get_system_prompt(role: str) -> str:
         "2. אין להשתמש בסינית, ערבית, גרמנית או כל שפה אחרת.\n"
         "3. גם אם יש מונחים באנגלית בהנחיות, התשובה שלך חייבת להיות בעברית מלאה.\n"
         "4. שמור על דמות אמינה ומקצועית."
+    )
+
+    # For simulator, use the full system_prompt_he.txt
+    if role == "simulator":
+        try:
+            full_prompt = load_prompt()
+            return full_prompt + language_guard
+        except FileNotFoundError:
+            # Fallback to dynamic prompt if file not found
+            pass
+
+    base = (
+        "אתה חלק ממערכת 'תתל\"מ Trinity' לאימון ביטחוני.\n"
+        "עליך לפעול אך ורק לפי 'תורת ההפעלה' (Doctrine) המוגדרת להלן.\n"
+        "כל חריגה מהנהלים, המשקלים או הסמכויות תחשב לכישלון.\n\n"
     )
 
     if role == "writer":
@@ -275,6 +285,7 @@ def get_system_prompt(role: str) -> str:
         """ + language_guard
 
     elif role == "simulator":
+        # Fallback if load_prompt() failed
         return base + f"""
         תפקידך: הסימולטור (היריב/האזרח).
         עליך לגלם דמויות הפועלות לפי הפרופילים ב-Threat Matrix:
