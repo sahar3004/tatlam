@@ -33,6 +33,14 @@ from tatlam.settings import get_settings
 
 logger = logging.getLogger(__name__)
 
+# ==== Iron Dome Configuration ====
+# These constants define the "Iron Dome" gatekeeper behavior:
+# - No scenario passes to user unless score >= IRON_DOME_THRESHOLD
+# - Auto-repair attempts before giving up
+
+IRON_DOME_THRESHOLD = 70  # Minimum score to pass Iron Dome and reach user
+MAX_AUTO_REPAIR_ATTEMPTS = 3  # Maximum auto-repair cycles before human escalation
+
 
 def _build_judge_rubric() -> str:
     """
@@ -255,7 +263,7 @@ def judge_node(state: SwarmState) -> SwarmState:
         try:
             llm_score, llm_critique = _score_with_llm(candidate.data, rubric)
         except Exception as e:
-            logger.warning("LLM scoring failed: %s, using doctrine score", e)
+            logger.warning("LLM scoring failed: %s, using doctrine score", e, exc_info=True)
             state.metrics.llm_errors += 1
             llm_score = doctrine_score
             llm_critique = (
@@ -275,19 +283,21 @@ def judge_node(state: SwarmState) -> SwarmState:
         candidate.add_feedback(full_critique, final_score)
         scores.append(final_score)
 
-        # Decision: approve or reject
-        if final_score >= state.score_threshold:
-            candidate.status = ScenarioStatus.APPROVED
+        # Decision: approve or reject (Iron Dome Gatekeeper)
+        # Using IRON_DOME_THRESHOLD for consistent gatekeeper behavior
+        if final_score >= IRON_DOME_THRESHOLD:
+            candidate.status = ScenarioStatus.JUDGE_APPROVED
             state.metrics.total_approved += 1
-            logger.info("Approved: %s (score=%.1f)", candidate.title, final_score)
+            logger.info("Judge Approved (Iron Dome): %s (score=%.1f >= %d)", 
+                       candidate.title, final_score, IRON_DOME_THRESHOLD)
         else:
             candidate.status = ScenarioStatus.REJECTED
             state.metrics.total_rejected += 1
             logger.debug(
-                "Rejected: %s (score=%.1f < %.1f)",
+                "Rejected (Iron Dome): %s (score=%.1f < %d)",
                 candidate.title,
                 final_score,
-                state.score_threshold,
+                IRON_DOME_THRESHOLD,
             )
 
     # Update score statistics
@@ -304,4 +314,4 @@ def judge_node(state: SwarmState) -> SwarmState:
     return state
 
 
-__all__ = ["judge_node"]
+__all__ = ["judge_node", "IRON_DOME_THRESHOLD", "MAX_AUTO_REPAIR_ATTEMPTS"]

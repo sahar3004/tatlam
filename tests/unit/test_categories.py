@@ -23,7 +23,7 @@ class TestCategories:
         for key in CATS.keys():
             assert isinstance(key, str)
             # Slugs should be lowercase ASCII with hyphens
-            assert key.islower() or '-' in key, f"Category key '{key}' is not a valid slug"
+            assert key.islower() or "-" in key, f"Category key '{key}' is not a valid slug"
 
     def test_cats_values_are_dictionaries(self):
         """Verify all category values are dictionaries with title and aliases."""
@@ -36,7 +36,7 @@ class TestCategories:
         """Verify all category titles contain Hebrew text."""
         for key, meta in CATS.items():
             title = meta.get("title", "")
-            has_hebrew = any('\u0590' <= char <= '\u05FF' for char in title)
+            has_hebrew = any("\u0590" <= char <= "\u05FF" for char in title)
             assert has_hebrew, f"Category '{key}' title '{title}' does not contain Hebrew"
 
     def test_cats_no_empty_titles(self):
@@ -50,7 +50,7 @@ class TestCategories:
         expected_slugs = [
             "piguim-peshutim",  # Simple attacks
             "chefetz-chashud",  # Suspicious object
-            "uncategorized",    # Uncategorized
+            "uncategorized",  # Uncategorized
         ]
 
         for expected in expected_slugs:

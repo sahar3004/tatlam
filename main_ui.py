@@ -398,62 +398,101 @@ def generate_scenario_view() -> None:
         
         # Container for the result to give it visual weight
         with st.container(border=True):
-            # Toolbar
-            col_actions, col_copy = st.columns([3, 1])
+            # Toolbar with enhanced three-action feedback
+            st.markdown("#### 🎯 פעולות משתמש (RLHF)")
             
-            with col_actions:
-                c1, c2, c3 = st.columns(3, gap="small")
-                with c1:
-                    if st.button("💾 שמור למאגר", use_container_width=True, help="שמור את התרחיש לארכיון המבצעי"):
-                        with st.spinner("שומר..."):
-                            success, message = save_scenario(st.session_state.last_scenario)
-                            if success:
-                                st.success("נשמר בהצלחה!")
-                                st.balloons()
-                            else:
-                                st.error(message)
-
-                with c2:
-                    # Rejection with Popover (Streamlit 1.30+)
-                    with st.popover("❌ דחה (ללמידה)", use_container_width=True, help="סמן כשגוי ותעד סיבה לשיפור המודל"):
-                        st.markdown("##### 🗑️ דחיית תרחיש")
-                        reason = st.text_input("סיבת הדחייה:", placeholder="לדוגמה: לא תואם דוקטרינה, מסוכן מדי...")
-                        if st.button("אשר דחייה", type="primary", use_container_width=True):
-                            if reason.strip():
-                                # We need an ID to reject. If it wasn't saved yet, we act as if we reject the 'concept'.
-                                # But for the 'learning loop', we probably want to save it with status='rejected'.
-                                # So, let's save it strictly as rejected.
-                                try:
-                                    # Reuse save logic but force status
-                                    data = parse_md_to_scenario(st.session_state.last_scenario)
-                                    # Insert as rejected directly via repo
-                                    from tatlam.infra.repo import get_repository
-                                    repo = get_repository()
-                                    # We simulate saving then updating, or just insert with a special flag if we had one.
-                                    # Since insert_scenario defaults to pending, let's just insert then reject.
-                                    # Optimization: Modify insert_scenario later to accept initial status, 
-                                    # but for now "surgical" means use the tool we built.
-                                    
-                                    # 1. Insert (if not exists, or get ID) -> Wait, if we haven't saved, we don't have an ID.
-                                    # We should save it as a "Rejected Candidate".
-                                    # Let's use internal repo insert logic but manually.
-                                    # Or simpler:
-                                    row_id = repo.insert_scenario(data, pending=True) # Insert first
-                                    _reject_scenario_handler(row_id, reason) # Then reject immediately
-                                    
-                                except Exception as e:
-                                    st.error(f"שגיאה: {e}")
-                            else:
-                                st.warning("נא לכתוב סיבה.")
-
-                with c3:
-                    st.download_button(
-                        "⬇️ קובץ להורדה",
-                        data=st.session_state.last_scenario,
-                        file_name=f"scenario_{datetime.now().strftime('%Y%m%d_%H%M')}.md",
-                        mime="text/markdown",
-                        use_container_width=True
+            action_cols = st.columns([1, 1, 1, 1])
+            
+            # Action 1: Approve (Hall of Fame)
+            with action_cols[0]:
+                if st.button("✅ אישור סופי", use_container_width=True, type="primary",
+                           help="שמור לארכיון ולהיכל התהילה (Few-Shot Learning)"):
+                    with st.spinner("שומר ומאשר..."):
+                        try:
+                            data = parse_md_to_scenario(st.session_state.last_scenario)
+                            row_id = insert_scenario(data, owner="streamlit", pending=False)
+                            
+                            # Add to Hall of Fame for learning
+                            from tatlam.infra.repo import add_to_hall_of_fame
+                            judge_score = st.session_state.get("judge_score", 85.0)
+                            add_to_hall_of_fame(row_id, data, judge_score)
+                            
+                            st.success(f"✅ אושר ונשמר להיכל התהילה! ID: {row_id}")
+                            st.balloons()
+                            
+                            # Clear session state
+                            if "last_scenario" in st.session_state:
+                                del st.session_state.last_scenario
+                            if "audit_result" in st.session_state:
+                                del st.session_state.audit_result
+                            st.rerun()
+                            
+                        except Exception as e:
+                            st.error(f"שגיאה באישור: {e}")
+            
+            # Action 2: Request Revision
+            with action_cols[1]:
+                with st.popover("🛠️ בקש תיקון", use_container_width=True,
+                              help="ציין מה לתקן - המערכת תייצר גרסה מתוקנת"):
+                    st.markdown("##### 🔧 בקשת תיקון")
+                    
+                    revision_notes = st.text_area(
+                        "מה לתקן?",
+                        placeholder="לדוגמה: הרקע ארוך מדי, השלבים לא ברורים...",
+                        height=100,
+                        key="revision_notes_input"
                     )
+                    
+                    sections_to_revise = st.multiselect(
+                        "בחר סעיפים לתיקון (אופציונלי)",
+                        options=["רקע", "שלבים", "נקודות הכרעה", "תנאי הסלמה", "לקחים"],
+                        key="sections_to_revise"
+                    )
+                    
+                    if st.button("🚀 שלח לתיקון", type="primary", use_container_width=True):
+                        if revision_notes.strip():
+                            _handle_revision_request(
+                                brain,
+                                st.session_state.last_scenario,
+                                revision_notes,
+                                sections_to_revise
+                            )
+                        else:
+                            st.warning("נא לכתוב מה לתקן.")
+            
+            # Action 3: Hard Reject (Graveyard)
+            with action_cols[2]:
+                with st.popover("🗑️ דחייה מוחלטת", use_container_width=True,
+                              help="סמן כשגוי - חובה לתת סיבה (ללמידת המערכת)"):
+                    st.markdown("##### ❌ דחיית תרחיש")
+                    st.warning("⚠️ סיבת הדחייה היא **חובה** כדי שהמערכת תלמד!")
+                    
+                    rejection_reason = st.text_area(
+                        "סיבת הדחייה:",
+                        placeholder="לדוגמה: לא תואם דוקטרינה, יקר מדי, תאריכים שגויים...",
+                        height=100,
+                        key="rejection_reason_input"
+                    )
+                    
+                    if st.button("❌ אשר דחייה", type="primary", use_container_width=True):
+                        if rejection_reason.strip():
+                            _handle_rejection(
+                                st.session_state.last_scenario,
+                                rejection_reason,
+                                st.session_state.get("audit_result", "")
+                            )
+                        else:
+                            st.error("🚫 חובה לתת סיבת דחייה!")
+            
+            # Action 4: Download
+            with action_cols[3]:
+                st.download_button(
+                    "⬇️ הורדה",
+                    data=st.session_state.last_scenario,
+                    file_name=f"scenario_{datetime.now().strftime('%Y%m%d_%H%M')}.md",
+                    mime="text/markdown",
+                    use_container_width=True
+                )
 
             # Display Audit Result if it exists
             if "audit_result" in st.session_state:
@@ -469,14 +508,120 @@ def generate_scenario_view() -> None:
             st.markdown(st.session_state.last_scenario)
 
 
+def _handle_revision_request(brain: TrinityBrain, scenario_text: str, notes: str, sections: list[str]):
+    """Handle revision request with targeted regeneration."""
+    from tatlam.core.prompts import get_prompt_manager
+    from tatlam.infra.repo import get_graveyard_patterns
+    
+    try:
+        # Parse the current scenario
+        data = parse_md_to_scenario(scenario_text)
+        
+        # Get pitfalls from Graveyard
+        category = data.get("category", "")
+        pitfalls = get_graveyard_patterns(category=category, limit=3)
+        
+        # Map Hebrew section names to English field names
+        section_map = {
+            "רקע": "background",
+            "שלבים": "steps",
+            "נקודות הכרעה": "decision_points",
+            "תנאי הסלמה": "escalation_conditions",
+            "לקחים": "lessons_learned"
+        }
+        english_sections = [section_map.get(s, s) for s in sections]
+        
+        # Build revision prompt
+        prompts = get_prompt_manager()
+        revision_prompt = prompts.format_revision_prompt(
+            original_scenario=data,
+            user_feedback=notes,
+            revision_sections=english_sections if english_sections else None,
+            graveyard_pitfalls=pitfalls if pitfalls else None
+        )
+        
+        st.info("🔄 מייצר גרסה מתוקנת...")
+        
+        # Regenerate with revision prompt
+        with st.spinner("המוח מתקן את התרחיש..."):
+            venue = "jaffa" if "עילי" in scenario_text or "יפו" in scenario_text else "allenby"
+            full_response = ""
+            scenario_placeholder = st.empty()
+            
+            stream = brain.generate_scenario_stream(revision_prompt, venue=venue)
+            for chunk in stream:
+                full_response += chunk
+                scenario_placeholder.markdown(full_response + "▌")
+            
+            scenario_placeholder.markdown(full_response)
+            st.session_state.last_scenario = full_response
+            st.session_state.revision_applied = True
+        
+        st.success("✅ התרחיש עודכן!")
+        st.rerun()
+        
+    except Exception as e:
+        st.error(f"שגיאה בתיקון: {e}")
+
+
+def _handle_rejection(scenario_text: str, reason: str, judge_critique: str):
+    """Handle hard rejection with Graveyard learning."""
+    from tatlam.infra.repo import get_repository, add_to_graveyard
+    
+    try:
+        # Parse scenario
+        data = parse_md_to_scenario(scenario_text)
+        
+        # Insert as rejected
+        repo = get_repository()
+        row_id = repo.insert_scenario(data, pending=True)
+        
+        # Update status to rejected
+        repo.reject_scenario(row_id, reason)
+        
+        # Add to Graveyard for learning
+        add_to_graveyard(
+            scenario_id=row_id,
+            scenario_data=data,
+            reason=reason,
+            judge_critique=judge_critique
+        )
+        
+        st.toast(f"📚 התרחיש נשמר ל-Graveyard ללמידה. סיבה: {reason[:50]}...")
+        
+        # Clear session state
+        if "last_scenario" in st.session_state:
+            del st.session_state.last_scenario
+        if "audit_result" in st.session_state:
+            del st.session_state.audit_result
+        
+        st.rerun()
+        
+    except Exception as e:
+        st.error(f"שגיאה בדחייה: {e}")
+
+
 def _execute_generation(brain: TrinityBrain, prompt: str, venue_context: str = "allenby"):
     """Internal helper to execute generation and handle state."""
+    from tatlam.core.prompts import get_prompt_manager
+    from tatlam.infra.repo import get_learning_context
+    
     logger.info(f"Generating scenario with prompt: {prompt[:100]}... Context: {venue_context}")
     
     st.markdown("---")
     st.subheader("🔄 מעבד נתונים...")
     
     try:
+        # Enhance prompt with learning context
+        prompts = get_prompt_manager()
+        learning = get_learning_context(category=None)  # Get general learning
+        
+        enhanced_prompt = prompts.format_learning_enhanced_prompt(
+            base_prompt=prompt,
+            positive_examples=learning.get("positive_examples", []),
+            negative_patterns=learning.get("negative_patterns", [])
+        )
+        
         # Stream the generation
         scenario_placeholder = st.empty()
         full_response = ""
@@ -484,7 +629,7 @@ def _execute_generation(brain: TrinityBrain, prompt: str, venue_context: str = "
         # Use st.spinner for the initial connection delay
         with st.spinner("המוח חושב... (Trinity Brain Processing)"):
             # Pass venue context to ensure correct Doctrine is loaded
-            stream = brain.generate_scenario_stream(prompt, venue=venue_context)
+            stream = brain.generate_scenario_stream(enhanced_prompt, venue=venue_context)
             
             # Stream output chunks
             for chunk in stream:
@@ -505,10 +650,59 @@ def _execute_generation(brain: TrinityBrain, prompt: str, venue_context: str = "
                 st.write("מנתח עמידה בדוקטרינה...")
                 audit_result = brain.audit_scenario(full_response)
                 st.session_state.audit_result = audit_result
-                status.update(label="✅ הביקורת הושלמה בהצלחה!", state="complete", expanded=False)
+                
+                # Try to extract score from audit result for Hall of Fame
+                import re
+                score_match = re.search(r'(\d+)\s*/\s*100|ציון[:\s]+(\d+)', audit_result)
+                if score_match:
+                    st.session_state.judge_score = float(score_match.group(1) or score_match.group(2))
+                else:
+                    st.session_state.judge_score = 75.0  # Default
+                
+                # ==== IRON DOME GATEKEEPER ====
+                # Import threshold constant
+                from tatlam.graph.nodes.judge import IRON_DOME_THRESHOLD
+                
+                judge_score = st.session_state.judge_score
+                
+                if judge_score >= IRON_DOME_THRESHOLD:
+                    # PASSED Iron Dome - allow user to see scenario
+                    st.session_state.iron_dome_passed = True
+                    status.update(
+                        label=f"✅ עבר ביקורת (ציון: {judge_score:.0f} ≥ {IRON_DOME_THRESHOLD})",
+                        state="complete",
+                        expanded=False
+                    )
+                else:
+                    # BLOCKED by Iron Dome - scenario not ready for user
+                    st.session_state.iron_dome_passed = False
+                    status.update(
+                        label=f"🚫 נחסם (ציון: {judge_score:.0f} < {IRON_DOME_THRESHOLD})",
+                        state="error",
+                        expanded=True
+                    )
+                    st.error(f"""
+                    ⛔ **Iron Dome: התרחיש לא עבר סף אישור ({judge_score:.0f}/{IRON_DOME_THRESHOLD})**
+                    
+                    התרחיש לא יוצג עד שיעמוד בדרישות. ניתן:
+                    - לחץ על "נסה שוב" לייצר תרחיש חדש
+                    - או לבקש תיקון ידני
+                    """)
+                    
+                    # Store blocked scenario for potential manual override
+                    st.session_state.blocked_scenario = full_response
+                    st.session_state.last_scenario = None  # Block from display
+                    
+                    if st.button("🔄 נסה שוב", type="primary"):
+                        st.rerun()
+                    
+                    return  # Exit early - don't show blocked scenario
+                    
             except Exception as e:
                 logger.error(f"Audit failed: {e}")
                 st.session_state.audit_result = f"❌ כשל בביקורת: {e}"
+                st.session_state.judge_score = 50.0
+                st.session_state.iron_dome_passed = False
                 status.update(label="❌ הביקורת נכשלה", state="error")
 
         logger.info(f"Scenario generated and audited, length: {len(full_response)}")
@@ -519,7 +713,7 @@ def _execute_generation(brain: TrinityBrain, prompt: str, venue_context: str = "
 
 
 def _reject_scenario_handler(sid: int, reason: str):
-    """Handle scenario rejection."""
+    """Handle scenario rejection (legacy)."""
     from tatlam.infra.repo import get_repository
     repo = get_repository()
     
@@ -536,7 +730,7 @@ def _reject_scenario_handler(sid: int, reason: str):
 
 
 
-def get_db_scenarios(status_filter: str = "all") -> list[dict[str, Any]]:
+def get_db_scenarios(status_filter: str = "all") -> list[Any]:
     """
     Fetch scenarios from database with optional status filtering.
     Uses repo layer instead of raw SQL.
@@ -545,19 +739,19 @@ def get_db_scenarios(status_filter: str = "all") -> list[dict[str, Any]]:
         status_filter: "all", "pending", or "approved"
 
     Returns:
-        List of scenario dictionaries
+        List of ScenarioDTO objects
     """
-    from tatlam.infra.repo import fetch_all
+    from tatlam.infra.repo import fetch_all_dto
 
     try:
-        # Fetch all scenarios from repo (already normalized)
-        all_scenarios = fetch_all()
+        # Fetch all scenarios from repo as DTOs
+        all_scenarios = fetch_all_dto()
 
         # Filter by status if needed
         if status_filter == "pending":
-            return [s for s in all_scenarios if s.get("status") == "pending"]
+            return [s for s in all_scenarios if s.status == "pending"]
         elif status_filter == "approved":
-            return [s for s in all_scenarios if s.get("status") == "approved"]
+            return [s for s in all_scenarios if s.status == "approved"]
         else:
             # "all" - return everything
             return all_scenarios

@@ -4,472 +4,464 @@ cachedir: .pytest_cache
 hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase(PosixPath('/Users/sahar.miterani/tatlam/.hypothesis/examples'))
 rootdir: /Users/sahar.miterani/tatlam
 configfile: pytest.ini
-testpaths: tests
-plugins: cov-5.0.0, anyio-4.10.0, hypothesis-6.112.1
-[1mcollecting ... [0mcollected 299 items
+plugins: langsmith-0.5.2, cov-5.0.0, anyio-4.10.0, hypothesis-6.112.1
+[1mcollecting ... [0mcollected 423 items
 
 tests/integration/core/test_bundle_flow.py::TestBundleFlow::test_bundle_grouping_by_category [32mPASSED[0m[33m [  0%][0m
 tests/integration/core/test_bundle_flow.py::TestBundleFlow::test_bundle_mixed_threat_levels [32mPASSED[0m[33m [  0%][0m
-tests/integration/core/test_bundle_flow.py::TestBundleFlow::test_bundle_without_bundle_field [32mPASSED[0m[33m [  1%][0m
-tests/integration/core/test_bundle_flow.py::TestBundleFlow::test_bundle_export_structure [32mPASSED[0m[33m [  1%][0m
+tests/integration/core/test_bundle_flow.py::TestBundleFlow::test_bundle_without_bundle_field [32mPASSED[0m[33m [  0%][0m
+tests/integration/core/test_bundle_flow.py::TestBundleFlow::test_bundle_export_structure [32mPASSED[0m[33m [  0%][0m
 tests/integration/core/test_bundle_flow.py::TestBundleFlow::test_multiple_bundles_isolation [32mPASSED[0m[33m [  1%][0m
-tests/integration/core/test_export.py::TestExport::test_export_single_scenario [32mPASSED[0m[33m [  2%][0m
-tests/integration/core/test_export.py::TestExport::test_export_preserves_hebrew [32mPASSED[0m[33m [  2%][0m
-tests/integration/core/test_export.py::TestExport::test_export_multiple_scenarios [32mPASSED[0m[33m [  2%][0m
-tests/integration/core/test_export.py::TestExport::test_export_with_all_fields [32mPASSED[0m[33m [  3%][0m
-tests/integration/core/test_export.py::TestExport::test_export_steps_structure [32mPASSED[0m[33m [  3%][0m
-tests/integration/core/test_export.py::TestExport::test_export_by_category [32mPASSED[0m[33m [  3%][0m
-tests/integration/core/test_export.py::TestExport::test_export_by_bundle [32mPASSED[0m[33m [  4%][0m
-tests/integration/core/test_export.py::TestExport::test_export_empty_database [32mPASSED[0m[33m [  4%][0m
-tests/integration/core/test_export.py::TestExport::test_export_special_characters [32mPASSED[0m[33m [  4%][0m
-tests/integration/infra/test_db_schema.py::TestDatabaseSchema::test_init_db_creates_database [32mPASSED[0m[33m [  5%][0m
-tests/integration/infra/test_db_schema.py::TestDatabaseSchema::test_scenarios_table_exists [32mPASSED[0m[33m [  5%][0m
-tests/integration/infra/test_db_schema.py::TestDatabaseSchema::test_scenarios_table_schema [32mPASSED[0m[33m [  5%][0m
-tests/integration/infra/test_db_schema.py::TestDatabaseSchema::test_scenarios_table_has_primary_key [32mPASSED[0m[33m [  6%][0m
-tests/integration/infra/test_db_schema.py::TestDatabaseSchema::test_database_supports_hebrew [31mFAILED[0m[31m [  6%][0m
-tests/integration/infra/test_db_schema.py::TestDatabaseSchema::test_database_supports_json_fields [31mFAILED[0m[31m [  6%][0m
-tests/integration/infra/test_db_schema.py::TestDatabaseSchema::test_scenarios_table_nullable_fields [31mFAILED[0m[31m [  7%][0m
-tests/integration/infra/test_db_schema.py::TestDatabaseSchema::test_database_utf8_encoding [31mFAILED[0m[31m [  7%][0m
-tests/integration/infra/test_db_schema.py::TestDatabaseSchema::test_init_db_is_idempotent [32mPASSED[0m[31m [  7%][0m
-tests/integration/infra/test_migrations.py::TestDatabaseMigrations::test_migration_placeholder [32mPASSED[0m[31m [  8%][0m
-tests/integration/infra/test_migrations.py::TestDatabaseMigrations::test_schema_version_tracking [32mPASSED[0m[31m [  8%][0m
-tests/integration/infra/test_migrations.py::TestDatabaseMigrations::test_backward_compatibility [32mPASSED[0m[31m [  8%][0m
-tests/integration/infra/test_repo_crud.py::TestRepositoryCRUD::test_insert_scenario_basic [32mPASSED[0m[31m [  9%][0m
-tests/integration/infra/test_repo_crud.py::TestRepositoryCRUD::test_insert_scenario_with_hebrew [32mPASSED[0m[31m [  9%][0m
-tests/integration/infra/test_repo_crud.py::TestRepositoryCRUD::test_insert_scenario_preserves_json_structure [32mPASSED[0m[31m [  9%][0m
-tests/integration/infra/test_repo_crud.py::TestRepositoryCRUD::test_fetch_all_scenarios [32mPASSED[0m[31m [ 10%][0m
-tests/integration/infra/test_repo_crud.py::TestRepositoryCRUD::test_fetch_all_returns_normalized_rows [32mPASSED[0m[31m [ 10%][0m
-tests/integration/infra/test_repo_crud.py::TestRepositoryCRUD::test_fetch_all_preserves_hebrew [32mPASSED[0m[31m [ 10%][0m
-tests/integration/infra/test_repo_crud.py::TestRepositoryCRUD::test_insert_scenario_with_all_fields [32mPASSED[0m[31m [ 11%][0m
-tests/integration/infra/test_repo_crud.py::TestRepositoryCRUD::test_insert_multiple_scenarios_different_categories [32mPASSED[0m[31m [ 11%][0m
-tests/integration/infra/test_repo_crud.py::TestRepositoryCRUD::test_normalize_row_integration [32mPASSED[0m[31m [ 11%][0m
-tests/integration/infra/test_repo_crud.py::TestRepositoryCRUD::test_insert_scenario_returns_incrementing_ids [32mPASSED[0m[31m [ 12%][0m
-tests/integration/infra/test_repo_crud.py::TestRepositoryCRUD::test_fetch_all_empty_database [32mPASSED[0m[31m [ 12%][0m
-tests/llm_evals/test_alignment.py::TestDoctrine_AlignmentAlignment::test_threat_level_weapon_found [33mSKIPPED[0m[31m [ 12%][0m
-tests/llm_evals/test_alignment.py::TestDoctrine_AlignmentAlignment::test_threat_level_gun_found [33mSKIPPED[0m[31m [ 13%][0m
-tests/llm_evals/test_alignment.py::TestDoctrine_AlignmentAlignment::test_threat_level_suspicious_object [33mSKIPPED[0m[31m [ 13%][0m
-tests/llm_evals/test_alignment.py::TestDoctrine_AlignmentAlignment::test_threat_level_behavioral [33mSKIPPED[0m[31m [ 13%][0m
-tests/llm_evals/test_alignment.py::TestDoctrine_AlignmentAlignment::test_threat_level_routine [33mSKIPPED[0m[31m [ 14%][0m
-tests/llm_evals/test_alignment.py::TestDoctrine_AlignmentAlignment::test_category_alignment_all_scenarios [33mSKIPPED[0m[31m [ 14%][0m
-tests/llm_evals/test_hallucinations.py::TestHallucinations::test_consistent_category_names [33mSKIPPED[0m[31m [ 14%][0m
-tests/llm_evals/test_hallucinations.py::TestHallucinations::test_no_invented_fields [33mSKIPPED[0m[31m [ 15%][0m
-tests/llm_evals/test_hallucinations.py::TestHallucinations::test_difficulty_levels_consistent [33mSKIPPED[0m[31m [ 15%][0m
-tests/llm_evals/test_hallucinations.py::TestHallucinations::test_step_numbers_sequential [33mSKIPPED[0m[31m [ 15%][0m
-tests/llm_evals/test_hallucinations.py::TestHallucinations::test_no_duplicate_steps [33mSKIPPED[0m[31m [ 16%][0m
-tests/llm_evals/test_hallucinations.py::TestHallucinations::test_steps_not_empty [33mSKIPPED[0m[31m [ 16%][0m
-tests/llm_evals/test_hallucinations.py::TestHallucinations::test_no_contradictory_information [33mSKIPPED[0m[31m [ 16%][0m
-tests/llm_evals/test_hallucinations.py::TestHallucinations::test_category_matches_content [33mSKIPPED[0m[31m [ 17%][0m
-tests/llm_evals/test_hallucinations.py::TestHallucinations::test_realistic_scenario_flow [33mSKIPPED[0m[31m [ 17%][0m
-tests/llm_evals/test_hallucinations.py::TestHallucinations::test_no_fictional_app_names [33mSKIPPED[0m[31m [ 17%][0m
-tests/llm_evals/test_hallucinations.py::TestHallucinations::test_consistent_terminology [33mSKIPPED[0m[31m [ 18%][0m
-tests/llm_evals/test_hebrew_quality.py::TestHebrewQuality::test_hebrew_grammar_correctness [33mSKIPPED[0m[31m [ 18%][0m
-tests/llm_evals/test_hebrew_quality.py::TestHebrewQuality::test_hebrew_gender_agreement [33mSKIPPED[0m[31m [ 18%][0m
-tests/llm_evals/test_hebrew_quality.py::TestHebrewQuality::test_hebrew_nikud_consistency [33mSKIPPED[0m[31m [ 19%][0m
-tests/llm_evals/test_hebrew_quality.py::TestHebrewQuality::test_hebrew_formal_vs_informal_register [33mSKIPPED[0m[31m [ 19%][0m
-tests/llm_evals/test_hebrew_quality.py::TestHebrewQuality::test_hebrew_technical_terminology [33mSKIPPED[0m[31m [ 19%][0m
-tests/llm_evals/test_hebrew_quality.py::TestHebrewQuality::test_hebrew_rtl_formatting [33mSKIPPED[0m[31m [ 20%][0m
-tests/llm_evals/test_hebrew_quality.py::TestHebrewQuality::test_hebrew_punctuation_correctness [33mSKIPPED[0m[31m [ 20%][0m
-tests/llm_evals/test_hebrew_quality.py::TestHebrewQuality::test_hebrew_sentence_structure [33mSKIPPED[0m[31m [ 20%][0m
-tests/llm_evals/test_hebrew_quality.py::TestHebrewQuality::test_hebrew_cultural_appropriateness [33mSKIPPED[0m[31m [ 21%][0m
-tests/llm_evals/test_hebrew_quality.py::TestHebrewQuality::test_hebrew_consistency_across_scenarios [33mSKIPPED[0m[31m [ 21%][0m
-tests/llm_evals/test_hebrew_quality.py::TestHebrewQuality::test_hebrew_numbers_and_dates [33mSKIPPED[0m[31m [ 21%][0m
-tests/llm_evals/test_json_robustness.py::TestJSONRobustness::test_generates_valid_json [33mSKIPPED[0m[31m [ 22%][0m
-tests/llm_evals/test_json_robustness.py::TestJSONRobustness::test_json_with_hebrew_no_escaping_issues [33mSKIPPED[0m[31m [ 22%][0m
-tests/llm_evals/test_json_robustness.py::TestJSONRobustness::test_json_required_fields_always_present [33mSKIPPED[0m[31m [ 22%][0m
-tests/llm_evals/test_json_robustness.py::TestJSONRobustness::test_json_steps_array_structure [33mSKIPPED[0m[31m [ 23%][0m
-tests/llm_evals/test_json_robustness.py::TestJSONRobustness::test_json_no_trailing_commas [33mSKIPPED[0m[31m [ 23%][0m
-tests/llm_evals/test_json_robustness.py::TestJSONRobustness::test_json_proper_string_escaping [33mSKIPPED[0m[31m [ 23%][0m
-tests/llm_evals/test_json_robustness.py::TestJSONRobustness::test_json_handles_empty_arrays [33mSKIPPED[0m[31m [ 24%][0m
-tests/llm_evals/test_json_robustness.py::TestJSONRobustness::test_json_no_undefined_or_null_strings [33mSKIPPED[0m[31m [ 24%][0m
-tests/llm_evals/test_json_robustness.py::TestJSONRobustness::test_json_number_types_consistent [33mSKIPPED[0m[31m [ 24%][0m
-tests/llm_evals/test_json_robustness.py::TestJSONRobustness::test_json_boolean_types_not_strings [33mSKIPPED[0m[31m [ 25%][0m
-tests/llm_evals/test_json_robustness.py::TestJSONRobustness::test_json_schema_validation_passes [33mSKIPPED[0m[31m [ 25%][0m
-tests/llm_evals/test_json_robustness.py::TestJSONRobustness::test_json_encoding_utf8 [33mSKIPPED[0m[31m [ 25%][0m
-tests/llm_evals/test_prompt_injection.py::TestPromptInjection::test_ignore_previous_instructions [33mSKIPPED[0m[31m [ 26%][0m
-tests/llm_evals/test_prompt_injection.py::TestPromptInjection::test_role_reversal_attack [33mSKIPPED[0m[31m [ 26%][0m
-tests/llm_evals/test_prompt_injection.py::TestPromptInjection::test_delimiter_injection [33mSKIPPED[0m[31m [ 26%][0m
-tests/llm_evals/test_prompt_injection.py::TestPromptInjection::test_json_injection [33mSKIPPED[0m[31m [ 27%][0m
-tests/llm_evals/test_prompt_injection.py::TestPromptInjection::test_multi_language_injection [33mSKIPPED[0m[31m [ 27%][0m
-tests/llm_evals/test_prompt_injection.py::TestPromptInjection::test_instruction_chaining [33mSKIPPED[0m[31m [ 27%][0m
-tests/llm_evals/test_prompt_injection.py::TestPromptInjection::test_unicode_obfuscation [33mSKIPPED[0m[31m [ 28%][0m
-tests/performance/test_db_lock.py::TestDatabaseLocking::test_concurrent_reads [32mPASSED[0m[31m [ 28%][0m
-tests/performance/test_db_lock.py::TestDatabaseLocking::test_concurrent_writes [32mPASSED[0m[31m [ 28%][0m
-tests/performance/test_db_lock.py::TestDatabaseLocking::test_read_during_write [32mPASSED[0m[31m [ 29%][0m
-tests/performance/test_db_lock.py::TestDatabaseLocking::test_database_not_locked_after_operation [32mPASSED[0m[31m [ 29%][0m
-tests/performance/test_db_lock.py::TestDatabaseLocking::test_transaction_rollback_on_error [32mPASSED[0m[31m [ 29%][0m
-tests/performance/test_db_lock.py::TestDatabaseLocking::test_connection_pool_reuse [32mPASSED[0m[31m [ 30%][0m
-tests/performance/test_db_lock.py::TestDatabaseLocking::test_large_batch_insert_performance [32mPASSED[0m[31m [ 30%][0m
-tests/performance/test_db_lock.py::TestDatabaseLocking::test_query_performance_with_many_records [32mPASSED[0m[31m [ 30%][0m
-tests/performance/test_db_lock.py::TestDatabaseLocking::test_index_usage [32mPASSED[0m[31m [ 31%][0m
-tests/security/test_secrets.py::TestSecretsManagement::test_no_api_keys_in_code [32mPASSED[0m[31m [ 31%][0m
-tests/security/test_secrets.py::TestSecretsManagement::test_config_uses_environment_variables [32mPASSED[0m[31m [ 31%][0m
-tests/security/test_secrets.py::TestSecretsManagement::test_no_passwords_in_database [32mPASSED[0m[31m [ 32%][0m
-tests/security/test_secrets.py::TestSecretsManagement::test_no_secrets_in_version_control [32mPASSED[0m[31m [ 32%][0m
-tests/security/test_secrets.py::TestSecretsManagement::test_database_path_not_exposed [32mPASSED[0m[31m [ 32%][0m
-tests/security/test_secrets.py::TestSecretsManagement::test_no_credentials_in_repo_history [32mPASSED[0m[31m [ 33%][0m
-tests/security/test_secrets.py::TestSecretsManagement::test_api_keys_not_logged [32mPASSED[0m[31m [ 33%][0m
-tests/security/test_secrets.py::TestSecretsManagement::test_sensitive_data_sanitized_in_errors [32mPASSED[0m[31m [ 33%][0m
-tests/security/test_secrets.py::TestSecretsManagement::test_config_file_permissions [32mPASSED[0m[31m [ 34%][0m
-tests/security/test_secrets.py::TestSecretsManagement::test_no_api_keys_in_exported_json [32mPASSED[0m[31m [ 34%][0m
-tests/security/test_sql_injection.py::TestSQLInjection::test_insert_scenario_with_sql_injection_attempt [32mPASSED[0m[31m [ 34%][0m
-tests/security/test_sql_injection.py::TestSQLInjection::test_insert_scenario_with_quote_escaping [32mPASSED[0m[31m [ 35%][0m
-tests/security/test_sql_injection.py::TestSQLInjection::test_fetch_all_no_injection_vulnerability [32mPASSED[0m[31m [ 35%][0m
-tests/security/test_sql_injection.py::TestSQLInjection::test_parameterized_queries_used [32mPASSED[0m[31m [ 35%][0m
-tests/security/test_sql_injection.py::TestSQLInjection::test_json_field_injection_prevention [32mPASSED[0m[31m [ 36%][0m
-tests/security/test_sql_injection.py::TestSQLInjection::test_unicode_injection_prevention [32mPASSED[0m[31m [ 36%][0m
-tests/security/test_sql_injection.py::TestSQLInjection::test_comment_injection_prevention [32mPASSED[0m[31m [ 36%][0m
-tests/security/test_sql_injection.py::TestSQLInjection::test_second_order_injection_prevention [32mPASSED[0m[31m [ 37%][0m
-tests/security/test_sql_injection.py::TestSQLInjection::test_batch_insertion_injection_prevention [32mPASSED[0m[31m [ 37%][0m
-tests/test_integrity.py::test_db_schema_consistency [32mPASSED[0m[31m               [ 37%][0m
-tests/test_integrity.py::test_db_schema_with_get_engine [32mPASSED[0m[31m           [ 38%][0m
-tests/test_integrity.py::test_insert_scenario_json_serialization [32mPASSED[0m[31m  [ 38%][0m
-tests/test_integrity.py::test_insert_scenario_duplicate_title [32mPASSED[0m[31m     [ 38%][0m
-tests/test_integrity.py::test_trinity_brain_initialization_success [32mPASSED[0m[31m [ 39%][0m
-tests/test_integrity.py::test_trinity_brain_initialization_missing_keys [31mFAILED[0m[31m [ 39%][0m
-tests/test_integrity.py::test_trinity_brain_initialization_client_failure [31mFAILED[0m[31m [ 39%][0m
-tests/test_integrity.py::test_json_fields_empty_handling [32mPASSED[0m[31m          [ 40%][0m
-tests/unit/cli/test_dashboard.py::TestDashboard::test_log_viewer_refresh_no_file [32mPASSED[0m[31m [ 40%][0m
-tests/unit/cli/test_dashboard.py::TestDashboard::test_log_viewer_refresh_success [32mPASSED[0m[31m [ 40%][0m
-tests/unit/cli/test_dashboard.py::TestDashboard::test_stats_bar_refresh [32mPASSED[0m[31m [ 41%][0m
-tests/unit/cli/test_dashboard.py::TestDashboard::test_scenario_table_refresh [32mPASSED[0m[31m [ 41%][0m
-tests/unit/cli/test_dashboard.py::TestDashboard::test_app_init [32mPASSED[0m[31m    [ 41%][0m
-tests/unit/cli/test_export_json.py::TestExportJSON::test_fetch_rows_logic [32mPASSED[0m[31m [ 42%][0m
-tests/unit/cli/test_export_json.py::TestExportJSON::test_normalize [32mPASSED[0m[31m [ 42%][0m
-tests/unit/cli/test_export_json.py::TestExportJSON::test_main [32mPASSED[0m[31m     [ 42%][0m
-tests/unit/cli/test_render_cards.py::TestRenderCards::test_json_to_list [32mPASSED[0m[31m [ 43%][0m
-tests/unit/cli/test_render_cards.py::TestRenderCards::test_none_if_blank [32mPASSED[0m[31m [ 43%][0m
-tests/unit/cli/test_render_cards.py::TestRenderCards::test_coerce_row_types [32mPASSED[0m[31m [ 43%][0m
-tests/unit/cli/test_render_cards.py::TestRenderCards::test_coerce_row_types_defaults [32mPASSED[0m[31m [ 44%][0m
-tests/unit/cli/test_render_cards.py::TestRenderCards::test_safe_filename [32mPASSED[0m[31m [ 44%][0m
-tests/unit/cli/test_render_cards.py::TestRenderCards::test_unique_path [32mPASSED[0m[31m [ 44%][0m
-tests/unit/cli/test_render_cards.py::TestRenderCards::test_render_html [31mFAILED[0m[31m [ 45%][0m
-tests/unit/cli/test_render_cards.py::TestRenderCards::test_render_html_empty [32mPASSED[0m[31m [ 45%][0m
-tests/unit/cli/test_render_cards.py::TestRenderCards::test_fetch [32mPASSED[0m[31m  [ 45%][0m
-tests/unit/cli/test_render_cards.py::TestRenderCards::test_main [32mPASSED[0m[31m   [ 46%][0m
-tests/unit/core/test_brain_extended.py::TestBrainExtended::test_generate_scenario_stream_success [32mPASSED[0m[31m [ 46%][0m
-tests/unit/core/test_brain_extended.py::TestBrainExtended::test_generate_scenario_convenience [32mPASSED[0m[31m [ 46%][0m
-tests/unit/core/test_brain_extended.py::TestBrainExtended::test_require_writer_raises [32mPASSED[0m[31m [ 47%][0m
-tests/unit/core/test_brain_extended.py::TestBrainExtended::test_think_success [32mPASSED[0m[31m [ 47%][0m
-tests/unit/core/test_brain_extended.py::TestBrainExtended::test_chat_simulation_stream_success [32mPASSED[0m[31m [ 47%][0m
-tests/unit/core/test_brain_extended.py::TestBrainExtended::test_chat_simulation_convenience [32mPASSED[0m[31m [ 48%][0m
-tests/unit/core/test_llm_factory_extra.py::TestLLMFactoryExtra::test_create_all_clients_success [32mPASSED[0m[31m [ 48%][0m
-tests/unit/core/test_llm_factory_extra.py::TestLLMFactoryExtra::test_create_all_clients_partial_failure [32mPASSED[0m[31m [ 48%][0m
-tests/unit/core/test_llm_factory_extra.py::TestLLMRouter::test_router_init [32mPASSED[0m[31m [ 49%][0m
-tests/unit/core/test_llm_factory_extra.py::TestLLMRouter::test_router_chat_complete_local [32mPASSED[0m[31m [ 49%][0m
-tests/unit/core/test_llm_factory_extra.py::TestLLMRouter::test_router_chat_complete_anthropic [32mPASSED[0m[31m [ 49%][0m
-tests/unit/core/test_llm_factory_extra.py::TestLLMRouter::test_router_fallback [32mPASSED[0m[31m [ 50%][0m
-tests/unit/core/test_llm_factory_extra.py::TestLLMRouter::test_router_all_fail [32mPASSED[0m[31m [ 50%][0m
-tests/unit/test_adapters.py::TestAdapters::test_writer_fallback_success [32mPASSED[0m[31m [ 50%][0m
-tests/unit/test_adapters.py::TestAdapters::test_writer_fallback_failure [32mPASSED[0m[31m [ 51%][0m
-tests/unit/test_adapters.py::TestAdapters::test_judge_fallback_failure [32mPASSED[0m[31m [ 51%][0m
-tests/unit/test_adapters.py::TestAdapters::test_simulator_fallback_failure [32mPASSED[0m[31m [ 51%][0m
-tests/unit/test_adapters.py::TestAdapters::test_dict_to_obj [32mPASSED[0m[31m       [ 52%][0m
-tests/unit/test_adapters.py::TestAdapters::test_local_as_judge [32mPASSED[0m[31m    [ 52%][0m
-tests/unit/test_adapters.py::TestAdapters::test_local_as_write [32mPASSED[0m[31m    [ 52%][0m
-tests/unit/test_brain_mock.py::TestBrainMock::test_trinity_brain_initializes [32mPASSED[0m[31m [ 53%][0m
-tests/unit/test_brain_mock.py::TestBrainMock::test_trinity_brain_has_writer_client_attribute [32mPASSED[0m[31m [ 53%][0m
-tests/unit/test_brain_mock.py::TestBrainMock::test_trinity_brain_has_judge_client_attribute [32mPASSED[0m[31m [ 53%][0m
-tests/unit/test_brain_mock.py::TestBrainMock::test_trinity_brain_has_simulator_client_attribute [32mPASSED[0m[31m [ 54%][0m
-tests/unit/test_brain_mock.py::TestBrainMock::test_trinity_brain_dependency_injection [32mPASSED[0m[31m [ 54%][0m
-tests/unit/test_brain_mock.py::TestBrainMock::test_trinity_brain_has_writer_method [32mPASSED[0m[31m [ 54%][0m
-tests/unit/test_brain_mock.py::TestBrainMock::test_trinity_brain_has_judge_method [32mPASSED[0m[31m [ 55%][0m
-tests/unit/test_brain_mock.py::TestBrainMock::test_trinity_brain_has_simulator_method [32mPASSED[0m[31m [ 55%][0m
-tests/unit/test_brain_mock.py::TestBrainMock::test_trinity_brain_get_status [32mPASSED[0m[31m [ 55%][0m
-tests/unit/test_brain_mock.py::TestBrainMock::test_trinity_brain_generate_scenario_stream_exists [32mPASSED[0m[31m [ 56%][0m
-tests/unit/test_brain_mock.py::TestBrainMock::test_trinity_brain_audit_scenario_exists [32mPASSED[0m[31m [ 56%][0m
-tests/unit/test_brain_mock.py::TestBrainMock::test_trinity_brain_chat_simulation_stream_exists [32mPASSED[0m[31m [ 56%][0m
-tests/unit/test_brain_mock.py::TestBrainMock::test_trinity_brain_require_writer_raises_without_client [32mPASSED[0m[31m [ 57%][0m
-tests/unit/test_brain_mock.py::TestBrainMock::test_trinity_brain_require_judge_raises_without_client [32mPASSED[0m[31m [ 57%][0m
-tests/unit/test_brain_mock.py::TestBrainMock::test_trinity_brain_require_simulator_raises_without_client [32mPASSED[0m[31m [ 57%][0m
-tests/unit/test_brain_resilience.py::TestClientAvailability::test_brain_without_clients [32mPASSED[0m[31m [ 58%][0m
-tests/unit/test_brain_resilience.py::TestClientAvailability::test_has_writer_returns_correct_status [32mPASSED[0m[31m [ 58%][0m
-tests/unit/test_brain_resilience.py::TestClientAvailability::test_has_judge_returns_correct_status [32mPASSED[0m[31m [ 58%][0m
-tests/unit/test_brain_resilience.py::TestClientAvailability::test_has_simulator_returns_correct_status [32mPASSED[0m[31m [ 59%][0m
-tests/unit/test_brain_resilience.py::TestClientAvailability::test_get_status_returns_all_statuses [32mPASSED[0m[31m [ 59%][0m
-tests/unit/test_brain_resilience.py::TestWriterUnavailable::test_generate_scenario_raises_when_writer_unavailable [32mPASSED[0m[31m [ 59%][0m
-tests/unit/test_brain_resilience.py::TestWriterUnavailable::test_generate_scenario_stream_raises_when_writer_unavailable [32mPASSED[0m[31m [ 60%][0m
-tests/unit/test_brain_resilience.py::TestJudgeUnavailable::test_audit_scenario_raises_when_judge_unavailable [32mPASSED[0m[31m [ 60%][0m
-tests/unit/test_brain_resilience.py::TestSimulatorUnavailable::test_chat_simulation_raises_when_simulator_unavailable [32mPASSED[0m[31m [ 60%][0m
-tests/unit/test_brain_resilience.py::TestSimulatorUnavailable::test_chat_simulation_stream_raises_when_simulator_unavailable [32mPASSED[0m[31m [ 61%][0m
-tests/unit/test_brain_resilience.py::TestInputValidation::test_generate_scenario_rejects_empty_prompt [32mPASSED[0m[31m [ 61%][0m
-tests/unit/test_brain_resilience.py::TestInputValidation::test_audit_scenario_rejects_empty_text [32mPASSED[0m[31m [ 61%][0m
-tests/unit/test_brain_resilience.py::TestRetryOnTransientErrors::test_writer_retries_on_connection_error [32mPASSED[0m[31m [ 62%][0m
-tests/unit/test_brain_resilience.py::TestRetryOnTransientErrors::test_judge_retries_on_timeout_error [32mPASSED[0m[31m [ 62%][0m
-tests/unit/test_brain_resilience.py::TestRetryOnTransientErrors::test_simulator_retries_on_connection_error [32mPASSED[0m[31m [ 62%][0m
-tests/unit/test_brain_resilience.py::TestNoRetryOnAuthErrors::test_writer_fails_immediately_on_401 [32mPASSED[0m[31m [ 63%][0m
-tests/unit/test_brain_resilience.py::TestNoRetryOnAuthErrors::test_judge_fails_immediately_on_authentication_error [32mPASSED[0m[31m [ 63%][0m
-tests/unit/test_brain_resilience.py::TestMaxRetriesExceeded::test_writer_raises_api_call_error_after_max_retries [32mPASSED[0m[31m [ 63%][0m
-tests/unit/test_brain_resilience.py::TestMaxRetriesExceeded::test_simulator_raises_unavailable_after_max_retries [32mPASSED[0m[31m [ 64%][0m
-tests/unit/test_brain_resilience.py::TestDependencyInjection::test_accepts_injected_clients [32mPASSED[0m[31m [ 64%][0m
-tests/unit/test_brain_resilience.py::TestDependencyInjection::test_auto_initialize_false_skips_client_creation [32mPASSED[0m[31m [ 64%][0m
-tests/unit/test_brain_resilience.py::TestStreamingBehavior::test_generate_scenario_collects_stream [32mPASSED[0m[31m [ 65%][0m
-tests/unit/test_brain_resilience.py::TestStreamingBehavior::test_chat_simulation_collects_stream [32mPASSED[0m[31m [ 65%][0m
-tests/unit/test_brain_resilience.py::TestStreamingBehavior::test_chat_simulation_stream_skips_none_content [32mPASSED[0m[31m [ 65%][0m
-tests/unit/test_bundles.py::TestBundles::test_coerce_bundle_shape_defaults [32mPASSED[0m[31m [ 66%][0m
-tests/unit/test_bundles.py::TestBundles::test_coerce_bundle_shape_json_string [32mPASSED[0m[31m [ 66%][0m
-tests/unit/test_bundles.py::TestBundles::test_coerce_bundle_shape_invalid_json [32mPASSED[0m[31m [ 66%][0m
-tests/unit/test_bundles.py::TestBundles::test_validate_bundle_strict_valid [32mPASSED[0m[31m [ 67%][0m
-tests/unit/test_bundles.py::TestBundles::test_validate_bundle_strict_invalid [32mPASSED[0m[31m [ 67%][0m
-tests/unit/test_bundles.py::TestBundles::test_scenario_model_coercion_validator [32mPASSED[0m[31m [ 67%][0m
-tests/unit/test_bundles.py::TestBundles::test_bundle_model_strictness [32mPASSED[0m[31m [ 68%][0m
-tests/unit/test_categories.py::TestCategories::test_cats_dictionary_exists [32mPASSED[0m[31m [ 68%][0m
-tests/unit/test_categories.py::TestCategories::test_cats_keys_are_slug_strings [32mPASSED[0m[31m [ 68%][0m
-tests/unit/test_categories.py::TestCategories::test_cats_values_are_dictionaries [32mPASSED[0m[31m [ 69%][0m
-tests/unit/test_categories.py::TestCategories::test_cats_titles_are_hebrew [32mPASSED[0m[31m [ 69%][0m
-tests/unit/test_categories.py::TestCategories::test_cats_no_empty_titles [32mPASSED[0m[31m [ 69%][0m
-tests/unit/test_categories.py::TestCategories::test_expected_categories_present [32mPASSED[0m[31m [ 70%][0m
-tests/unit/test_categories.py::TestCategories::test_cats_immutable_structure [32mPASSED[0m[31m [ 70%][0m
-tests/unit/test_categories.py::TestCategories::test_category_to_slug_with_hebrew_input [32mPASSED[0m[31m [ 70%][0m
-tests/unit/test_categories.py::TestCategories::test_category_to_slug_with_empty_input [32mPASSED[0m[31m [ 71%][0m
-tests/unit/test_categories.py::TestCategories::test_normalize_hebrew_strips_unicode_markers [32mPASSED[0m[31m [ 71%][0m
-tests/unit/test_doctrine.py::TestDoctrine::test_doctrine_file_exists [32mPASSED[0m[31m [ 71%][0m
-tests/unit/test_doctrine.py::TestDoctrine::test_doctrine_loads_successfully [32mPASSED[0m[31m [ 72%][0m
-tests/unit/test_doctrine.py::TestDoctrine::test_doctrine_contains_hebrew [32mPASSED[0m[31m [ 72%][0m
-tests/unit/test_doctrine.py::TestDoctrine::test_doctrine_not_empty [32mPASSED[0m[31m [ 72%][0m
-tests/unit/test_doctrine.py::TestDoctrine::test_doctrine_contains_instructions [31mFAILED[0m[31m [ 73%][0m
-tests/unit/test_doctrine.py::TestDoctrine::test_doctrine_caching [32mPASSED[0m[31m  [ 73%][0m
-tests/unit/test_doctrine.py::TestDoctrine::test_doctrine_encoding [32mPASSED[0m[31m [ 73%][0m
-tests/unit/test_gap_fillers.py::TestGapFillers::test_brain_generate_scenario_stream_auth_error [32mPASSED[0m[31m [ 74%][0m
-tests/unit/test_gap_fillers.py::TestGapFillers::test_brain_audit_scenario_auth_error [32mPASSED[0m[31m [ 74%][0m
-tests/unit/test_gap_fillers.py::TestGapFillers::test_brain_chat_simulation_stream_connection_error [32mPASSED[0m[31m [ 74%][0m
-tests/unit/test_gap_fillers.py::TestGapFillers::test_brain_think_structured_json_error [32mPASSED[0m[31m [ 75%][0m
-tests/unit/test_gap_fillers.py::TestGapFillers::test_brain_think_structured_missing_fields_fallback [32mPASSED[0m[31m [ 75%][0m
-tests/unit/test_gap_fillers.py::TestGapFillers::test_strip_markdown_and_parse_json_variants [32mPASSED[0m[31m [ 75%][0m
-tests/unit/test_llm_factory.py::TestLLMFactory::test_create_writer_client_success [32mPASSED[0m[31m [ 76%][0m
-tests/unit/test_llm_factory.py::TestLLMFactory::test_create_writer_client_missing_key [31mFAILED[0m[31m [ 76%][0m
-tests/unit/test_llm_factory.py::TestLLMFactory::test_create_judge_client_success [32mPASSED[0m[31m [ 76%][0m
-tests/unit/test_llm_factory.py::TestLLMFactory::test_create_judge_client_missing_key [31mFAILED[0m[31m [ 77%][0m
-tests/unit/test_llm_factory.py::TestLLMFactory::test_create_simulator_client_success [32mPASSED[0m[31m [ 77%][0m
-tests/unit/test_llm_factory.py::TestLLMFactory::test_create_simulator_client_offline [31mFAILED[0m[31m [ 77%][0m
-tests/unit/test_llm_factory.py::TestLLMFactory::test_client_local [32mPASSED[0m[31m [ 78%][0m
-tests/unit/test_llm_factory.py::TestLLMFactory::test_client_cloud [31mFAILED[0m[31m [ 78%][0m
-tests/unit/test_local_llm.py::TestLocalLLM::test_init_local_qwen [31mFAILED[0m[31m  [ 78%][0m
-tests/unit/test_local_llm.py::TestLocalLLM::test_generate [31mFAILED[0m[31m         [ 79%][0m
-tests/unit/test_local_llm.py::TestLocalLLM::test_create_chat_completion [31mFAILED[0m[31m [ 79%][0m
-tests/unit/test_prompts.py::TestPromptLoading::test_system_prompt_loads_successfully [32mPASSED[0m[31m [ 79%][0m
-tests/unit/test_prompts.py::TestPromptLoading::test_system_prompt_contains_hebrew [32mPASSED[0m[31m [ 80%][0m
-tests/unit/test_prompts.py::TestPromptLoading::test_system_prompt_is_cached [32mPASSED[0m[31m [ 80%][0m
-tests/unit/test_prompts.py::TestPromptLoading::test_legacy_load_system_prompt_function [32mPASSED[0m[31m [ 80%][0m
-tests/unit/test_prompts.py::TestPromptLoading::test_memory_addendum_returns_valid_dict [32mPASSED[0m[31m [ 81%][0m
-tests/unit/test_prompts.py::TestPromptInjectionDetection::test_detects_english_injection_patterns [32mPASSED[0m[31m [ 81%][0m
-tests/unit/test_prompts.py::TestPromptInjectionDetection::test_detects_hebrew_injection_patterns [32mPASSED[0m[31m [ 81%][0m
-tests/unit/test_prompts.py::TestPromptInjectionDetection::test_allows_safe_input [32mPASSED[0m[31m [ 82%][0m
-tests/unit/test_prompts.py::TestUserInputSanitization::test_escapes_angle_brackets [32mPASSED[0m[31m [ 82%][0m
-tests/unit/test_prompts.py::TestUserInputSanitization::test_strips_whitespace [32mPASSED[0m[31m [ 82%][0m
-tests/unit/test_prompts.py::TestUserInputSanitization::test_preserves_hebrew_characters [32mPASSED[0m[31m [ 83%][0m
-tests/unit/test_prompts.py::TestPromptManager::test_singleton_pattern [32mPASSED[0m[31m [ 83%][0m
-tests/unit/test_prompts.py::TestPromptManager::test_batch_system_prompt_property [32mPASSED[0m[31m [ 83%][0m
-tests/unit/test_prompts.py::TestPromptManager::test_get_trinity_prompt_valid_roles [32mPASSED[0m[31m [ 84%][0m
-tests/unit/test_prompts.py::TestPromptManager::test_get_trinity_prompt_invalid_role [32mPASSED[0m[31m [ 84%][0m
-tests/unit/test_prompts.py::TestScenarioPromptFormatting::test_format_scenario_prompt_basic [32mPASSED[0m[31m [ 84%][0m
-tests/unit/test_prompts.py::TestScenarioPromptFormatting::test_format_scenario_prompt_with_category [32mPASSED[0m[31m [ 85%][0m
-tests/unit/test_prompts.py::TestScenarioPromptFormatting::test_format_scenario_prompt_empty_input_raises [32mPASSED[0m[31m [ 85%][0m
-tests/unit/test_prompts.py::TestScenarioPromptFormatting::test_format_scenario_prompt_injection_detected [32mPASSED[0m[31m [ 85%][0m
-tests/unit/test_prompts.py::TestScenarioPromptFormatting::test_format_scenario_prompt_injection_bypass [32mPASSED[0m[31m [ 86%][0m
-tests/unit/test_prompts.py::TestAuditPromptFormatting::test_format_audit_prompt_basic [32mPASSED[0m[31m [ 86%][0m
-tests/unit/test_prompts.py::TestAuditPromptFormatting::test_format_audit_prompt_with_metadata [32mPASSED[0m[31m [ 86%][0m
-tests/unit/test_prompts.py::TestAuditPromptFormatting::test_format_audit_prompt_empty_text_raises [32mPASSED[0m[31m [ 87%][0m
-tests/unit/test_prompts.py::TestSimulationPromptFormatting::test_format_simulation_prompt_valid_types [32mPASSED[0m[31m [ 87%][0m
-tests/unit/test_prompts.py::TestSimulationPromptFormatting::test_format_simulation_prompt_invalid_type [32mPASSED[0m[31m [ 87%][0m
-tests/unit/test_prompts.py::TestSimulationPromptFormatting::test_format_simulation_prompt_with_context [32mPASSED[0m[31m [ 88%][0m
-tests/unit/test_prompts.py::TestScenarioValidation::test_validate_valid_scenario [32mPASSED[0m[31m [ 88%][0m
-tests/unit/test_prompts.py::TestScenarioValidation::test_validate_missing_fields [32mPASSED[0m[31m [ 88%][0m
-tests/unit/test_prompts.py::TestScenarioValidation::test_validate_invalid_steps_type [32mPASSED[0m[31m [ 89%][0m
-tests/unit/test_render_cards.py::TestRenderCards::test_render_html_function_exists [32mPASSED[0m[31m [ 89%][0m
-tests/unit/test_render_cards.py::TestRenderCards::test_render_html_with_sample_data [32mPASSED[0m[31m [ 89%][0m
-tests/unit/test_render_cards.py::TestRenderCards::test_render_html_contains_html_tags [32mPASSED[0m[31m [ 90%][0m
-tests/unit/test_render_cards.py::TestRenderCards::test_render_html_contains_hebrew_content [32mPASSED[0m[31m [ 90%][0m
-tests/unit/test_render_cards.py::TestRenderCards::test_render_html_with_multiple_scenarios [32mPASSED[0m[31m [ 90%][0m
-tests/unit/test_render_cards.py::TestRenderCards::test_render_html_with_empty_list [32mPASSED[0m[31m [ 91%][0m
-tests/unit/test_render_cards.py::TestRenderCards::test_render_html_rtl_support [32mPASSED[0m[31m [ 91%][0m
-tests/unit/test_render_cards.py::TestRenderCards::test_render_html_includes_steps [32mPASSED[0m[31m [ 91%][0m
-tests/unit/test_render_cards.py::TestRenderCards::test_render_html_includes_metadata [32mPASSED[0m[31m [ 92%][0m
-tests/unit/test_render_cards.py::TestRenderCards::test_render_html_css_styling [32mPASSED[0m[31m [ 92%][0m
-tests/unit/test_render_cards.py::TestRenderCards::test_render_html_handles_special_characters [32mPASSED[0m[31m [ 92%][0m
-tests/unit/test_repo.py::TestRepoUnit::test_normalize_text [32mPASSED[0m[31m        [ 93%][0m
-tests/unit/test_repo.py::TestRepoUnit::test_parse_json_field [32mPASSED[0m[31m      [ 93%][0m
-tests/unit/test_repo.py::TestRepoUnit::test_normalize_row_dict [32mPASSED[0m[31m    [ 93%][0m
-tests/unit/test_repo.py::TestRepoUnit::test_normalize_row_model [32mPASSED[0m[31m   [ 94%][0m
-tests/unit/test_repo.py::TestRepoUnit::test_db_has_column_cached [32mPASSED[0m[31m  [ 94%][0m
-tests/unit/test_repo.py::TestRepoUnit::test_repository_singleton [32mPASSED[0m[31m  [ 94%][0m
-tests/unit/test_repo.py::TestRepoUnit::test_repo_class_methods [31mFAILED[0m[31m    [ 95%][0m
-tests/unit/test_repo.py::TestRepoUnit::test_repo_insert [31mFAILED[0m[31m           [ 95%][0m
-tests/unit/test_repo.py::TestRepoUnit::test_repo_fetch_one [31mFAILED[0m[31m        [ 95%][0m
-tests/unit/test_utils.py::TestUtils::test_normalize_row_with_sqlite_row [32mPASSED[0m[31m [ 96%][0m
-tests/unit/test_utils.py::TestUtils::test_normalize_row_preserves_hebrew [32mPASSED[0m[31m [ 96%][0m
-tests/unit/test_utils.py::TestUtils::test_normalize_row_handles_null_values [32mPASSED[0m[31m [ 96%][0m
-tests/unit/test_utils.py::TestUtils::test_normalize_row_with_json_fields [32mPASSED[0m[31m [ 97%][0m
-tests/unit/test_utils.py::TestUtils::test_normalize_row_empty_row [32mPASSED[0m[31m [ 97%][0m
-tests/unit/test_validators.py::TestValidators::test_validate_json_schema_with_valid_data [32mPASSED[0m[31m [ 97%][0m
+tests/integration/core/test_export.py::TestExport::test_export_single_scenario [32mPASSED[0m[33m [  1%][0m
+tests/integration/core/test_export.py::TestExport::test_export_preserves_hebrew [32mPASSED[0m[33m [  1%][0m
+tests/integration/core/test_export.py::TestExport::test_export_multiple_scenarios [32mPASSED[0m[33m [  1%][0m
+tests/integration/core/test_export.py::TestExport::test_export_with_all_fields [32mPASSED[0m[33m [  2%][0m
+tests/integration/core/test_export.py::TestExport::test_export_steps_structure [32mPASSED[0m[33m [  2%][0m
+tests/integration/core/test_export.py::TestExport::test_export_by_category [32mPASSED[0m[33m [  2%][0m
+tests/integration/core/test_export.py::TestExport::test_export_by_bundle [32mPASSED[0m[33m [  2%][0m
+tests/integration/core/test_export.py::TestExport::test_export_empty_database [32mPASSED[0m[33m [  3%][0m
+tests/integration/core/test_export.py::TestExport::test_export_special_characters [32mPASSED[0m[33m [  3%][0m
+tests/integration/infra/test_db_schema.py::TestDatabaseSchema::test_init_db_creates_database [32mPASSED[0m[33m [  3%][0m
+tests/integration/infra/test_db_schema.py::TestDatabaseSchema::test_scenarios_table_exists [32mPASSED[0m[33m [  3%][0m
+tests/integration/infra/test_db_schema.py::TestDatabaseSchema::test_scenarios_table_schema [32mPASSED[0m[33m [  4%][0m
+tests/integration/infra/test_db_schema.py::TestDatabaseSchema::test_scenarios_table_has_primary_key [32mPASSED[0m[33m [  4%][0m
+tests/integration/infra/test_db_schema.py::TestDatabaseSchema::test_database_supports_hebrew [32mPASSED[0m[33m [  4%][0m
+tests/integration/infra/test_db_schema.py::TestDatabaseSchema::test_database_supports_json_fields [32mPASSED[0m[33m [  4%][0m
+tests/integration/infra/test_db_schema.py::TestDatabaseSchema::test_scenarios_table_nullable_fields [32mPASSED[0m[33m [  4%][0m
+tests/integration/infra/test_db_schema.py::TestDatabaseSchema::test_database_utf8_encoding [32mPASSED[0m[33m [  5%][0m
+tests/integration/infra/test_db_schema.py::TestDatabaseSchema::test_init_db_is_idempotent [32mPASSED[0m[33m [  5%][0m
+tests/integration/infra/test_migrations.py::TestDatabaseMigrations::test_migration_placeholder [32mPASSED[0m[33m [  5%][0m
+tests/integration/infra/test_migrations.py::TestDatabaseMigrations::test_schema_version_tracking [32mPASSED[0m[33m [  5%][0m
+tests/integration/infra/test_migrations.py::TestDatabaseMigrations::test_backward_compatibility [32mPASSED[0m[33m [  6%][0m
+tests/integration/infra/test_repo_crud.py::TestRepositoryCRUD::test_insert_scenario_basic [32mPASSED[0m[33m [  6%][0m
+tests/integration/infra/test_repo_crud.py::TestRepositoryCRUD::test_insert_scenario_with_hebrew [32mPASSED[0m[33m [  6%][0m
+tests/integration/infra/test_repo_crud.py::TestRepositoryCRUD::test_insert_scenario_preserves_json_structure [32mPASSED[0m[33m [  6%][0m
+tests/integration/infra/test_repo_crud.py::TestRepositoryCRUD::test_fetch_all_scenarios [32mPASSED[0m[33m [  7%][0m
+tests/integration/infra/test_repo_crud.py::TestRepositoryCRUD::test_fetch_all_returns_normalized_rows [32mPASSED[0m[33m [  7%][0m
+tests/integration/infra/test_repo_crud.py::TestRepositoryCRUD::test_fetch_all_preserves_hebrew [32mPASSED[0m[33m [  7%][0m
+tests/integration/infra/test_repo_crud.py::TestRepositoryCRUD::test_insert_scenario_with_all_fields [32mPASSED[0m[33m [  7%][0m
+tests/integration/infra/test_repo_crud.py::TestRepositoryCRUD::test_insert_multiple_scenarios_different_categories [32mPASSED[0m[33m [  8%][0m
+tests/integration/infra/test_repo_crud.py::TestRepositoryCRUD::test_normalize_row_integration [32mPASSED[0m[33m [  8%][0m
+tests/integration/infra/test_repo_crud.py::TestRepositoryCRUD::test_insert_scenario_returns_incrementing_ids [32mPASSED[0m[33m [  8%][0m
+tests/integration/infra/test_repo_crud.py::TestRepositoryCRUD::test_fetch_all_empty_database [32mPASSED[0m[33m [  8%][0m
+tests/llm_evals/test_alignment.py::TestDoctrine_AlignmentAlignment::test_threat_level_weapon_found [33mSKIPPED[0m[33m [  8%][0m
+tests/llm_evals/test_alignment.py::TestDoctrine_AlignmentAlignment::test_threat_level_gun_found [33mSKIPPED[0m[33m [  9%][0m
+tests/llm_evals/test_alignment.py::TestDoctrine_AlignmentAlignment::test_threat_level_suspicious_object [33mSKIPPED[0m[33m [  9%][0m
+tests/llm_evals/test_alignment.py::TestDoctrine_AlignmentAlignment::test_threat_level_behavioral [33mSKIPPED[0m[33m [  9%][0m
+tests/llm_evals/test_alignment.py::TestDoctrine_AlignmentAlignment::test_threat_level_routine [33mSKIPPED[0m[33m [  9%][0m
+tests/llm_evals/test_alignment.py::TestDoctrine_AlignmentAlignment::test_category_alignment_all_scenarios [33mSKIPPED[0m[33m [ 10%][0m
+tests/llm_evals/test_hallucinations.py::TestHallucinations::test_consistent_category_names [33mSKIPPED[0m[33m [ 10%][0m
+tests/llm_evals/test_hallucinations.py::TestHallucinations::test_no_invented_fields [33mSKIPPED[0m[33m [ 10%][0m
+tests/llm_evals/test_hallucinations.py::TestHallucinations::test_difficulty_levels_consistent [33mSKIPPED[0m[33m [ 10%][0m
+tests/llm_evals/test_hallucinations.py::TestHallucinations::test_step_numbers_sequential [33mSKIPPED[0m[33m [ 11%][0m
+tests/llm_evals/test_hallucinations.py::TestHallucinations::test_no_duplicate_steps [33mSKIPPED[0m[33m [ 11%][0m
+tests/llm_evals/test_hallucinations.py::TestHallucinations::test_steps_not_empty [33mSKIPPED[0m[33m [ 11%][0m
+tests/llm_evals/test_hallucinations.py::TestHallucinations::test_no_contradictory_information [33mSKIPPED[0m[33m [ 11%][0m
+tests/llm_evals/test_hallucinations.py::TestHallucinations::test_category_matches_content [33mSKIPPED[0m[33m [ 12%][0m
+tests/llm_evals/test_hallucinations.py::TestHallucinations::test_realistic_scenario_flow [33mSKIPPED[0m[33m [ 12%][0m
+tests/llm_evals/test_hallucinations.py::TestHallucinations::test_no_fictional_app_names [33mSKIPPED[0m[33m [ 12%][0m
+tests/llm_evals/test_hallucinations.py::TestHallucinations::test_consistent_terminology [33mSKIPPED[0m[33m [ 12%][0m
+tests/llm_evals/test_hebrew_quality.py::TestHebrewQuality::test_hebrew_grammar_correctness [33mSKIPPED[0m[33m [ 13%][0m
+tests/llm_evals/test_hebrew_quality.py::TestHebrewQuality::test_hebrew_gender_agreement [33mSKIPPED[0m[33m [ 13%][0m
+tests/llm_evals/test_hebrew_quality.py::TestHebrewQuality::test_hebrew_nikud_consistency [33mSKIPPED[0m[33m [ 13%][0m
+tests/llm_evals/test_hebrew_quality.py::TestHebrewQuality::test_hebrew_formal_vs_informal_register [33mSKIPPED[0m[33m [ 13%][0m
+tests/llm_evals/test_hebrew_quality.py::TestHebrewQuality::test_hebrew_technical_terminology [33mSKIPPED[0m[33m [ 13%][0m
+tests/llm_evals/test_hebrew_quality.py::TestHebrewQuality::test_hebrew_rtl_formatting [33mSKIPPED[0m[33m [ 14%][0m
+tests/llm_evals/test_hebrew_quality.py::TestHebrewQuality::test_hebrew_punctuation_correctness [33mSKIPPED[0m[33m [ 14%][0m
+tests/llm_evals/test_hebrew_quality.py::TestHebrewQuality::test_hebrew_sentence_structure [33mSKIPPED[0m[33m [ 14%][0m
+tests/llm_evals/test_hebrew_quality.py::TestHebrewQuality::test_hebrew_cultural_appropriateness [33mSKIPPED[0m[33m [ 14%][0m
+tests/llm_evals/test_hebrew_quality.py::TestHebrewQuality::test_hebrew_consistency_across_scenarios [33mSKIPPED[0m[33m [ 15%][0m
+tests/llm_evals/test_hebrew_quality.py::TestHebrewQuality::test_hebrew_numbers_and_dates [33mSKIPPED[0m[33m [ 15%][0m
+tests/llm_evals/test_json_robustness.py::TestJSONRobustness::test_generates_valid_json [33mSKIPPED[0m[33m [ 15%][0m
+tests/llm_evals/test_json_robustness.py::TestJSONRobustness::test_json_with_hebrew_no_escaping_issues [33mSKIPPED[0m[33m [ 15%][0m
+tests/llm_evals/test_json_robustness.py::TestJSONRobustness::test_json_required_fields_always_present [33mSKIPPED[0m[33m [ 16%][0m
+tests/llm_evals/test_json_robustness.py::TestJSONRobustness::test_json_steps_array_structure [33mSKIPPED[0m[33m [ 16%][0m
+tests/llm_evals/test_json_robustness.py::TestJSONRobustness::test_json_no_trailing_commas [33mSKIPPED[0m[33m [ 16%][0m
+tests/llm_evals/test_json_robustness.py::TestJSONRobustness::test_json_proper_string_escaping [33mSKIPPED[0m[33m [ 16%][0m
+tests/llm_evals/test_json_robustness.py::TestJSONRobustness::test_json_handles_empty_arrays [33mSKIPPED[0m[33m [ 17%][0m
+tests/llm_evals/test_json_robustness.py::TestJSONRobustness::test_json_no_undefined_or_null_strings [33mSKIPPED[0m[33m [ 17%][0m
+tests/llm_evals/test_json_robustness.py::TestJSONRobustness::test_json_number_types_consistent [33mSKIPPED[0m[33m [ 17%][0m
+tests/llm_evals/test_json_robustness.py::TestJSONRobustness::test_json_boolean_types_not_strings [33mSKIPPED[0m[33m [ 17%][0m
+tests/llm_evals/test_json_robustness.py::TestJSONRobustness::test_json_schema_validation_passes [33mSKIPPED[0m[33m [ 17%][0m
+tests/llm_evals/test_json_robustness.py::TestJSONRobustness::test_json_encoding_utf8 [33mSKIPPED[0m[33m [ 18%][0m
+tests/llm_evals/test_prompt_injection.py::TestPromptInjection::test_ignore_previous_instructions [33mSKIPPED[0m[33m [ 18%][0m
+tests/llm_evals/test_prompt_injection.py::TestPromptInjection::test_role_reversal_attack [33mSKIPPED[0m[33m [ 18%][0m
+tests/llm_evals/test_prompt_injection.py::TestPromptInjection::test_delimiter_injection [33mSKIPPED[0m[33m [ 18%][0m
+tests/llm_evals/test_prompt_injection.py::TestPromptInjection::test_json_injection [33mSKIPPED[0m[33m [ 19%][0m
+tests/llm_evals/test_prompt_injection.py::TestPromptInjection::test_multi_language_injection [33mSKIPPED[0m[33m [ 19%][0m
+tests/llm_evals/test_prompt_injection.py::TestPromptInjection::test_instruction_chaining [33mSKIPPED[0m[33m [ 19%][0m
+tests/llm_evals/test_prompt_injection.py::TestPromptInjection::test_unicode_obfuscation [33mSKIPPED[0m[33m [ 19%][0m
+tests/performance/test_db_lock.py::TestDatabaseLocking::test_concurrent_reads [32mPASSED[0m[33m [ 20%][0m
+tests/performance/test_db_lock.py::TestDatabaseLocking::test_concurrent_writes [32mPASSED[0m[33m [ 20%][0m
+tests/performance/test_db_lock.py::TestDatabaseLocking::test_read_during_write [32mPASSED[0m[33m [ 20%][0m
+tests/performance/test_db_lock.py::TestDatabaseLocking::test_database_not_locked_after_operation [32mPASSED[0m[33m [ 20%][0m
+tests/performance/test_db_lock.py::TestDatabaseLocking::test_transaction_rollback_on_error [32mPASSED[0m[33m [ 21%][0m
+tests/performance/test_db_lock.py::TestDatabaseLocking::test_connection_pool_reuse [32mPASSED[0m[33m [ 21%][0m
+tests/performance/test_db_lock.py::TestDatabaseLocking::test_large_batch_insert_performance [32mPASSED[0m[33m [ 21%][0m
+tests/performance/test_db_lock.py::TestDatabaseLocking::test_query_performance_with_many_records [32mPASSED[0m[33m [ 21%][0m
+tests/performance/test_db_lock.py::TestDatabaseLocking::test_index_usage [32mPASSED[0m[33m [ 21%][0m
+tests/security/test_secrets.py::TestSecretsManagement::test_no_api_keys_in_code [32mPASSED[0m[33m [ 22%][0m
+tests/security/test_secrets.py::TestSecretsManagement::test_config_uses_environment_variables [32mPASSED[0m[33m [ 22%][0m
+tests/security/test_secrets.py::TestSecretsManagement::test_no_passwords_in_database [32mPASSED[0m[33m [ 22%][0m
+tests/security/test_secrets.py::TestSecretsManagement::test_no_secrets_in_version_control [32mPASSED[0m[33m [ 22%][0m
+tests/security/test_secrets.py::TestSecretsManagement::test_database_path_not_exposed [32mPASSED[0m[33m [ 23%][0m
+tests/security/test_secrets.py::TestSecretsManagement::test_no_credentials_in_repo_history [32mPASSED[0m[33m [ 23%][0m
+tests/security/test_secrets.py::TestSecretsManagement::test_api_keys_not_logged [32mPASSED[0m[33m [ 23%][0m
+tests/security/test_secrets.py::TestSecretsManagement::test_sensitive_data_sanitized_in_errors [32mPASSED[0m[33m [ 23%][0m
+tests/security/test_secrets.py::TestSecretsManagement::test_config_file_permissions [32mPASSED[0m[33m [ 24%][0m
+tests/security/test_secrets.py::TestSecretsManagement::test_no_api_keys_in_exported_json [32mPASSED[0m[33m [ 24%][0m
+tests/security/test_sql_injection.py::TestSQLInjection::test_insert_scenario_with_sql_injection_attempt [32mPASSED[0m[33m [ 24%][0m
+tests/security/test_sql_injection.py::TestSQLInjection::test_insert_scenario_with_quote_escaping [32mPASSED[0m[33m [ 24%][0m
+tests/security/test_sql_injection.py::TestSQLInjection::test_fetch_all_no_injection_vulnerability [32mPASSED[0m[33m [ 25%][0m
+tests/security/test_sql_injection.py::TestSQLInjection::test_parameterized_queries_used [32mPASSED[0m[33m [ 25%][0m
+tests/security/test_sql_injection.py::TestSQLInjection::test_json_field_injection_prevention [32mPASSED[0m[33m [ 25%][0m
+tests/security/test_sql_injection.py::TestSQLInjection::test_unicode_injection_prevention [32mPASSED[0m[33m [ 25%][0m
+tests/security/test_sql_injection.py::TestSQLInjection::test_comment_injection_prevention [32mPASSED[0m[33m [ 26%][0m
+tests/security/test_sql_injection.py::TestSQLInjection::test_second_order_injection_prevention [32mPASSED[0m[33m [ 26%][0m
+tests/security/test_sql_injection.py::TestSQLInjection::test_batch_insertion_injection_prevention [32mPASSED[0m[33m [ 26%][0m
+tests/test_integrity.py::test_db_schema_consistency [32mPASSED[0m[33m               [ 26%][0m
+tests/test_integrity.py::test_db_schema_with_get_engine [32mPASSED[0m[33m           [ 26%][0m
+tests/test_integrity.py::test_insert_scenario_json_serialization [32mPASSED[0m[33m  [ 27%][0m
+tests/test_integrity.py::test_insert_scenario_duplicate_title [32mPASSED[0m[33m     [ 27%][0m
+tests/test_integrity.py::test_trinity_brain_initialization_success [32mPASSED[0m[33m [ 27%][0m
+tests/test_integrity.py::test_trinity_brain_initialization_missing_keys [32mPASSED[0m[33m [ 27%][0m
+tests/test_integrity.py::test_trinity_brain_initialization_client_failure [32mPASSED[0m[33m [ 28%][0m
+tests/test_integrity.py::test_json_fields_empty_handling [32mPASSED[0m[33m          [ 28%][0m
+tests/unit/cli/test_dashboard.py::TestDashboard::test_log_viewer_refresh_no_file [32mPASSED[0m[33m [ 28%][0m
+tests/unit/cli/test_dashboard.py::TestDashboard::test_log_viewer_refresh_success [32mPASSED[0m[33m [ 28%][0m
+tests/unit/cli/test_dashboard.py::TestDashboard::test_stats_bar_refresh [32mPASSED[0m[33m [ 29%][0m
+tests/unit/cli/test_dashboard.py::TestDashboard::test_scenario_table_refresh [32mPASSED[0m[33m [ 29%][0m
+tests/unit/cli/test_dashboard.py::TestDashboard::test_app_init [32mPASSED[0m[33m    [ 29%][0m
+tests/unit/cli/test_export_json.py::TestExportJSON::test_fetch_rows_logic [32mPASSED[0m[33m [ 29%][0m
+tests/unit/cli/test_export_json.py::TestExportJSON::test_normalize [32mPASSED[0m[33m [ 30%][0m
+tests/unit/cli/test_export_json.py::TestExportJSON::test_main [32mPASSED[0m[33m     [ 30%][0m
+tests/unit/cli/test_render_cards.py::TestRenderCards::test_json_to_list [32mPASSED[0m[33m [ 30%][0m
+tests/unit/cli/test_render_cards.py::TestRenderCards::test_none_if_blank [32mPASSED[0m[33m [ 30%][0m
+tests/unit/cli/test_render_cards.py::TestRenderCards::test_coerce_row_types [32mPASSED[0m[33m [ 30%][0m
+tests/unit/cli/test_render_cards.py::TestRenderCards::test_coerce_row_types_defaults [32mPASSED[0m[33m [ 31%][0m
+tests/unit/cli/test_render_cards.py::TestRenderCards::test_safe_filename [32mPASSED[0m[33m [ 31%][0m
+tests/unit/cli/test_render_cards.py::TestRenderCards::test_unique_path [32mPASSED[0m[33m [ 31%][0m
+tests/unit/cli/test_render_cards.py::TestRenderCards::test_render_html [32mPASSED[0m[33m [ 31%][0m
+tests/unit/cli/test_render_cards.py::TestRenderCards::test_render_html_empty [32mPASSED[0m[33m [ 32%][0m
+tests/unit/cli/test_render_cards.py::TestRenderCards::test_fetch [32mPASSED[0m[33m  [ 32%][0m
+tests/unit/cli/test_render_cards.py::TestRenderCards::test_main [32mPASSED[0m[33m   [ 32%][0m
+tests/unit/core/test_brain_extended.py::TestBrainExtended::test_generate_scenario_stream_success [32mPASSED[0m[33m [ 32%][0m
+tests/unit/core/test_brain_extended.py::TestBrainExtended::test_generate_scenario_convenience [32mPASSED[0m[33m [ 33%][0m
+tests/unit/core/test_brain_extended.py::TestBrainExtended::test_require_writer_raises [32mPASSED[0m[33m [ 33%][0m
+tests/unit/core/test_brain_extended.py::TestBrainExtended::test_think_success [32mPASSED[0m[33m [ 33%][0m
+tests/unit/core/test_brain_extended.py::TestBrainExtended::test_chat_simulation_stream_success [32mPASSED[0m[33m [ 33%][0m
+tests/unit/core/test_brain_extended.py::TestBrainExtended::test_chat_simulation_convenience [32mPASSED[0m[33m [ 34%][0m
+tests/unit/core/test_llm_factory_extra.py::TestLLMFactoryExtra::test_create_all_clients_success [32mPASSED[0m[33m [ 34%][0m
+tests/unit/core/test_llm_factory_extra.py::TestLLMFactoryExtra::test_create_all_clients_partial_failure [32mPASSED[0m[33m [ 34%][0m
+tests/unit/core/test_llm_factory_extra.py::TestLLMRouter::test_router_init [32mPASSED[0m[33m [ 34%][0m
+tests/unit/core/test_llm_factory_extra.py::TestLLMRouter::test_router_chat_complete_local [32mPASSED[0m[33m [ 34%][0m
+tests/unit/core/test_llm_factory_extra.py::TestLLMRouter::test_router_chat_complete_anthropic [32mPASSED[0m[33m [ 35%][0m
+tests/unit/core/test_llm_factory_extra.py::TestLLMRouter::test_router_fallback [32mPASSED[0m[33m [ 35%][0m
+tests/unit/core/test_llm_factory_extra.py::TestLLMRouter::test_router_all_fail [32mPASSED[0m[33m [ 35%][0m
+tests/unit/graph/test_deduplicator.py::TestDeduplicatorNode::test_deduplicator_skips_empty_candidates [32mPASSED[0m[33m [ 35%][0m
+tests/unit/graph/test_deduplicator.py::TestDeduplicatorNode::test_deduplicator_processes_candidates [32mPASSED[0m[33m [ 36%][0m
+tests/unit/graph/test_deduplicator.py::TestDeduplicatorNode::test_deduplicator_handles_single_scenario [32mPASSED[0m[33m [ 36%][0m
+tests/unit/graph/test_deduplicator.py::TestCosineSimilarity::test_cosine_similarity_identical [32mPASSED[0m[33m [ 36%][0m
+tests/unit/graph/test_deduplicator.py::TestCosineSimilarity::test_cosine_similarity_orthogonal [32mPASSED[0m[33m [ 36%][0m
+tests/unit/graph/test_deduplicator.py::TestCosineSimilarity::test_cosine_similarity_opposite [32mPASSED[0m[33m [ 37%][0m
+tests/unit/graph/test_deduplicator.py::TestCosineSimilarity::test_cosine_similarity_zero_vector [32mPASSED[0m[33m [ 37%][0m
+tests/unit/graph/test_deduplicator.py::TestEmbedText::test_embed_text_no_client [32mPASSED[0m[33m [ 37%][0m
+tests/unit/graph/test_deduplicator.py::TestEmbedText::test_embed_text_success [32mPASSED[0m[33m [ 37%][0m
+tests/unit/graph/test_deduplicator.py::TestEmbedText::test_embed_text_api_error [32mPASSED[0m[33m [ 38%][0m
+tests/unit/graph/test_deduplicator.py::TestLoadExistingEmbeddings::test_load_existing_embeddings_empty_db [32mPASSED[0m[33m [ 38%][0m
+tests/unit/graph/test_judge_node.py::TestJudgeNode::test_judge_node_skips_empty_candidates [32mPASSED[0m[33m [ 38%][0m
+tests/unit/graph/test_judge_node.py::TestJudgeNode::test_judge_node_processes_candidates [32mPASSED[0m[33m [ 38%][0m
+tests/unit/graph/test_judge_node.py::TestScoreWithLLM::test_score_with_llm_no_client [32mPASSED[0m[33m [ 39%][0m
+tests/unit/graph/test_judge_node.py::TestScoreWithLLM::test_score_with_llm_success [32mPASSED[0m[33m [ 39%][0m
+tests/unit/graph/test_judge_node.py::TestScoreWithLLM::test_score_with_llm_invalid_json [32mPASSED[0m[33m [ 39%][0m
+tests/unit/graph/test_judge_node.py::TestScoreWithLLM::test_score_with_llm_jaffa_venue_detection [32mPASSED[0m[33m [ 39%][0m
+tests/unit/graph/test_judge_node.py::TestScoreWithLLM::test_score_with_llm_repair_instructions [32mPASSED[0m[33m [ 39%][0m
+tests/unit/test_brain_mock.py::TestBrainMock::test_trinity_brain_initializes [32mPASSED[0m[33m [ 40%][0m
+tests/unit/test_brain_mock.py::TestBrainMock::test_trinity_brain_has_writer_client_attribute [32mPASSED[0m[33m [ 40%][0m
+tests/unit/test_brain_mock.py::TestBrainMock::test_trinity_brain_has_judge_client_attribute [32mPASSED[0m[33m [ 40%][0m
+tests/unit/test_brain_mock.py::TestBrainMock::test_trinity_brain_has_simulator_client_attribute [32mPASSED[0m[33m [ 40%][0m
+tests/unit/test_brain_mock.py::TestBrainMock::test_trinity_brain_dependency_injection [32mPASSED[0m[33m [ 41%][0m
+tests/unit/test_brain_mock.py::TestBrainMock::test_trinity_brain_has_writer_method [32mPASSED[0m[33m [ 41%][0m
+tests/unit/test_brain_mock.py::TestBrainMock::test_trinity_brain_has_judge_method [32mPASSED[0m[33m [ 41%][0m
+tests/unit/test_brain_mock.py::TestBrainMock::test_trinity_brain_has_simulator_method [32mPASSED[0m[33m [ 41%][0m
+tests/unit/test_brain_mock.py::TestBrainMock::test_trinity_brain_get_status [32mPASSED[0m[33m [ 42%][0m
+tests/unit/test_brain_mock.py::TestBrainMock::test_trinity_brain_generate_scenario_stream_exists [32mPASSED[0m[33m [ 42%][0m
+tests/unit/test_brain_mock.py::TestBrainMock::test_trinity_brain_audit_scenario_exists [32mPASSED[0m[33m [ 42%][0m
+tests/unit/test_brain_mock.py::TestBrainMock::test_trinity_brain_chat_simulation_stream_exists [32mPASSED[0m[33m [ 42%][0m
+tests/unit/test_brain_mock.py::TestBrainMock::test_trinity_brain_require_writer_raises_without_client [32mPASSED[0m[33m [ 43%][0m
+tests/unit/test_brain_mock.py::TestBrainMock::test_trinity_brain_require_judge_raises_without_client [32mPASSED[0m[33m [ 43%][0m
+tests/unit/test_brain_mock.py::TestBrainMock::test_trinity_brain_require_simulator_raises_without_client [32mPASSED[0m[33m [ 43%][0m
+tests/unit/test_brain_resilience.py::TestClientAvailability::test_brain_without_clients [32mPASSED[0m[33m [ 43%][0m
+tests/unit/test_brain_resilience.py::TestClientAvailability::test_has_writer_returns_correct_status [32mPASSED[0m[33m [ 43%][0m
+tests/unit/test_brain_resilience.py::TestClientAvailability::test_has_judge_returns_correct_status [32mPASSED[0m[33m [ 44%][0m
+tests/unit/test_brain_resilience.py::TestClientAvailability::test_has_simulator_returns_correct_status [32mPASSED[0m[33m [ 44%][0m
+tests/unit/test_brain_resilience.py::TestClientAvailability::test_get_status_returns_all_statuses [32mPASSED[0m[33m [ 44%][0m
+tests/unit/test_brain_resilience.py::TestWriterUnavailable::test_generate_scenario_raises_when_writer_unavailable [32mPASSED[0m[33m [ 44%][0m
+tests/unit/test_brain_resilience.py::TestWriterUnavailable::test_generate_scenario_stream_raises_when_writer_unavailable [32mPASSED[0m[33m [ 45%][0m
+tests/unit/test_brain_resilience.py::TestJudgeUnavailable::test_audit_scenario_raises_when_judge_unavailable [32mPASSED[0m[33m [ 45%][0m
+tests/unit/test_brain_resilience.py::TestSimulatorUnavailable::test_chat_simulation_raises_when_simulator_unavailable [32mPASSED[0m[33m [ 45%][0m
+tests/unit/test_brain_resilience.py::TestSimulatorUnavailable::test_chat_simulation_stream_raises_when_simulator_unavailable [32mPASSED[0m[33m [ 45%][0m
+tests/unit/test_brain_resilience.py::TestInputValidation::test_generate_scenario_rejects_empty_prompt [32mPASSED[0m[33m [ 46%][0m
+tests/unit/test_brain_resilience.py::TestInputValidation::test_audit_scenario_rejects_empty_text [32mPASSED[0m[33m [ 46%][0m
+tests/unit/test_brain_resilience.py::TestRetryOnTransientErrors::test_writer_retries_on_connection_error [32mPASSED[0m[33m [ 46%][0m
+tests/unit/test_brain_resilience.py::TestRetryOnTransientErrors::test_judge_retries_on_timeout_error [32mPASSED[0m[33m [ 46%][0m
+tests/unit/test_brain_resilience.py::TestRetryOnTransientErrors::test_simulator_retries_on_connection_error [32mPASSED[0m[33m [ 47%][0m
+tests/unit/test_brain_resilience.py::TestNoRetryOnAuthErrors::test_writer_fails_immediately_on_401 [32mPASSED[0m[33m [ 47%][0m
+tests/unit/test_brain_resilience.py::TestNoRetryOnAuthErrors::test_judge_fails_immediately_on_authentication_error [32mPASSED[0m[33m [ 47%][0m
+tests/unit/test_brain_resilience.py::TestMaxRetriesExceeded::test_writer_raises_api_call_error_after_max_retries [32mPASSED[0m[33m [ 47%][0m
+tests/unit/test_brain_resilience.py::TestMaxRetriesExceeded::test_simulator_raises_after_max_retries [32mPASSED[0m[33m [ 47%][0m
+tests/unit/test_brain_resilience.py::TestDependencyInjection::test_accepts_injected_clients [32mPASSED[0m[33m [ 48%][0m
+tests/unit/test_brain_resilience.py::TestDependencyInjection::test_auto_initialize_false_skips_client_creation [32mPASSED[0m[33m [ 48%][0m
+tests/unit/test_brain_resilience.py::TestStreamingBehavior::test_generate_scenario_collects_stream [32mPASSED[0m[33m [ 48%][0m
+tests/unit/test_brain_resilience.py::TestStreamingBehavior::test_chat_simulation_collects_stream [32mPASSED[0m[33m [ 48%][0m
+tests/unit/test_brain_resilience.py::TestStreamingBehavior::test_chat_simulation_stream_with_empty_text [32mPASSED[0m[33m [ 49%][0m
+tests/unit/test_bundles.py::TestBundles::test_coerce_bundle_shape_defaults [32mPASSED[0m[33m [ 49%][0m
+tests/unit/test_bundles.py::TestBundles::test_coerce_bundle_shape_json_string [32mPASSED[0m[33m [ 49%][0m
+tests/unit/test_bundles.py::TestBundles::test_coerce_bundle_shape_invalid_json [32mPASSED[0m[33m [ 49%][0m
+tests/unit/test_bundles.py::TestBundles::test_validate_bundle_strict_valid [32mPASSED[0m[33m [ 50%][0m
+tests/unit/test_bundles.py::TestBundles::test_validate_bundle_strict_invalid [32mPASSED[0m[33m [ 50%][0m
+tests/unit/test_bundles.py::TestBundles::test_scenario_model_coercion_validator [32mPASSED[0m[33m [ 50%][0m
+tests/unit/test_bundles.py::TestBundles::test_bundle_model_strictness [32mPASSED[0m[33m [ 50%][0m
+tests/unit/test_categories.py::TestCategories::test_cats_dictionary_exists [32mPASSED[0m[33m [ 51%][0m
+tests/unit/test_categories.py::TestCategories::test_cats_keys_are_slug_strings [32mPASSED[0m[33m [ 51%][0m
+tests/unit/test_categories.py::TestCategories::test_cats_values_are_dictionaries [32mPASSED[0m[33m [ 51%][0m
+tests/unit/test_categories.py::TestCategories::test_cats_titles_are_hebrew [32mPASSED[0m[33m [ 51%][0m
+tests/unit/test_categories.py::TestCategories::test_cats_no_empty_titles [32mPASSED[0m[33m [ 52%][0m
+tests/unit/test_categories.py::TestCategories::test_expected_categories_present [32mPASSED[0m[33m [ 52%][0m
+tests/unit/test_categories.py::TestCategories::test_cats_immutable_structure [32mPASSED[0m[33m [ 52%][0m
+tests/unit/test_categories.py::TestCategories::test_category_to_slug_with_hebrew_input [32mPASSED[0m[33m [ 52%][0m
+tests/unit/test_categories.py::TestCategories::test_category_to_slug_with_empty_input [32mPASSED[0m[33m [ 52%][0m
+tests/unit/test_categories.py::TestCategories::test_normalize_hebrew_strips_unicode_markers [32mPASSED[0m[33m [ 53%][0m
+tests/unit/test_doctrine.py::TestDoctrine::test_doctrine_file_exists [32mPASSED[0m[33m [ 53%][0m
+tests/unit/test_doctrine.py::TestDoctrine::test_doctrine_loads_successfully [32mPASSED[0m[33m [ 53%][0m
+tests/unit/test_doctrine.py::TestDoctrine::test_doctrine_contains_hebrew [32mPASSED[0m[33m [ 53%][0m
+tests/unit/test_doctrine.py::TestDoctrine::test_doctrine_not_empty [32mPASSED[0m[33m [ 54%][0m
+tests/unit/test_doctrine.py::TestDoctrine::test_doctrine_contains_instructions [32mPASSED[0m[33m [ 54%][0m
+tests/unit/test_doctrine.py::TestDoctrine::test_doctrine_caching [32mPASSED[0m[33m  [ 54%][0m
+tests/unit/test_doctrine.py::TestDoctrine::test_doctrine_encoding [32mPASSED[0m[33m [ 54%][0m
+tests/unit/test_gap_fillers.py::TestGapFillers::test_brain_generate_scenario_stream_auth_error [32mPASSED[0m[33m [ 55%][0m
+tests/unit/test_gap_fillers.py::TestGapFillers::test_brain_audit_scenario_auth_error [32mPASSED[0m[33m [ 55%][0m
+tests/unit/test_gap_fillers.py::TestGapFillers::test_brain_chat_simulation_stream_connection_error [32mPASSED[0m[33m [ 55%][0m
+tests/unit/test_gap_fillers.py::TestGapFillers::test_brain_think_structured_json_error [32mPASSED[0m[33m [ 55%][0m
+tests/unit/test_gap_fillers.py::TestGapFillers::test_brain_think_structured_missing_fields_fallback [32mPASSED[0m[33m [ 56%][0m
+tests/unit/test_gap_fillers.py::TestGapFillers::test_strip_markdown_and_parse_json_variants [32mPASSED[0m[33m [ 56%][0m
+tests/unit/test_graph_nodes.py::TestSupervisorNode::test_should_continue_returns_archivist_when_target_reached [32mPASSED[0m[33m [ 56%][0m
+tests/unit/test_graph_nodes.py::TestSupervisorNode::test_should_continue_returns_writer_when_needs_more [32mPASSED[0m[33m [ 56%][0m
+tests/unit/test_graph_nodes.py::TestSupervisorNode::test_should_continue_returns_writer_for_repair [32mPASSED[0m[33m [ 56%][0m
+tests/unit/test_graph_nodes.py::TestSupervisorNode::test_should_continue_returns_end_on_max_iterations_no_approved [32mPASSED[0m[33m [ 57%][0m
+tests/unit/test_graph_nodes.py::TestSupervisorNode::test_init_supervisor_validates_category [32mPASSED[0m[33m [ 57%][0m
+tests/unit/test_graph_nodes.py::TestSupervisorNode::test_init_supervisor_validates_target_count [32mPASSED[0m[33m [ 57%][0m
+tests/unit/test_graph_nodes.py::TestWriterNode::test_writer_adds_raw_candidate [32mPASSED[0m[33m [ 57%][0m
+tests/unit/test_graph_nodes.py::TestWriterNode::test_writer_handles_no_clients [32mPASSED[0m[33m [ 58%][0m
+tests/unit/test_graph_nodes.py::TestWriterNode::test_get_doctrine_context_returns_string [32mPASSED[0m[33m [ 58%][0m
+tests/unit/test_graph_nodes.py::TestClerkNode::test_clerk_skips_when_no_raw_drafts [32mPASSED[0m[33m [ 58%][0m
+tests/unit/test_graph_nodes.py::TestClerkNode::test_clerk_processes_raw_drafts [32mPASSED[0m[33m [ 58%][0m
+tests/unit/test_graph_nodes.py::TestDeduplicatorNode::test_deduplicator_marks_unique [32mPASSED[0m[33m [ 59%][0m
+tests/unit/test_graph_nodes.py::TestDeduplicatorNode::test_deduplicator_marks_duplicate [32mPASSED[0m[33m [ 59%][0m
+tests/unit/test_graph_nodes.py::TestJudgeNode::test_judge_skips_when_no_unique_candidates [32mPASSED[0m[33m [ 59%][0m
+tests/unit/test_graph_nodes.py::TestJudgeNode::test_judge_approves_high_score [32mPASSED[0m[33m [ 59%][0m
+tests/unit/test_graph_nodes.py::TestJudgeNode::test_judge_rejects_low_score [32mPASSED[0m[33m [ 60%][0m
+tests/unit/test_graph_nodes.py::TestJudgeNode::test_build_judge_rubric_from_doctrine [32mPASSED[0m[33m [ 60%][0m
+tests/unit/test_graph_nodes.py::TestArchivistNode::test_archivist_skips_when_no_approved [32mPASSED[0m[33m [ 60%][0m
+tests/unit/test_graph_nodes.py::TestArchivistNode::test_archivist_saves_approved_scenarios [32mPASSED[0m[33m [ 60%][0m
+tests/unit/test_graph_state.py::TestScenarioCandidate::test_creation_with_defaults [32mPASSED[0m[33m [ 60%][0m
+tests/unit/test_graph_state.py::TestScenarioCandidate::test_add_feedback [32mPASSED[0m[33m [ 61%][0m
+tests/unit/test_graph_state.py::TestScenarioCandidate::test_multiple_feedback_rounds [32mPASSED[0m[33m [ 61%][0m
+tests/unit/test_graph_state.py::TestScenarioCandidate::test_to_dict [32mPASSED[0m[33m [ 61%][0m
+tests/unit/test_graph_state.py::TestSwarmMetrics::test_update_score_stats_empty [32mPASSED[0m[33m [ 61%][0m
+tests/unit/test_graph_state.py::TestSwarmMetrics::test_update_score_stats [32mPASSED[0m[33m [ 62%][0m
+tests/unit/test_graph_state.py::TestSwarmMetrics::test_finalize_sets_end_time [32mPASSED[0m[33m [ 62%][0m
+tests/unit/test_graph_state.py::TestSwarmMetrics::test_to_dict [32mPASSED[0m[33m    [ 62%][0m
+tests/unit/test_graph_state.py::TestSwarmState::test_creation_with_defaults [32mPASSED[0m[33m [ 62%][0m
+tests/unit/test_graph_state.py::TestSwarmState::test_add_candidate [32mPASSED[0m[33m [ 63%][0m
+tests/unit/test_graph_state.py::TestSwarmState::test_approved_scenarios_property [32mPASSED[0m[33m [ 63%][0m
+tests/unit/test_graph_state.py::TestSwarmState::test_rejected_scenarios_property [32mPASSED[0m[33m [ 63%][0m
+tests/unit/test_graph_state.py::TestSwarmState::test_needs_more_property [32mPASSED[0m[33m [ 63%][0m
+tests/unit/test_graph_state.py::TestSwarmState::test_add_error [32mPASSED[0m[33m    [ 64%][0m
+tests/unit/test_graph_state.py::TestSwarmState::test_to_bundle_dict [32mPASSED[0m[33m [ 64%][0m
+tests/unit/test_graph_state.py::TestSwarmState::test_get_summary [32mPASSED[0m[33m  [ 64%][0m
+tests/unit/test_graph_state.py::TestSwarmState::test_phase_change_logging [32mPASSED[0m[33m [ 64%][0m
+tests/unit/test_graph_state.py::TestWorkflowPhase::test_all_phases_exist [32mPASSED[0m[33m [ 65%][0m
+tests/unit/test_graph_state.py::TestScenarioStatus::test_all_statuses_exist [32mPASSED[0m[33m [ 65%][0m
+tests/unit/test_learning_system.py::TestFeedbackLogger::test_log_approval_creates_entry [32mPASSED[0m[33m [ 65%][0m
+tests/unit/test_learning_system.py::TestFeedbackLogger::test_log_rejection_requires_reason [32mPASSED[0m[33m [ 65%][0m
+tests/unit/test_learning_system.py::TestFeedbackLogger::test_log_rejection_with_reason_succeeds [32mPASSED[0m[33m [ 65%][0m
+tests/unit/test_learning_system.py::TestFeedbackLogger::test_log_revision_with_notes [32mPASSED[0m[33m [ 66%][0m
+tests/unit/test_learning_system.py::TestFeedbackLogger::test_get_rejection_reasons [32mPASSED[0m[33m [ 66%][0m
+tests/unit/test_learning_system.py::TestLearningStore::test_add_to_hall_of_fame [32mPASSED[0m[33m [ 66%][0m
+tests/unit/test_learning_system.py::TestLearningStore::test_add_to_graveyard_requires_reason [32mPASSED[0m[33m [ 66%][0m
+tests/unit/test_learning_system.py::TestLearningStore::test_get_positive_examples_filters_by_category [32mPASSED[0m[33m [ 67%][0m
+tests/unit/test_learning_system.py::TestLearningStore::test_get_negative_patterns_aggregates_reasons [32mPASSED[0m[33m [ 67%][0m
+tests/unit/test_learning_system.py::TestLearningStore::test_get_pitfalls_for_context [32mPASSED[0m[33m [ 67%][0m
+tests/unit/test_learning_system.py::TestPromptManagerLearning::test_format_revision_prompt_requires_feedback [32mPASSED[0m[33m [ 67%][0m
+tests/unit/test_learning_system.py::TestPromptManagerLearning::test_format_revision_prompt_includes_feedback [32mPASSED[0m[33m [ 68%][0m
+tests/unit/test_learning_system.py::TestPromptManagerLearning::test_format_learning_enhanced_prompt_adds_context [32mPASSED[0m[33m [ 68%][0m
+tests/unit/test_learning_system.py::TestPromptManagerLearning::test_format_learning_enhanced_prompt_returns_base_if_no_learning [32mPASSED[0m[33m [ 68%][0m
+tests/unit/test_llm_factory.py::TestLLMFactory::test_create_writer_client_success [32mPASSED[0m[33m [ 68%][0m
+tests/unit/test_llm_factory.py::TestLLMFactory::test_create_writer_client_missing_key [32mPASSED[0m[33m [ 69%][0m
+tests/unit/test_llm_factory.py::TestLLMFactory::test_create_judge_client_success [32mPASSED[0m[33m [ 69%][0m
+tests/unit/test_llm_factory.py::TestLLMFactory::test_create_judge_client_missing_key [32mPASSED[0m[33m [ 69%][0m
+tests/unit/test_llm_factory.py::TestLLMFactory::test_create_simulator_client_success [32mPASSED[0m[33m [ 69%][0m
+tests/unit/test_llm_factory.py::TestLLMFactory::test_create_simulator_client_missing_key [32mPASSED[0m[33m [ 69%][0m
+tests/unit/test_llm_factory.py::TestLLMFactory::test_client_local [32mPASSED[0m[33m [ 70%][0m
+tests/unit/test_llm_factory.py::TestLLMFactory::test_client_cloud [32mPASSED[0m[33m [ 70%][0m
+tests/unit/test_prompts.py::TestPromptLoading::test_system_prompt_loads_successfully [32mPASSED[0m[33m [ 70%][0m
+tests/unit/test_prompts.py::TestPromptLoading::test_system_prompt_contains_hebrew [32mPASSED[0m[33m [ 70%][0m
+tests/unit/test_prompts.py::TestPromptLoading::test_system_prompt_is_cached [32mPASSED[0m[33m [ 71%][0m
+tests/unit/test_prompts.py::TestPromptLoading::test_legacy_load_system_prompt_function [32mPASSED[0m[33m [ 71%][0m
+tests/unit/test_prompts.py::TestPromptLoading::test_memory_addendum_returns_valid_dict [32mPASSED[0m[33m [ 71%][0m
+tests/unit/test_prompts.py::TestPromptInjectionDetection::test_detects_english_injection_patterns [32mPASSED[0m[33m [ 71%][0m
+tests/unit/test_prompts.py::TestPromptInjectionDetection::test_detects_hebrew_injection_patterns [32mPASSED[0m[33m [ 72%][0m
+tests/unit/test_prompts.py::TestPromptInjectionDetection::test_allows_safe_input [32mPASSED[0m[33m [ 72%][0m
+tests/unit/test_prompts.py::TestUserInputSanitization::test_escapes_angle_brackets [32mPASSED[0m[33m [ 72%][0m
+tests/unit/test_prompts.py::TestUserInputSanitization::test_strips_whitespace [32mPASSED[0m[33m [ 72%][0m
+tests/unit/test_prompts.py::TestUserInputSanitization::test_preserves_hebrew_characters [32mPASSED[0m[33m [ 73%][0m
+tests/unit/test_prompts.py::TestPromptManager::test_singleton_pattern [32mPASSED[0m[33m [ 73%][0m
+tests/unit/test_prompts.py::TestPromptManager::test_batch_system_prompt_property [32mPASSED[0m[33m [ 73%][0m
+tests/unit/test_prompts.py::TestPromptManager::test_get_trinity_prompt_valid_roles [32mPASSED[0m[33m [ 73%][0m
+tests/unit/test_prompts.py::TestPromptManager::test_get_trinity_prompt_invalid_role [32mPASSED[0m[33m [ 73%][0m
+tests/unit/test_prompts.py::TestScenarioPromptFormatting::test_format_scenario_prompt_basic [32mPASSED[0m[33m [ 74%][0m
+tests/unit/test_prompts.py::TestScenarioPromptFormatting::test_format_scenario_prompt_with_category [32mPASSED[0m[33m [ 74%][0m
+tests/unit/test_prompts.py::TestScenarioPromptFormatting::test_format_scenario_prompt_empty_input_raises [32mPASSED[0m[33m [ 74%][0m
+tests/unit/test_prompts.py::TestScenarioPromptFormatting::test_format_scenario_prompt_injection_detected [32mPASSED[0m[33m [ 74%][0m
+tests/unit/test_prompts.py::TestScenarioPromptFormatting::test_format_scenario_prompt_injection_bypass [32mPASSED[0m[33m [ 75%][0m
+tests/unit/test_prompts.py::TestAuditPromptFormatting::test_format_audit_prompt_basic [32mPASSED[0m[33m [ 75%][0m
+tests/unit/test_prompts.py::TestAuditPromptFormatting::test_format_audit_prompt_with_metadata [32mPASSED[0m[33m [ 75%][0m
+tests/unit/test_prompts.py::TestAuditPromptFormatting::test_format_audit_prompt_empty_text_raises [32mPASSED[0m[33m [ 75%][0m
+tests/unit/test_prompts.py::TestSimulationPromptFormatting::test_format_simulation_prompt_valid_types [32mPASSED[0m[33m [ 76%][0m
+tests/unit/test_prompts.py::TestSimulationPromptFormatting::test_format_simulation_prompt_invalid_type [32mPASSED[0m[33m [ 76%][0m
+tests/unit/test_prompts.py::TestSimulationPromptFormatting::test_format_simulation_prompt_with_context [32mPASSED[0m[33m [ 76%][0m
+tests/unit/test_prompts.py::TestScenarioValidation::test_validate_valid_scenario [32mPASSED[0m[33m [ 76%][0m
+tests/unit/test_prompts.py::TestScenarioValidation::test_validate_missing_fields [32mPASSED[0m[33m [ 77%][0m
+tests/unit/test_prompts.py::TestScenarioValidation::test_validate_invalid_steps_type [32mPASSED[0m[33m [ 77%][0m
+tests/unit/test_render_cards.py::TestRenderCards::test_render_html_function_exists [32mPASSED[0m[33m [ 77%][0m
+tests/unit/test_render_cards.py::TestRenderCards::test_render_html_with_sample_data [32mPASSED[0m[33m [ 77%][0m
+tests/unit/test_render_cards.py::TestRenderCards::test_render_html_contains_html_tags [32mPASSED[0m[33m [ 78%][0m
+tests/unit/test_render_cards.py::TestRenderCards::test_render_html_contains_hebrew_content [32mPASSED[0m[33m [ 78%][0m
+tests/unit/test_render_cards.py::TestRenderCards::test_render_html_with_multiple_scenarios [32mPASSED[0m[33m [ 78%][0m
+tests/unit/test_render_cards.py::TestRenderCards::test_render_html_with_empty_list [32mPASSED[0m[33m [ 78%][0m
+tests/unit/test_render_cards.py::TestRenderCards::test_render_html_rtl_support [32mPASSED[0m[33m [ 78%][0m
+tests/unit/test_render_cards.py::TestRenderCards::test_render_html_includes_steps [32mPASSED[0m[33m [ 79%][0m
+tests/unit/test_render_cards.py::TestRenderCards::test_render_html_includes_metadata [32mPASSED[0m[33m [ 79%][0m
+tests/unit/test_render_cards.py::TestRenderCards::test_render_html_css_styling [32mPASSED[0m[33m [ 79%][0m
+tests/unit/test_render_cards.py::TestRenderCards::test_render_html_handles_special_characters [32mPASSED[0m[33m [ 79%][0m
+tests/unit/test_repo.py::TestRepoUnit::test_normalize_text [32mPASSED[0m[33m        [ 80%][0m
+tests/unit/test_repo.py::TestRepoUnit::test_parse_json_field [32mPASSED[0m[33m      [ 80%][0m
+tests/unit/test_repo.py::TestRepoUnit::test_normalize_row_dict [32mPASSED[0m[33m    [ 80%][0m
+tests/unit/test_repo.py::TestRepoUnit::test_normalize_row_model [32mPASSED[0m[33m   [ 80%][0m
+tests/unit/test_repo.py::TestRepoUnit::test_db_has_column_cached [32mPASSED[0m[33m  [ 81%][0m
+tests/unit/test_repo.py::TestRepoUnit::test_repository_singleton [32mPASSED[0m[33m  [ 81%][0m
+tests/unit/test_repo.py::TestRepoUnit::test_repo_class_methods [33mSKIPPED[0m[33m   [ 81%][0m
+tests/unit/test_repo.py::TestRepoUnit::test_repo_insert [33mSKIPPED[0m (Red...)[33m [ 81%][0m
+tests/unit/test_repo.py::TestRepoUnit::test_repo_fetch_one [33mSKIPPED[0m (...)[33m [ 82%][0m
+tests/unit/test_repo_rejection.py::test_rejection_workflow [31mFAILED[0m[31m        [ 82%][0m
+tests/unit/test_rules.py::TestRule::test_rule_creation [32mPASSED[0m[31m            [ 82%][0m
+tests/unit/test_rules.py::TestRule::test_rule_creation_defaults [32mPASSED[0m[31m   [ 82%][0m
+tests/unit/test_rules.py::TestRule::test_is_applicable_no_context_requirement [32mPASSED[0m[31m [ 82%][0m
+tests/unit/test_rules.py::TestRule::test_is_applicable_matching_context [32mPASSED[0m[31m [ 83%][0m
+tests/unit/test_rules.py::TestRule::test_is_applicable_non_matching_context [32mPASSED[0m[31m [ 83%][0m
+tests/unit/test_rules.py::TestRule::test_is_applicable_list_context [32mPASSED[0m[31m [ 83%][0m
+tests/unit/test_rules.py::TestRule::test_is_applicable_multiple_requirements [32mPASSED[0m[31m [ 83%][0m
+tests/unit/test_rules.py::TestRuleEngine::test_engine_creation_missing_path [32mPASSED[0m[31m [ 84%][0m
+tests/unit/test_rules.py::TestRuleEngine::test_engine_load_rules_from_yaml [32mPASSED[0m[31m [ 84%][0m
+tests/unit/test_rules.py::TestRuleEngine::test_engine_load_nested_yaml_files [32mPASSED[0m[31m [ 84%][0m
+tests/unit/test_rules.py::TestRuleEngine::test_engine_handles_invalid_yaml [32mPASSED[0m[31m [ 84%][0m
+tests/unit/test_rules.py::TestRuleEngine::test_engine_handles_missing_required_fields [32mPASSED[0m[31m [ 85%][0m
+tests/unit/test_rules.py::TestRuleEngine::test_get_rules_filters_by_context [32mPASSED[0m[31m [ 85%][0m
+tests/unit/test_rules.py::TestRuleEngine::test_format_rules_for_prompt [32mPASSED[0m[31m [ 85%][0m
+tests/unit/test_rules.py::TestRuleEngine::test_format_rules_empty_when_no_applicable [32mPASSED[0m[31m [ 85%][0m
+tests/unit/test_rules.py::TestRuleEngine::test_reload_rules [32mPASSED[0m[31m       [ 86%][0m
+tests/unit/test_rules.py::TestRuleEngine::test_handles_yaml_without_rules_key [32mPASSED[0m[31m [ 86%][0m
+tests/unit/test_scout_curator.py::TestScoutNode::test_scout_parses_seeds_correctly [32mPASSED[0m[31m [ 86%][0m
+tests/unit/test_scout_curator.py::TestScoutNode::test_scout_parses_empty_input [32mPASSED[0m[31m [ 86%][0m
+tests/unit/test_scout_curator.py::TestScoutNode::test_scout_filters_short_lines [32mPASSED[0m[31m [ 86%][0m
+tests/unit/test_scout_curator.py::TestScoutNode::test_build_scout_prompt_includes_category [32mPASSED[0m[31m [ 87%][0m
+tests/unit/test_scout_curator.py::TestScoutNode::test_scout_skips_when_no_local_client [32mPASSED[0m[31m [ 87%][0m
+tests/unit/test_scout_curator.py::TestScoutNode::test_scout_populates_seeds_on_success [32mPASSED[0m[31m [ 87%][0m
+tests/unit/test_scout_curator.py::TestCuratorNode::test_curator_skips_when_no_seeds [32mPASSED[0m[31m [ 87%][0m
+tests/unit/test_scout_curator.py::TestCuratorNode::test_curator_limits_seeds_when_no_cloud_client [32mPASSED[0m[31m [ 88%][0m
+tests/unit/test_scout_curator.py::TestCuratorNode::test_parse_curated_seeds_extracts_list [32mPASSED[0m[31m [ 88%][0m
+tests/unit/test_scout_curator.py::TestCuratorNode::test_parse_curated_seeds_fallback_on_invalid_json [32mPASSED[0m[31m [ 88%][0m
+tests/unit/test_scout_curator.py::TestCuratorNode::test_curator_updates_phase [32mPASSED[0m[31m [ 88%][0m
+tests/unit/test_scout_curator.py::TestScoutNewFunctions::test_get_learning_context_returns_dict [32mPASSED[0m[31m [ 89%][0m
+tests/unit/test_scout_curator.py::TestScoutNewFunctions::test_get_learning_context_handles_exception [32mPASSED[0m[31m [ 89%][0m
+tests/unit/test_scout_curator.py::TestScoutNewFunctions::test_call_local_llm_batch_generates_ideas [32mPASSED[0m[31m [ 89%][0m
+tests/unit/test_scout_curator.py::TestScoutNewFunctions::test_call_local_llm_batch_deduplicates [32mPASSED[0m[31m [ 89%][0m
+tests/unit/test_scout_curator.py::TestScoutNewFunctions::test_call_local_llm_batch_handles_failure [32mPASSED[0m[31m [ 90%][0m
+tests/unit/test_scout_curator.py::TestScoutNewFunctions::test_local_self_curate_selects_ideas [32mPASSED[0m[31m [ 90%][0m
+tests/unit/test_scout_curator.py::TestScoutNewFunctions::test_local_self_curate_returns_all_if_less_than_topk [32mPASSED[0m[31m [ 90%][0m
+tests/unit/test_scout_curator.py::TestScoutNewFunctions::test_local_self_curate_handles_failure [32mPASSED[0m[31m [ 90%][0m
+tests/unit/test_scout_curator.py::TestScoutNewFunctions::test_build_fallback_prompt_includes_category [32mPASSED[0m[31m [ 91%][0m
+tests/unit/test_scout_curator.py::TestScoutNewFunctions::test_build_scout_prompt_jaffa_venue [32mPASSED[0m[31m [ 91%][0m
+tests/unit/test_scout_curator.py::TestScoutCoverage100::test_get_local_client_returns_client [32mPASSED[0m[31m [ 91%][0m
+tests/unit/test_scout_curator.py::TestScoutCoverage100::test_get_local_client_returns_none_on_config_error [32mPASSED[0m[31m [ 91%][0m
+tests/unit/test_scout_curator.py::TestScoutCoverage100::test_get_anthropic_client_returns_client [32mPASSED[0m[31m [ 91%][0m
+tests/unit/test_scout_curator.py::TestScoutCoverage100::test_get_anthropic_client_returns_none_on_error [32mPASSED[0m[31m [ 92%][0m
+tests/unit/test_scout_curator.py::TestScoutCoverage100::test_call_claude_refinement_success [32mPASSED[0m[31m [ 92%][0m
+tests/unit/test_scout_curator.py::TestScoutCoverage100::test_call_claude_refinement_empty_content [32mPASSED[0m[31m [ 92%][0m
+tests/unit/test_scout_curator.py::TestScoutCoverage100::test_local_self_curate_skips_out_of_range_indices [32mPASSED[0m[31m [ 92%][0m
+tests/unit/test_scout_curator.py::TestScoutCoverage100::test_local_self_curate_skips_duplicate_indices [32mPASSED[0m[31m [ 93%][0m
+tests/unit/test_scout_curator.py::TestScoutCoverage100::test_local_self_curate_empty_response [32mPASSED[0m[31m [ 93%][0m
+tests/unit/test_scout_curator.py::TestScoutCoverage100::test_scout_node_jaffa_venue_detection [32mPASSED[0m[31m [ 93%][0m
+tests/unit/test_scout_curator.py::TestScoutCoverage100::test_scout_node_with_local_and_claude [32mPASSED[0m[31m [ 93%][0m
+tests/unit/test_scout_curator.py::TestScoutCoverage100::test_scout_node_curated_fallback [32mPASSED[0m[31m [ 94%][0m
+tests/unit/test_scout_curator.py::TestScoutCoverage100::test_scout_node_claude_fallback_mode [32mPASSED[0m[31m [ 94%][0m
+tests/unit/test_scout_curator.py::TestScoutCoverage100::test_scout_node_self_curation_path [32mPASSED[0m[31m [ 94%][0m
+tests/unit/test_scout_curator.py::TestScoutCoverage100::test_scout_node_claude_empty_response_hasattr [32mPASSED[0m[31m [ 94%][0m
+tests/unit/test_scout_curator.py::TestScoutCoverage100::test_scout_node_curated_ideas_as_fallback [32mPASSED[0m[31m [ 95%][0m
+tests/unit/test_scout_curator.py::TestScoutCoverage100::test_scout_node_stage1_exception_handling [32mPASSED[0m[31m [ 95%][0m
+tests/unit/test_scout_curator.py::TestScoutCoverage100::test_scout_node_claude_empty_refinement_fallback [32mPASSED[0m[31m [ 95%][0m
+tests/unit/test_simulate.py::TestSimulateModule::test_imports_simulation_scenario [32mPASSED[0m[31m [ 95%][0m
+tests/unit/test_simulate.py::TestSimulateModule::test_imports_default_payload [32mPASSED[0m[31m [ 95%][0m
+tests/unit/test_simulate.py::TestSimulateModule::test_imports_sim_handlers [32mPASSED[0m[31m [ 96%][0m
+tests/unit/test_simulate.py::TestSimulateModule::test_imports_run_simulations [32mPASSED[0m[31m [ 96%][0m
+tests/unit/test_simulate.py::TestSimulateModule::test_imports_load_payload [32mPASSED[0m[31m [ 96%][0m
+tests/unit/test_simulate.py::TestSimulateModule::test_imports_main [32mPASSED[0m[31m [ 96%][0m
+tests/unit/test_simulate.py::TestSimulateModule::test_all_exports [32mPASSED[0m[31m [ 97%][0m
+tests/unit/test_utils.py::TestUtils::test_normalize_row_with_sqlite_row [32mPASSED[0m[31m [ 97%][0m
+tests/unit/test_utils.py::TestUtils::test_normalize_row_preserves_hebrew [32mPASSED[0m[31m [ 97%][0m
+tests/unit/test_utils.py::TestUtils::test_normalize_row_handles_null_values [32mPASSED[0m[31m [ 97%][0m
+tests/unit/test_utils.py::TestUtils::test_normalize_row_with_json_fields [32mPASSED[0m[31m [ 98%][0m
+tests/unit/test_utils.py::TestUtils::test_normalize_row_empty_row [32mPASSED[0m[31m [ 98%][0m
+tests/unit/test_validators.py::TestValidators::test_validate_json_schema_with_valid_data [32mPASSED[0m[31m [ 98%][0m
 tests/unit/test_validators.py::TestValidators::test_validate_json_schema_missing_required_field [32mPASSED[0m[31m [ 98%][0m
-tests/unit/test_validators.py::TestValidators::test_validate_json_schema_wrong_type [32mPASSED[0m[31m [ 98%][0m
-tests/unit/test_validators.py::TestValidators::test_validate_json_schema_invalid_steps_structure [32mPASSED[0m[31m [ 98%][0m
+tests/unit/test_validators.py::TestValidators::test_validate_json_schema_wrong_type [32mPASSED[0m[31m [ 99%][0m
+tests/unit/test_validators.py::TestValidators::test_validate_json_schema_invalid_steps_structure [32mPASSED[0m[31m [ 99%][0m
 tests/unit/test_validators.py::TestValidators::test_validate_json_schema_with_hebrew_content [32mPASSED[0m[31m [ 99%][0m
 tests/unit/test_validators.py::TestValidators::test_validate_json_schema_empty_steps_array [32mPASSED[0m[31m [ 99%][0m
 tests/unit/test_validators.py::TestValidators::test_validate_json_schema_extra_fields [32mPASSED[0m[31m [100%][0m
 
 =================================== FAILURES ===================================
-[31m[1m_______________ TestDatabaseSchema.test_database_supports_hebrew _______________[0m
-[1m[31mtests/integration/infra/test_db_schema.py[0m:64: in test_database_supports_hebrew
-    [0mcursor.execute([33m"""[39;49;00m[33m[39;49;00m
-[1m[31mE   sqlite3.IntegrityError: NOT NULL constraint failed: scenarios.bundle_id[0m
-[31m[1m____________ TestDatabaseSchema.test_database_supports_json_fields _____________[0m
-[1m[31mtests/integration/infra/test_db_schema.py[0m:88: in test_database_supports_json_fields
-    [0mcursor.execute([33m"""[39;49;00m[33m[39;49;00m
-[1m[31mE   sqlite3.IntegrityError: NOT NULL constraint failed: scenarios.bundle_id[0m
-[31m[1m___________ TestDatabaseSchema.test_scenarios_table_nullable_fields ____________[0m
-[1m[31mtests/integration/infra/test_db_schema.py[0m:118: in test_scenarios_table_nullable_fields
-    [0m[94massert[39;49;00m success, [33m"[39;49;00m[33mFailed to insert minimal scenario record[39;49;00m[33m"[39;49;00m[90m[39;49;00m
-[1m[31mE   AssertionError: Failed to insert minimal scenario record[0m
-[1m[31mE   assert False[0m
-[31m[1m________________ TestDatabaseSchema.test_database_utf8_encoding ________________[0m
-[1m[31mtests/integration/infra/test_db_schema.py[0m:126: in test_database_utf8_encoding
-    [0mcursor.execute([33m"""[39;49;00m[33m[39;49;00m
-[1m[31mE   sqlite3.IntegrityError: NOT NULL constraint failed: scenarios.bundle_id[0m
-[31m[1m________________ test_trinity_brain_initialization_missing_keys ________________[0m
-[1m[31mtests/test_integrity.py[0m:383: in test_trinity_brain_initialization_missing_keys
-    [0m[94massert[39;49;00m brain.writer_client [95mis[39;49;00m [94mNone[39;49;00m[90m[39;49;00m
-[1m[31mE   assert <anthropic.Anthropic object at 0x1332d6ae0> is None[0m
-[1m[31mE    +  where <anthropic.Anthropic object at 0x1332d6ae0> = <tatlam.core.brain.TrinityBrain object at 0x133192180>.writer_client[0m
------------------------------- Captured log call -------------------------------
-[32mINFO    [0m tatlam.core.brain:brain.py:441 TrinityBrain initialized: writer=ready, judge=ready, simulator=ready
-[31m[1m_______________ test_trinity_brain_initialization_client_failure _______________[0m
-[1m[31mtests/test_integrity.py[0m:424: in test_trinity_brain_initialization_client_failure
-    [0mbrain = TrinityBrain(auto_initialize=[94mTrue[39;49;00m)[90m[39;49;00m
-[1m[31mtatlam/core/brain.py[0m:439: in __init__
-    [0m[96mself[39;49;00m._auto_initialize_clients()[90m[39;49;00m
-[1m[31mtatlam/core/brain.py[0m:452: in _auto_initialize_clients
-    [0m[96mself[39;49;00m.writer_client = create_writer_client()[90m[39;49;00m
-[1m[31m/opt/anaconda3/lib/python3.12/unittest/mock.py[0m:1139: in __call__
-    [0m[94mreturn[39;49;00m [96mself[39;49;00m._mock_call(*args, **kwargs)[90m[39;49;00m
-[1m[31m/opt/anaconda3/lib/python3.12/unittest/mock.py[0m:1143: in _mock_call
-    [0m[94mreturn[39;49;00m [96mself[39;49;00m._execute_mock_call(*args, **kwargs)[90m[39;49;00m
-[1m[31m/opt/anaconda3/lib/python3.12/unittest/mock.py[0m:1198: in _execute_mock_call
-    [0m[94mraise[39;49;00m effect[90m[39;49;00m
-[1m[31mE   tatlam.settings.ConfigurationError: Connection error[0m
-[31m[1m_______________________ TestRenderCards.test_render_html _______________________[0m
-[1m[31mtests/unit/cli/test_render_cards.py[0m:72: in test_render_html
-    [0m[94massert[39;49;00m [33m"[39;49;00m[33m<html>[39;49;00m[33m"[39;49;00m [95min[39;49;00m html[90m[39;49;00m
-[1m[31mE   assert '<html>' in '<!DOCTYPE html>\n<html lang="he" dir="rtl">\n<head>\n    <meta charset="UTF-8">\n    <title>תרחישים</title>\n    <style>\n        body {\n            font-family: Arial, sans-serif;\n            direction: rtl;\n            background-color: #f5f5f5;\n            padding: 20px;\n        }\n        .card {\n            background-color: white;\n            box-shadow: 0 2px 4px rgba(0,0,0,0.1);\n        }\n        .card h2 {\n            color: #333;\n            margin-top: 0;\n        }\n        .steps ol {\n            padding-right: 20px;\n        }\n    </style>\n</head>\n<body>\n    <h1>תרחישים</h1>\n    \n        <div class="card" style="border: 1px solid #ccc; margin: 10px; padding: 15px; border-radius: 8px;">\n            <h2>T1</h2>\n            <p><strong>קטגוריה:</strong> לא מסווג</p>\n            <p><strong>רמת קושי:</strong> לא צוין</p>\n            <div class="steps"><h3>צעדים:</h3><ol><li>s1</li></ol></div>\n        </div>\n        \n        <div class="card" style="border: 1px solid #ccc; margin: 10px; padding: 15px; border-radius: 8px;">\n            <h2>ללא כותרת</h2>\n            <p><strong>קטגוריה:</strong> לא מסווג</p>\n            <p><strong>רמת קושי:</strong> לא צוין</p>\n            \n        </div>\n        \n</body>\n</html>'[0m
-[31m[1m_______________ TestDoctrine.test_doctrine_contains_instructions _______________[0m
-[1m[31mtests/unit/test_doctrine.py[0m:58: in test_doctrine_contains_instructions
-    [0m[94massert[39;49;00m [96mlen[39;49;00m(found_patterns) > [94m0[39;49;00m, [33mf[39;49;00m[33m"[39;49;00m[33mDoctrine missing expected instruction patterns[39;49;00m[33m"[39;49;00m[90m[39;49;00m
-[1m[31mE   AssertionError: Doctrine missing expected instruction patterns[0m
-[1m[31mE   assert 0 > 0[0m
-[1m[31mE    +  where 0 = len([])[0m
-[31m[1m_____________ TestLLMFactory.test_create_writer_client_missing_key _____________[0m
-[1m[31mtests/unit/test_llm_factory.py[0m:30: in test_create_writer_client_missing_key
-    [0m[94mwith[39;49;00m pytest.raises(ConfigurationError):[90m[39;49;00m
-[1m[31mE   Failed: DID NOT RAISE <class 'tatlam.settings.ConfigurationError'>[0m
------------------------------- Captured log call -------------------------------
-[33mWARNING [0m tatlam.core.llm_factory:llm_factory.py:119 ANTHROPIC_API_KEY not set. Writer (Claude) will be unavailable.
-[31m[1m_____________ TestLLMFactory.test_create_judge_client_missing_key ______________[0m
-[1m[31mtests/unit/test_llm_factory.py[0m:45: in test_create_judge_client_missing_key
-    [0m[94mwith[39;49;00m pytest.raises(ConfigurationError):[90m[39;49;00m
-[1m[31mE   Failed: DID NOT RAISE <class 'tatlam.settings.ConfigurationError'>[0m
------------------------------- Captured log call -------------------------------
-[33mWARNING [0m tatlam.core.llm_factory:llm_factory.py:150 GOOGLE_API_KEY not set. Judge (Gemini) will be unavailable.
-[31m[1m_____________ TestLLMFactory.test_create_simulator_client_offline ______________[0m
-[1m[31mtests/unit/test_llm_factory.py[0m:68: in test_create_simulator_client_offline
-    [0m[94mwith[39;49;00m pytest.raises(ConfigurationError, match=[33m"[39;49;00m[33moffline[39;49;00m[33m"[39;49;00m):[90m[39;49;00m
-[1m[31mE   Failed: DID NOT RAISE <class 'tatlam.settings.ConfigurationError'>[0m
-[31m[1m_______________________ TestLLMFactory.test_client_cloud _______________________[0m
-[1m[31mtests/unit/test_llm_factory.py[0m:81: in test_client_cloud
-    [0m[94massert[39;49;00m client_cloud() == [33m"[39;49;00m[33mclient[39;49;00m[33m"[39;49;00m[90m[39;49;00m
-[1m[31mE   AssertionError: assert <openai.OpenAI object at 0x133341c40> == 'client'[0m
-[1m[31mE    +  where <openai.OpenAI object at 0x133341c40> = client_cloud()[0m
-[31m[1m______________________ TestLocalLLM.test_init_local_qwen _______________________[0m
-[1m[31mtests/unit/test_local_llm.py[0m:10: in test_init_local_qwen
-    [0mprovider = LocalQwenProvider(model_path=[33m"[39;49;00m[33m/path/to/model[39;49;00m[33m"[39;49;00m, n_ctx=[94m2048[39;49;00m)[90m[39;49;00m
-[1m[31mtatlam/core/local_llm.py[0m:22: in __init__
-    [0m[94mraise[39;49;00m [96mFileNotFoundError[39;49;00m([33mf[39;49;00m[33m"[39;49;00m[33mModel not found at [39;49;00m[33m{[39;49;00m[96mself[39;49;00m.model_path[33m}[39;49;00m[33m"[39;49;00m)[90m[39;49;00m
-[1m[31mE   FileNotFoundError: Model not found at /path/to/model[0m
-[31m[1m__________________________ TestLocalLLM.test_generate __________________________[0m
-[1m[31mtests/unit/test_local_llm.py[0m:27: in test_generate
-    [0mprovider = LocalQwenProvider(model_path=[33m"[39;49;00m[33mpath[39;49;00m[33m"[39;49;00m)[90m[39;49;00m
-[1m[31mtatlam/core/local_llm.py[0m:22: in __init__
-    [0m[94mraise[39;49;00m [96mFileNotFoundError[39;49;00m([33mf[39;49;00m[33m"[39;49;00m[33mModel not found at [39;49;00m[33m{[39;49;00m[96mself[39;49;00m.model_path[33m}[39;49;00m[33m"[39;49;00m)[90m[39;49;00m
-[1m[31mE   FileNotFoundError: Model not found at path[0m
-[31m[1m___________________ TestLocalLLM.test_create_chat_completion ___________________[0m
-[1m[31mtests/unit/test_local_llm.py[0m:39: in test_create_chat_completion
-    [0mprovider = LocalQwenProvider(model_path=[33m"[39;49;00m[33mpath[39;49;00m[33m"[39;49;00m)[90m[39;49;00m
-[1m[31mtatlam/core/local_llm.py[0m:22: in __init__
-    [0m[94mraise[39;49;00m [96mFileNotFoundError[39;49;00m([33mf[39;49;00m[33m"[39;49;00m[33mModel not found at [39;49;00m[33m{[39;49;00m[96mself[39;49;00m.model_path[33m}[39;49;00m[33m"[39;49;00m)[90m[39;49;00m
-[1m[31mE   FileNotFoundError: Model not found at path[0m
-[31m[1m_____________________ TestRepoUnit.test_repo_class_methods _____________________[0m
+[31m[1m___________________________ test_rejection_workflow ____________________________[0m
 [1m[31m/opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/engine/base.py[0m:1967: in _exec_single_context
     [0m[96mself[39;49;00m.dialect.do_execute([90m[39;49;00m
 [1m[31m/opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/engine/default.py[0m:941: in do_execute
     [0mcursor.execute(statement, parameters)[90m[39;49;00m
-[1m[31mE   sqlite3.OperationalError: no such table: scenarios[0m
+[1m[31mE   sqlite3.OperationalError: table scenarios has no column named status[0m
 
 [33mThe above exception was the direct cause of the following exception:[0m
-[1m[31mtests/unit/test_repo.py[0m:91: in test_repo_class_methods
-    [0mrepo.fetch_all(limit=[94m10[39;49;00m)[90m[39;49;00m
-[1m[31mtatlam/infra/repo.py[0m:421: in fetch_all
-    [0m[94mreturn[39;49;00m fetch_all(limit=limit, offset=offset)[90m[39;49;00m
-[1m[31mtatlam/infra/repo.py[0m:185: in fetch_all
-    [0mscenarios = session.scalars(stmt).all()[90m[39;49;00m
-[1m[31m/opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/orm/session.py[0m:2470: in scalars
-    [0m[94mreturn[39;49;00m [96mself[39;49;00m._execute_internal([90m[39;49;00m
-[1m[31m/opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/orm/session.py[0m:2247: in _execute_internal
-    [0mresult: Result[Any] = compile_state_cls.orm_execute_statement([90m[39;49;00m
-[1m[31m/opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/orm/context.py[0m:293: in orm_execute_statement
-    [0mresult = conn.execute([90m[39;49;00m
-[1m[31m/opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/engine/base.py[0m:1418: in execute
-    [0m[94mreturn[39;49;00m meth([90m[39;49;00m
-[1m[31m/opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/sql/elements.py[0m:515: in _execute_on_connection
-    [0m[94mreturn[39;49;00m connection._execute_clauseelement([90m[39;49;00m
-[1m[31m/opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/engine/base.py[0m:1640: in _execute_clauseelement
-    [0mret = [96mself[39;49;00m._execute_context([90m[39;49;00m
-[1m[31m/opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/engine/base.py[0m:1846: in _execute_context
-    [0m[94mreturn[39;49;00m [96mself[39;49;00m._exec_single_context([90m[39;49;00m
-[1m[31m/opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/engine/base.py[0m:1986: in _exec_single_context
-    [0m[96mself[39;49;00m._handle_dbapi_exception([90m[39;49;00m
-[1m[31m/opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/engine/base.py[0m:2355: in _handle_dbapi_exception
-    [0m[94mraise[39;49;00m sqlalchemy_exception.with_traceback(exc_info[[94m2[39;49;00m]) [94mfrom[39;49;00m[90m [39;49;00m[04m[96me[39;49;00m[90m[39;49;00m
-[1m[31m/opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/engine/base.py[0m:1967: in _exec_single_context
-    [0m[96mself[39;49;00m.dialect.do_execute([90m[39;49;00m
-[1m[31m/opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/engine/default.py[0m:941: in do_execute
-    [0mcursor.execute(statement, parameters)[90m[39;49;00m
-[1m[31mE   sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: scenarios[0m
-[1m[31mE   [SQL: SELECT scenarios.id, scenarios.bundle_id, scenarios.external_id, scenarios.title, scenarios.category, scenarios.threat_level, scenarios.likelihood, scenarios.complexity, scenarios.location, scenarios.background, scenarios.operational_background, scenarios.steps, scenarios.required_response, scenarios.debrief_points, scenarios.comms, scenarios.decision_points, scenarios.escalation_conditions, scenarios.lessons_learned, scenarios.variations, scenarios.validation, scenarios.media_link, scenarios.mask_usage, scenarios.cctv_usage, scenarios.authority_notes, scenarios.end_state_success, scenarios.end_state_failure, scenarios.owner, scenarios.approved_by, scenarios.status, scenarios.created_at [0m
-[1m[31mE   FROM scenarios ORDER BY scenarios.created_at DESC, scenarios.id DESC][0m
-[1m[31mE   (Background on this error at: https://sqlalche.me/e/20/e3q8)[0m
-[31m[1m________________________ TestRepoUnit.test_repo_insert _________________________[0m
-[1m[31mtests/unit/test_repo.py[0m:98: in test_repo_insert
-    [0mrepo.insert_scenario(data)[90m[39;49;00m
-[1m[31mtatlam/infra/repo.py[0m:447: in insert_scenario
+[1m[31mtests/unit/test_repo_rejection.py[0m:29: in test_rejection_workflow
+    [0msid = repo.insert_scenario(data, pending=[94mTrue[39;49;00m)[90m[39;49;00m
+[1m[31mtatlam/infra/repo.py[0m:755: in insert_scenario
     [0m[94mreturn[39;49;00m insert_scenario(data=data, owner=owner, pending=pending)[90m[39;49;00m
-[1m[31mtatlam/infra/repo.py[0m:321: in insert_scenario
-    [0m[94mraise[39;49;00m [96mValueError[39;49;00m([33m"[39;49;00m[33mcategory is required[39;49;00m[33m"[39;49;00m)[90m[39;49;00m
-[1m[31mE   ValueError: category is required[0m
-[31m[1m_______________________ TestRepoUnit.test_repo_fetch_one _______________________[0m
-[1m[31m/opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/engine/base.py[0m:1967: in _exec_single_context
-    [0m[96mself[39;49;00m.dialect.do_execute([90m[39;49;00m
-[1m[31m/opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/engine/default.py[0m:941: in do_execute
-    [0mcursor.execute(statement, parameters)[90m[39;49;00m
-[1m[31mE   sqlite3.OperationalError: no such table: scenarios[0m
-
-[33mThe above exception was the direct cause of the following exception:[0m
-[1m[31mtests/unit/test_repo.py[0m:104: in test_repo_fetch_one
-    [0mrepo.fetch_one([94m1[39;49;00m)[90m[39;49;00m
-[1m[31mtatlam/infra/repo.py[0m:435: in fetch_one
-    [0m[94mreturn[39;49;00m fetch_one(sid)[90m[39;49;00m
-[1m[31mtatlam/infra/repo.py[0m:238: in fetch_one
-    [0mscenario = session.get(Scenario, sid)[90m[39;49;00m
-[1m[31m/opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/orm/session.py[0m:3693: in get
-    [0m[94mreturn[39;49;00m [96mself[39;49;00m._get_impl([90m[39;49;00m
-[1m[31m/opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/orm/session.py[0m:3873: in _get_impl
-    [0m[94mreturn[39;49;00m db_load_fn([90m[39;49;00m
-[1m[31m/opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/orm/loading.py[0m:694: in load_on_pk_identity
-    [0msession.execute([90m[39;49;00m
-[1m[31m/opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/orm/session.py[0m:2362: in execute
-    [0m[94mreturn[39;49;00m [96mself[39;49;00m._execute_internal([90m[39;49;00m
-[1m[31m/opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/orm/session.py[0m:2247: in _execute_internal
-    [0mresult: Result[Any] = compile_state_cls.orm_execute_statement([90m[39;49;00m
-[1m[31m/opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/orm/context.py[0m:293: in orm_execute_statement
-    [0mresult = conn.execute([90m[39;49;00m
+[1m[31mtatlam/infra/repo.py[0m:402: in insert_scenario
+    [0msession.flush()  [90m# Get the ID before commit[39;49;00m[90m[39;49;00m
+[1m[31m/opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/orm/session.py[0m:4352: in flush
+    [0m[96mself[39;49;00m._flush(objects)[90m[39;49;00m
+[1m[31m/opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/orm/session.py[0m:4487: in _flush
+    [0m[94mwith[39;49;00m util.safe_reraise():[90m[39;49;00m
+[1m[31m/opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py[0m:146: in __exit__
+    [0m[94mraise[39;49;00m exc_value.with_traceback(exc_tb)[90m[39;49;00m
+[1m[31m/opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/orm/session.py[0m:4448: in _flush
+    [0mflush_context.execute()[90m[39;49;00m
+[1m[31m/opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/orm/unitofwork.py[0m:466: in execute
+    [0mrec.execute([96mself[39;49;00m)[90m[39;49;00m
+[1m[31m/opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/orm/unitofwork.py[0m:642: in execute
+    [0mutil.preloaded.orm_persistence.save_obj([90m[39;49;00m
+[1m[31m/opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py[0m:93: in save_obj
+    [0m_emit_insert_statements([90m[39;49;00m
+[1m[31m/opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py[0m:1233: in _emit_insert_statements
+    [0mresult = connection.execute([90m[39;49;00m
 [1m[31m/opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/engine/base.py[0m:1418: in execute
     [0m[94mreturn[39;49;00m meth([90m[39;49;00m
 [1m[31m/opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/sql/elements.py[0m:515: in _execute_on_connection
@@ -486,64 +478,99 @@ tests/unit/test_validators.py::TestValidators::test_validate_json_schema_extra_f
     [0m[96mself[39;49;00m.dialect.do_execute([90m[39;49;00m
 [1m[31m/opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/engine/default.py[0m:941: in do_execute
     [0mcursor.execute(statement, parameters)[90m[39;49;00m
-[1m[31mE   sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: scenarios[0m
-[1m[31mE   [SQL: SELECT scenarios.id AS scenarios_id, scenarios.bundle_id AS scenarios_bundle_id, scenarios.external_id AS scenarios_external_id, scenarios.title AS scenarios_title, scenarios.category AS scenarios_category, scenarios.threat_level AS scenarios_threat_level, scenarios.likelihood AS scenarios_likelihood, scenarios.complexity AS scenarios_complexity, scenarios.location AS scenarios_location, scenarios.background AS scenarios_background, scenarios.operational_background AS scenarios_operational_background, scenarios.steps AS scenarios_steps, scenarios.required_response AS scenarios_required_response, scenarios.debrief_points AS scenarios_debrief_points, scenarios.comms AS scenarios_comms, scenarios.decision_points AS scenarios_decision_points, scenarios.escalation_conditions AS scenarios_escalation_conditions, scenarios.lessons_learned AS scenarios_lessons_learned, scenarios.variations AS scenarios_variations, scenarios.validation AS scenarios_validation, scenarios.media_link AS scenarios_media_link, scenarios.mask_usage AS scenarios_mask_usage, scenarios.cctv_usage AS scenarios_cctv_usage, scenarios.authority_notes AS scenarios_authority_notes, scenarios.end_state_success AS scenarios_end_state_success, scenarios.end_state_failure AS scenarios_end_state_failure, scenarios.owner AS scenarios_owner, scenarios.approved_by AS scenarios_approved_by, scenarios.status AS scenarios_status, scenarios.created_at AS scenarios_created_at [0m
-[1m[31mE   FROM scenarios [0m
-[1m[31mE   WHERE scenarios.id = ?][0m
-[1m[31mE   [parameters: (1,)][0m
+[1m[31mE   sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) table scenarios has no column named status[0m
+[1m[31mE   [SQL: INSERT INTO scenarios (bundle_id, external_id, title, category, threat_level, likelihood, complexity, location, background, operational_background, steps, required_response, debrief_points, comms, decision_points, escalation_conditions, lessons_learned, variations, validation, media_link, mask_usage, cctv_usage, authority_notes, end_state_success, end_state_failure, owner, approved_by, status, rejection_reason, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)][0m
+[1m[31mE   [parameters: ('', '', 'Test Rejection Flow', 'Test', 'Low', 'Low', 'Low', 'Test', 'Test', '', '[]', '[]', '[]', '[]', '[]', '[]', '[]', '[]', '[]', '', None, '', '', '', '', 'web', '', 'pending', None, '2026-01-03T00:28:12.072777')][0m
 [1m[31mE   (Background on this error at: https://sqlalche.me/e/20/e3q8)[0m
+----------------------------- Captured stdout call -----------------------------
+
+=== DEBUG SCHEMA ===
+(0, 'id', 'INTEGER', 1, None, 1)
+(1, 'bundle_id', 'TEXT', 1, None, 0)
+(2, 'external_id', 'TEXT', 1, None, 0)
+(3, 'title', 'TEXT', 1, None, 0)
+(4, 'category', 'TEXT', 1, None, 0)
+(5, 'threat_level', 'TEXT', 1, None, 0)
+(6, 'likelihood', 'TEXT', 1, None, 0)
+(7, 'complexity', 'TEXT', 1, None, 0)
+(8, 'location', 'TEXT', 1, None, 0)
+(9, 'background', 'TEXT', 1, None, 0)
+(10, 'operational_background', 'TEXT', 1, None, 0)
+(11, 'steps', 'TEXT', 1, None, 0)
+(12, 'required_response', 'TEXT', 1, None, 0)
+(13, 'debrief_points', 'TEXT', 1, None, 0)
+(14, 'comms', 'TEXT', 1, None, 0)
+(15, 'decision_points', 'TEXT', 1, None, 0)
+(16, 'escalation_conditions', 'TEXT', 1, None, 0)
+(17, 'lessons_learned', 'TEXT', 1, None, 0)
+(18, 'variations', 'TEXT', 1, None, 0)
+(19, 'validation', 'TEXT', 1, None, 0)
+(20, 'media_link', 'TEXT', 0, None, 0)
+(21, 'mask_usage', 'TEXT', 0, None, 0)
+(22, 'cctv_usage', 'TEXT', 1, None, 0)
+(23, 'authority_notes', 'TEXT', 1, None, 0)
+(24, 'end_state_success', 'TEXT', 1, None, 0)
+(25, 'end_state_failure', 'TEXT', 1, None, 0)
+(26, 'owner', 'TEXT', 1, None, 0)
+(27, 'approved_by', 'TEXT', 1, None, 0)
+(28, 'status', 'TEXT', 1, None, 0)
+(29, 'rejection_reason', 'TEXT', 0, None, 0)
+(30, 'created_at', 'TEXT', 1, None, 0)
+==================
+
 
 ---------- coverage: platform darwin, python 3.12.7-final-0 ----------
-Name                         Stmts   Miss Branch BrPart  Cover   Missing
-------------------------------------------------------------------------
-tatlam/__init__.py               3      0      0      0   100%
-tatlam/categories.py             6      0      0      0   100%
-tatlam/cli/__init__.py           0      0      0      0   100%
-tatlam/cli/batch_cmd.py         29     29      6      0     0%   6-79
-tatlam/cli/dashboard.py        132     48     28      5    63%   43-44, 64-65, 83-92, 96-97, 119, 124, 130-131, 142-144, 152-153, 184-185, 247->258, 255-256, 262-279, 284-295, 299, 304-305, 309
-tatlam/cli/export_json.py       44      0     12      1    98%   39->42
-tatlam/cli/render_cards.py     159     13     56      6    87%   59, 92-95, 96->99, 111-113, 136-139, 171, 202
-tatlam/core/__init__.py          0      0      0      0   100%
-tatlam/core/adapters.py        115      9     16      2    89%   56, 100->97, 135-136, 140, 144, 147-150
-tatlam/core/brain.py           245     66     91     17    68%   55, 310-320, 355, 358-360, 366-378, 384-385, 450->456, 454, 456->462, 459-460, 462->exit, 465-466, 540-541, 551, 603-604, 613-617, 648, 649->653, 670-672, 679-687, 806-819, 882, 943->951, 956-967
-tatlam/core/bundles.py          88      4     26      4    93%   77, 88, 168, 172
-tatlam/core/categories.py       45      7     22      4    81%   92, 98, 102-106
-tatlam/core/doctrine.py         22      2     14      3    86%   34->33, 38, 287
-tatlam/core/gold_md.py           7      7      0      0     0%   7-23
-tatlam/core/interfaces.py       32     32     12      0     0%   21-188
-tatlam/core/llm_factory.py     167     39     44      7    76%   34-36, 51, 60, 70, 94, 126-128, 159-161, 191-193, 217-218, 224-226, 269-272, 277-280, 303, 318, 350-351, 355-356, 360-361, 364, 393->414, 430
-tatlam/core/local_llm.py        60     36     12      2    36%   7-8, 24-35, 41-68, 74, 82-86, 90, 98-99, 103, 107, 111-118, 123-128
-tatlam/core/prompts.py         107      5     40      3    95%   70-71, 77-79, 282->285, 291->290
-tatlam/core/utils.py            19      0      8      1    96%   29->33
-tatlam/core/validators.py       11      1      0      0    91%   11
-tatlam/infra/__init__.py         0      0      0      0   100%
-tatlam/infra/db.py              56      2     12      2    94%   27, 47
-tatlam/infra/logging.py         51     39     16      0    18%   20-39, 44, 57-122
-tatlam/infra/models.py          67      7     12      5    85%   91->exit, 114, 116, 118, 121-122, 125, 170
-tatlam/infra/repo.py           141     40     56      7    67%   42, 98, 115, 127-130, 138-161, 183, 209-216, 240, 267-273, 283-286, 319, 388-399, 431, 441, 453
-tatlam/logging_setup.py          3      0      0      0   100%
-tatlam/settings.py             105     17     34      6    79%   69, 80, 141, 149, 153, 157, 161, 186-192, 217, 219, 223
-tatlam/simulate.py               9      9      0      0     0%   7-18
-------------------------------------------------------------------------
-TOTAL                         1723    412    517     75    73%
+Name                                 Stmts   Miss Branch BrPart  Cover   Missing
+--------------------------------------------------------------------------------
+tatlam/__init__.py                       3      0      0      0   100%
+tatlam/categories.py                     6      0      0      0   100%
+tatlam/cli/__init__.py                   0      0      0      0   100%
+tatlam/cli/batch_cmd.py                 32     32      6      0     0%   7-94
+tatlam/cli/dashboard.py                131     48     28      5    63%   43-44, 66-67, 85-94, 98-99, 117, 122, 128-129, 140-142, 150-151, 193-194, 256->267, 264-265, 271-290, 295-306, 310, 315-316, 320
+tatlam/cli/export_json.py               44      0     12      1    98%   39->42
+tatlam/cli/render_cards.py             159     13     56      6    87%   59, 92-95, 96->99, 111-113, 136-139, 171, 202
+tatlam/cli/run_swarm.py                110    110     20      0     0%   18-269
+tatlam/core/__init__.py                  0      0      0      0   100%
+tatlam/core/batch_tools.py             133    133     36      0     0%   7-220
+tatlam/core/brain.py                   267     71     94     18    70%   57, 301-311, 347, 350-352, 358-371, 443->449, 447, 449->455, 452-453, 455->exit, 458-459, 535-536, 550, 602-603, 612-616, 654, 657-658, 681->680, 692-693, 696, 819-829, 853-863, 902-915, 978, 1036->1048, 1053-1064, 1088-1092
+tatlam/core/bundles.py                  88      4     26      4    93%   78, 89, 169, 173
+tatlam/core/categories.py               46      4     22      4    88%   173, 179, 183, 185
+tatlam/core/doctrine.py                 37     10     16      5    72%   39->38, 43, 296-297, 306-329, 427, 430->435
+tatlam/core/feedback_logger.py          74      8     18      2    87%   70, 74, 79, 271->274, 278, 299, 309-311
+tatlam/core/gold_md.py                   7      7      0      0     0%   7-23
+tatlam/core/interfaces.py               32     32     12      0     0%   22-185
+tatlam/core/learning_store.py          101     25     40      3    69%   41, 67, 160->163, 175-181, 283->290, 288, 298-306, 310-316, 339, 348-349, 359-361
+tatlam/core/llm_factory.py             191     59     48      7    70%   35-37, 52, 61, 70, 98-113, 134, 166-168, 193->201, 195-196, 214-216, 250-252, 269-285, 326-329, 334-337, 360, 375, 405-406, 410-411, 415-416, 419, 446->465, 479
+tatlam/core/prompts.py                 159     12     70      9    90%   73-74, 80-82, 257, 260, 263, 276-281, 352->355, 361->360, 505-506, 515->524
+tatlam/core/rules.py                    74      0     36      0   100%
+tatlam/core/utils.py                    19      0      8      1    96%   30->34
+tatlam/core/validators.py               74     17     31     12    70%   10, 16, 111-112, 118->126, 122-123, 129-137, 145->exit, 146-148, 152->161, 154-155, 157-158, 162->167, 167->172
+tatlam/graph/__init__.py                 4      0      0      0   100%
+tatlam/graph/nodes/__init__.py           8      0      0      0   100%
+tatlam/graph/nodes/archivist.py         74     22     12      1    66%   29-45, 106, 114-121
+tatlam/graph/nodes/clerk.py             91     30     28      7    66%   71-72, 77-84, 95-96, 98, 142-145, 153, 159-174, 181, 184-186
+tatlam/graph/nodes/curator.py           64     29     10      3    57%   32, 39-45, 50-55, 73-81, 86-88, 123->131, 168-202
+tatlam/graph/nodes/deduplicator.py      91     16     28      5    77%   65-75, 107, 112->110, 118-121, 188->164
+tatlam/graph/nodes/judge.py            110     11     28      4    89%   106, 256-260, 265-269, 279->283, 304->307
+tatlam/graph/nodes/scout.py            166      2     44      1    99%   33-34
+tatlam/graph/nodes/supervisor.py        60     16     16      3    72%   41-69, 108, 134-135, 175-177
+tatlam/graph/nodes/writer.py           161     64     44     16    61%   33, 40-66, 78-83, 95-103, 117-124, 182, 185, 193, 201-202, 212, 289-290, 292-293, 325->329, 336-337, 355, 357, 373, 391-403, 407-422, 439-441, 445-459
+tatlam/graph/state.py                  128      0     30      0   100%
+tatlam/graph/workflow.py                67     50      0      0    25%   61-118, 157-179, 202-224
+tatlam/infra/__init__.py                 0      0      0      0   100%
+tatlam/infra/db.py                      57      3     12      2    93%   28-30, 50
+tatlam/infra/logging.py                 51     27     16      3    40%   20-39, 44, 59-61, 67, 115-122
+tatlam/infra/models.py                 105     10     18      8    85%   99->exit, 122, 124, 126, 129-130, 133, 179, 210->exit, 220, 245->exit, 254, 283->exit, 292
+tatlam/infra/repo.py                   234    117     88      9    46%   48, 71-82, 128, 145, 157-160, 168-191, 222-223, 226, 252-259, 283, 310-316, 326-329, 362, 364, 425-434, 456-471, 495-514, 533-550, 563-574, 588-602, 635-654, 669, 695-706, 731, 741, 745, 749, 759, 765, 776, 786, 790
+tatlam/logging_setup.py                  3      0      0      0   100%
+tatlam/settings.py                     111     17     34      6    80%   72, 83, 158, 166, 170, 174, 178, 204-210, 236, 238, 242
+tatlam/sim/engine.py                    66     39     12      0    40%   31, 76-81, 98-101, 121-131, 135-140, 144-165
+tatlam/simulate.py                       9      0      0      0   100%
+tatlam/ui/__init__.py                    2      2      0      0     0%   5-7
+tatlam/ui/styles.py                     16     16      0      0     0%   9-548
+--------------------------------------------------------------------------------
+TOTAL                                 3465   1056    999    145    68%
 
 [36m[1m=========================== short test summary info ============================[0m
-[31mFAILED[0m tests/integration/infra/test_db_schema.py::[1mTestDatabaseSchema::test_database_supports_hebrew[0m - sqlite3.IntegrityError: NOT NULL constraint failed: scenarios.bundle_id
-[31mFAILED[0m tests/integration/infra/test_db_schema.py::[1mTestDatabaseSchema::test_database_supports_json_fields[0m - sqlite3.IntegrityError: NOT NULL constraint failed: scenarios.bundle_id
-[31mFAILED[0m tests/integration/infra/test_db_schema.py::[1mTestDatabaseSchema::test_scenarios_table_nullable_fields[0m - AssertionError: Failed to insert minimal scenario record
-[31mFAILED[0m tests/integration/infra/test_db_schema.py::[1mTestDatabaseSchema::test_database_utf8_encoding[0m - sqlite3.IntegrityError: NOT NULL constraint failed: scenarios.bundle_id
-[31mFAILED[0m tests/test_integrity.py::[1mtest_trinity_brain_initialization_missing_keys[0m - assert <anthropic.Anthropic object at 0x1332d6ae0> is None
-[31mFAILED[0m tests/test_integrity.py::[1mtest_trinity_brain_initialization_client_failure[0m - tatlam.settings.ConfigurationError: Connection error
-[31mFAILED[0m tests/unit/cli/test_render_cards.py::[1mTestRenderCards::test_render_html[0m - assert '<html>' in '<!DOCTYPE html>\n<html lang="he" dir="rtl">\n<head>\n  ...
-[31mFAILED[0m tests/unit/test_doctrine.py::[1mTestDoctrine::test_doctrine_contains_instructions[0m - AssertionError: Doctrine missing expected instruction patterns
-[31mFAILED[0m tests/unit/test_llm_factory.py::[1mTestLLMFactory::test_create_writer_client_missing_key[0m - Failed: DID NOT RAISE <class 'tatlam.settings.ConfigurationError'>
-[31mFAILED[0m tests/unit/test_llm_factory.py::[1mTestLLMFactory::test_create_judge_client_missing_key[0m - Failed: DID NOT RAISE <class 'tatlam.settings.ConfigurationError'>
-[31mFAILED[0m tests/unit/test_llm_factory.py::[1mTestLLMFactory::test_create_simulator_client_offline[0m - Failed: DID NOT RAISE <class 'tatlam.settings.ConfigurationError'>
-[31mFAILED[0m tests/unit/test_llm_factory.py::[1mTestLLMFactory::test_client_cloud[0m - AssertionError: assert <openai.OpenAI object at 0x133341c40> == 'client'
-[31mFAILED[0m tests/unit/test_local_llm.py::[1mTestLocalLLM::test_init_local_qwen[0m - FileNotFoundError: Model not found at /path/to/model
-[31mFAILED[0m tests/unit/test_local_llm.py::[1mTestLocalLLM::test_generate[0m - FileNotFoundError: Model not found at path
-[31mFAILED[0m tests/unit/test_local_llm.py::[1mTestLocalLLM::test_create_chat_completion[0m - FileNotFoundError: Model not found at path
-[31mFAILED[0m tests/unit/test_repo.py::[1mTestRepoUnit::test_repo_class_methods[0m - sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: ...
-[31mFAILED[0m tests/unit/test_repo.py::[1mTestRepoUnit::test_repo_insert[0m - ValueError: category is required
-[31mFAILED[0m tests/unit/test_repo.py::[1mTestRepoUnit::test_repo_fetch_one[0m - sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: ...
-[31m=========== [31m[1m18 failed[0m, [32m234 passed[0m, [33m47 skipped[0m, [33m5 warnings[0m[31m in 15.28s[0m[31m ============[0m
+[31mFAILED[0m tests/unit/test_repo_rejection.py::[1mtest_rejection_workflow[0m - sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) table scenarios...
+[31m============ [31m[1m1 failed[0m, [32m372 passed[0m, [33m50 skipped[0m, [33m5 warnings[0m[31m in 13.98s[0m[31m ============[0m

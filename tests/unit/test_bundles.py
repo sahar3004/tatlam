@@ -1,4 +1,3 @@
-
 import pytest
 import json
 from tatlam.core.bundles import (
@@ -8,6 +7,7 @@ from tatlam.core.bundles import (
     ScenarioBundleModel,
 )
 from pydantic import ValidationError
+
 
 class TestBundles:
 
@@ -28,7 +28,7 @@ class TestBundles:
                 {
                     "title": "T",
                     "steps": json.dumps([{"step": 1}]),
-                    "required_response": "single string item"
+                    "required_response": "single string item",
                 }
             ]
         }
@@ -56,13 +56,7 @@ class TestBundles:
         """Test validation of a valid bundle."""
         bundle = {
             "bundle_id": "B1",
-            "scenarios": [
-                {
-                    "title": "Title",
-                    "category": "Cat",
-                    "steps": ["step1"]
-                }
-            ]
+            "scenarios": [{"title": "Title", "category": "Cat", "steps": ["step1"]}],
         }
         validated = validate_bundle_strict(bundle)
         assert validated["bundle_id"] == "B1"
@@ -72,12 +66,7 @@ class TestBundles:
         """Test validation raises error on invalid data."""
         bundle = {
             "bundle_id": "B1",
-            "scenarios": [
-                {
-                    "title": "", # Empty title not allowed
-                    "category": "Cat"
-                }
-            ]
+            "scenarios": [{"title": "", "category": "Cat"}],  # Empty title not allowed
         }
         with pytest.raises(ValidationError):
             validate_bundle_strict(bundle)
@@ -87,11 +76,11 @@ class TestBundles:
         # Single string -> list
         m = ScenarioModel(title="T", category="C", steps="step1")
         assert m.steps == ["step1"]
-        
+
         # Valid JSON string -> list
         m = ScenarioModel(title="T", category="C", steps='["step1", "step2"]')
         assert m.steps == ["step1", "step2"]
-        
+
         # None -> empty list
         # Using dict to bypass init checks if any, but field validator runs on init
         m = ScenarioModel(title="T", category="C", steps=None)

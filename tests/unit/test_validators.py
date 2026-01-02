@@ -22,7 +22,7 @@ class TestValidators:
         """Test validation fails when required field is missing."""
         invalid_data = {
             "category": "פיננסים",
-            "difficulty": "בינוני"
+            "difficulty": "בינוני",
             # Missing 'title' and 'steps'
         }
 
@@ -35,7 +35,7 @@ class TestValidators:
             "title": "כותרת",
             "category": "פיננסים",
             "difficulty": "בינוני",
-            "steps": "not an array"  # Should be array, not string
+            "steps": "not an array",  # Should be array, not string
         }
 
         with pytest.raises(Exception):
@@ -47,9 +47,7 @@ class TestValidators:
             "title": "כותרת",
             "category": "פיננסים",
             "difficulty": "בינוני",
-            "steps": [
-                {"step": 1}  # Missing 'description'
-            ]
+            "steps": [{"step": 1}],  # Missing 'description'
         }
 
         with pytest.raises(Exception):
@@ -64,10 +62,10 @@ class TestValidators:
             "bundle": "חבילת בריאות",
             "steps": [
                 {"step": 1, "description": "פתיחת יישום בעברית"},
-                {"step": 2, "description": "ניווט לתפריט הגדרות"}
+                {"step": 2, "description": "ניווט לתפריט הגדרות"},
             ],
             "expected_behavior": "המערכת תגיב בעברית",
-            "testing_tips": "בדוק תמיכה ב-RTL"
+            "testing_tips": "בדוק תמיכה ב-RTL",
         }
 
         result = validate_json_schema(hebrew_data, sample_json_schema)
@@ -79,7 +77,7 @@ class TestValidators:
             "title": "כותרת",
             "category": "פיננסים",
             "difficulty": "בינוני",
-            "steps": []  # Empty array
+            "steps": [],  # Empty array
         }
 
         # Depending on schema, this might be valid or invalid

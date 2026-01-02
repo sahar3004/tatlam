@@ -1,4 +1,3 @@
-
 import pytest
 from unittest.mock import MagicMock, patch
 from tatlam.infra.repo import (
@@ -8,9 +7,9 @@ from tatlam.infra.repo import (
     db_has_column,
     _normalize_text,
     _parse_json_field,
-    JSON_FIELDS
 )
 from tatlam.infra.models import Scenario
+
 
 class TestRepoUnit:
 
@@ -18,8 +17,10 @@ class TestRepoUnit:
     def setup_db(self, in_memory_db):
         """Ensure DB is initialized with schema."""
         from tatlam.infra.db import init_db_sqlalchemy
+
         init_db_sqlalchemy()
-        yield    
+        yield
+
     def test_normalize_text(self):
         """Test text normalization."""
         assert _normalize_text(None) == ""
@@ -41,12 +42,7 @@ class TestRepoUnit:
 
     def test_normalize_row_dict(self):
         """Test normalize_row with dictionary."""
-        row = {
-            "id": 1,
-            "title": "Test",
-            "steps": '["step1"]',
-            "other": "value"
-        }
+        row = {"id": 1, "title": "Test", "steps": '["step1"]', "other": "value"}
         normalized = normalize_row(row)
         assert normalized["id"] == 1
         assert normalized["steps"] == ["step1"]
@@ -54,14 +50,10 @@ class TestRepoUnit:
 
     def test_normalize_row_model(self):
         """Test normalize_row with Scenario model."""
-        scenario = Scenario(
-            id=1,
-            title="Test",
-            steps='["step1"]'
-        )
+        scenario = Scenario(id=1, title="Test", steps='["step1"]')
         # Mock to_dict for Scenario
         scenario.to_dict = MagicMock(return_value={"id": 1, "title": "Test", "steps": ["step1"]})
-        
+
         normalized = normalize_row(scenario)
         assert normalized["id"] == 1
         assert normalized["steps"] == ["step1"]
@@ -69,21 +61,47 @@ class TestRepoUnit:
     @patch("tatlam.infra.repo.Scenario")
     def test_db_has_column_cached(self, MockScenario):
         """Test column existence check with cache."""
-        # Clear cache first if needed, but module level mock is hard.
-        # We test logic flow.
-        MockScenario.test_col = "dummy"
+        # Setup mock to simulate Scenario model behavior
+        # We need validation that 'status' exists and 'garbage' does not.
         
-        # We need to mock TABLE_NAME to match what we pass or rely on default
-        from tatlam.infra.repo import TABLE_NAME
+        def mock_hasattr(obj, name):
+            # Simulate real model having 'status' but not 'garbage'
+            if name == "status":
+                return True
+            if name == "garbage":
+                return False
+            return True
+
+        # Since db_has_column uses hasattr(Scenario, col), we simply need 
+        # to ensure that logic works. However, mocking hasattr on a class (Mock object)
+        # is tricky because hasattr calls __getattr__ which mocks do by default.
+        # simpler approach: relying on the fact that db_has_column calls hasattr
         
-        # Mocks have all attributes by default, so hasattr returns True.
-        # We must explicitly delete the attribute or use spec.
-        del MockScenario.test_col
-        assert db_has_column(TABLE_NAME, "test_col") is False
-        # Ideally we don't mock the class attribute but rely on hasattr
+        # Reset cache to ensure we test the logic
+        from tatlam.infra.repo import _column_cache
+        _column_cache.clear()
+
+        # We can't easily patch hasattr built-in, so we'll rely on the side_effect 
+        # of the attribute access raising AttributeError if we configure the mock that way
+        # OR we just check that it returns what we expect if we assume real Scenario behavior
+        # But here we are mocking Scenario.
         
-        # Let's test non-table fallback
-        assert db_has_column("non_existent_table", "col") is True
+        # Let's delete the attribute to force False
+        try:
+            del MockScenario.garbage
+        except AttributeError:
+            pass # Already not there
+            
+        # Ensure status exists (it's a mock, so it does by default)
+        
+        # Test 1: Column exists
+        assert db_has_column("scenarios", "status") is True
+        
+        # Test 2: Column does not exist (we deleted it)
+        assert db_has_column("scenarios", "garbage") is False
+
+        # Test 3: Table mismatch fallback
+        assert db_has_column("other_table", "garbage") is True
 
     def test_repository_singleton(self):
         """Test get_repository returns singleton."""
@@ -92,31 +110,40 @@ class TestRepoUnit:
         assert repo1 is repo2
         assert isinstance(repo1, ScenarioRepository)
 
-    @pytest.mark.skip(reason="Redundant with integration/infra/test_repo_crud.py and flaky in full suite")
+    @pytest.mark.skip(
+        reason="Redundant with integration/infra/test_repo_crud.py and flaky in full suite"
+    )
     def test_repo_class_methods(self):
         """Test ScenarioRepository class methods delegate correctly."""
         import tatlam.infra.repo
-        with patch.object(tatlam.infra.repo, 'fetch_all') as mock_fetch_all:
+
+        with patch.object(tatlam.infra.repo, "fetch_all") as mock_fetch_all:
             mock_fetch_all.return_value = []
             repo = ScenarioRepository()
-            
+
             repo.fetch_all(limit=10)
             mock_fetch_all.assert_called_with(limit=10, offset=None)
 
-    @pytest.mark.skip(reason="Redundant with integration/infra/test_repo_crud.py and flaky in full suite")
+    @pytest.mark.skip(
+        reason="Redundant with integration/infra/test_repo_crud.py and flaky in full suite"
+    )
     def test_repo_insert(self):
         import tatlam.infra.repo
-        with patch.object(tatlam.infra.repo, 'insert_scenario') as mock_insert:
+
+        with patch.object(tatlam.infra.repo, "insert_scenario") as mock_insert:
             mock_insert.return_value = 1
             repo = ScenarioRepository()
             data = {"title": "T", "category": "C"}
             repo.insert_scenario(data)
             mock_insert.assert_called_with(data=data, owner="web", pending=True)
 
-    @pytest.mark.skip(reason="Redundant with integration/infra/test_repo_crud.py and flaky in full suite")
+    @pytest.mark.skip(
+        reason="Redundant with integration/infra/test_repo_crud.py and flaky in full suite"
+    )
     def test_repo_fetch_one(self):
         import tatlam.infra.repo
-        with patch.object(tatlam.infra.repo, 'fetch_one') as mock_fetch:
+
+        with patch.object(tatlam.infra.repo, "fetch_one") as mock_fetch:
             mock_fetch.return_value = {}
             repo = ScenarioRepository()
             repo.fetch_one(1)

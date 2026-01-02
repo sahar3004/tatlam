@@ -51,6 +51,7 @@ from tatlam.core.prompts import (
     PromptValidationError,
     get_prompt_manager,
 )
+from tatlam.core.schemas import ScenarioDTO
 from tatlam.settings import ConfigurationError, get_settings
 
 if TYPE_CHECKING:
@@ -828,7 +829,7 @@ class TrinityBrain:
 
         return {
             "bundle_id": final_state.bundle_id,
-            "scenarios": [c.data for c in final_state.approved_scenarios],
+            "scenarios": [ScenarioDTO(**c.data) for c in final_state.approved_scenarios],
             "metrics": final_state.metrics.to_dict(),
             "errors": final_state.errors,
         }
@@ -862,7 +863,7 @@ class TrinityBrain:
 
         return {
             "bundle_id": final_state.bundle_id,
-            "scenarios": [c.data for c in final_state.approved_scenarios],
+            "scenarios": [ScenarioDTO(**c.data) for c in final_state.approved_scenarios],
             "metrics": final_state.metrics.to_dict(),
             "errors": final_state.errors,
         }

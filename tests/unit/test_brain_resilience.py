@@ -9,7 +9,7 @@ Tests cover:
 """
 
 import pytest
-from unittest.mock import Mock, MagicMock, patch, PropertyMock
+from unittest.mock import Mock, MagicMock, patch
 
 from tatlam.core.brain import (
     TrinityBrain,
@@ -343,7 +343,7 @@ class TestDependencyInjection:
             writer_client=mock_writer,
             judge_client=mock_judge,
             simulator_client=mock_simulator,
-            auto_initialize=False
+            auto_initialize=False,
         )
 
         assert brain.writer_client is mock_writer
@@ -352,9 +352,11 @@ class TestDependencyInjection:
 
     def test_auto_initialize_false_skips_client_creation(self):
         """Test that auto_initialize=False prevents automatic client creation."""
-        with patch('tatlam.core.brain.create_writer_client') as mock_create_writer, \
-             patch('tatlam.core.brain.create_judge_client') as mock_create_judge, \
-             patch('tatlam.core.brain.create_simulator_client') as mock_create_sim:
+        with (
+            patch("tatlam.core.brain.create_writer_client") as mock_create_writer,
+            patch("tatlam.core.brain.create_judge_client") as mock_create_judge,
+            patch("tatlam.core.brain.create_simulator_client") as mock_create_sim,
+        ):
 
             brain = TrinityBrain(auto_initialize=False)
 

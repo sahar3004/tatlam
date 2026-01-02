@@ -42,8 +42,9 @@ def in_memory_db(monkeypatch):
     # Reset SQLAlchemy engine to pick up new DB path
     reset_engine()
 
-    # Reset repo module's cached column checks
+    # Reset repo module's cached column checks and singleton instance
     repo_module._column_cache.clear()
+    repo_module._default_repository = None
 
     # Re-fetch settings - handled by get_engine internal call but good to ensure
     settings = get_settings()

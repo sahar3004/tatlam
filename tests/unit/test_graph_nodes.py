@@ -1,10 +1,10 @@
 """Unit tests for tatlam/graph/nodes/*.py"""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
-import pytest
 
-from tatlam.graph.state import SwarmState, ScenarioCandidate, ScenarioStatus
+from tatlam.graph.state import SwarmState, ScenarioStatus
 
 
 class TestSupervisorNode:
@@ -138,17 +138,21 @@ class TestClerkNode:
         state = SwarmState(category="Test", target_count=5)
 
         # Add a raw candidate
-        raw = state.add_candidate({
-            "_raw_text": '{"scenarios": [{"title": "Test", "category": "Test"}]}',
-            "_is_raw_draft": True,
-            "category": "Test",
-        })
+        raw = state.add_candidate(
+            {
+                "_raw_text": '{"scenarios": [{"title": "Test", "category": "Test"}]}',
+                "_is_raw_draft": True,
+                "category": "Test",
+            }
+        )
         raw.status = ScenarioStatus.DRAFT
 
         # Mock cloud client
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = '{"scenarios": [{"title": "Test", "category": "Test"}]}'
+        mock_response.choices[0].message.content = (
+            '{"scenarios": [{"title": "Test", "category": "Test"}]}'
+        )
         mock_cloud.return_value.chat.completions.create.return_value = mock_response
 
         result = clerk_node(state)
@@ -223,16 +227,20 @@ class TestJudgeNode:
         mock_score.return_value = (85.0, "Good scenario")
 
         state = SwarmState(category="Test", target_count=5, score_threshold=70.0)
-        c1 = state.add_candidate({
-            "title": "Good Scenario",
-            "category": "Test",
-            "steps": ["step1", "step2", "step3", "step4"],
-        })
+        c1 = state.add_candidate(
+            {
+                "title": "Good Scenario",
+                "category": "Test",
+                "steps": ["step1", "step2", "step3", "step4"],
+            }
+        )
         c1.status = ScenarioStatus.UNIQUE
 
         result = judge_node(state)
 
-        assert result.candidates[0].status == ScenarioStatus.APPROVED
+        # Iron Dome: Judge now sets JUDGE_APPROVED (not APPROVED)
+        # This distinguishes Judge approval from User approval
+        assert result.candidates[0].status == ScenarioStatus.JUDGE_APPROVED
         assert result.metrics.total_approved == 1
 
     @patch("tatlam.graph.nodes.judge._score_with_llm")
@@ -243,11 +251,13 @@ class TestJudgeNode:
         mock_score.return_value = (50.0, "Needs improvement")
 
         state = SwarmState(category="Test", target_count=5, score_threshold=70.0)
-        c1 = state.add_candidate({
-            "title": "Weak Scenario",
-            "category": "Test",
-            "steps": ["step1", "step2", "step3", "step4"],
-        })
+        c1 = state.add_candidate(
+            {
+                "title": "Weak Scenario",
+                "category": "Test",
+                "steps": ["step1", "step2", "step3", "step4"],
+            }
+        )
         c1.status = ScenarioStatus.UNIQUE
 
         result = judge_node(state)

@@ -25,12 +25,13 @@ from sqlalchemy.exc import IntegrityError
 
 from tatlam.infra.db import get_session
 from tatlam.infra.models import Scenario, ScenarioEmbedding
+from tatlam.core.schemas import ScenarioDTO  # Import for typing
 from tatlam.settings import get_settings
 
-# Get settings for module-level constants
-_settings = get_settings()
-REQUIRE_APPROVED_ONLY = _settings.REQUIRE_APPROVED_ONLY
-TABLE_NAME = _settings.TABLE_NAME
+# Get settings for module-level constants - REMOVED to avoid stale state in tests
+# _settings = get_settings()
+# REQUIRE_APPROVED_ONLY = _settings.REQUIRE_APPROVED_ONLY
+# TABLE_NAME = _settings.TABLE_NAME
 
 LOGGER = logging.getLogger(__name__)
 
@@ -46,9 +47,11 @@ def db_has_column(table: str, col: str) -> bool:
     cache_key = (table, col)
     if cache_key in _column_cache:
         return _column_cache[cache_key]
+    
+    table_name = get_settings().TABLE_NAME
 
     # For the Scenario model, we know the columns from the ORM definition
-    if table == TABLE_NAME:
+    if table == table_name:
         # Get column names from the ORM model
         result = hasattr(Scenario, col)
         _column_cache[cache_key] = result
@@ -82,7 +85,10 @@ def save_embedding(title: str, vec: np.ndarray) -> None:
         LOGGER.warning("Failed to save embedding for '%s': %s", title, e)
 
 
-_HAS_STATUS = db_has_column(TABLE_NAME, "status")
+def _has_status_column() -> bool:
+    """Check if the table has a status column (dynamic check)."""
+    table_name = get_settings().TABLE_NAME
+    return db_has_column(table_name, "status")
 
 
 def _normalize_text(text: Any) -> str:
@@ -152,9 +158,11 @@ def normalize_row(row: Any) -> dict[str, Any]:
 
 def is_approved_row(row: dict[str, Any]) -> bool:
     """Check if a row is approved based on status/approved_by fields."""
-    if not REQUIRE_APPROVED_ONLY:
+    settings = get_settings()
+    if not settings.REQUIRE_APPROVED_ONLY:
         return True
-    if _HAS_STATUS:
+    
+    if _has_status_column():
         return (row.get("status") or "").strip().lower() == "approved"
     ab = (row.get("approved_by") or "").strip().lower()
     return ab in {"admin", "human", "approved", "manager"}
@@ -222,13 +230,43 @@ def fetch_all(
         elif status_filter != "all":
             stmt = stmt.where(Scenario.status == status_filter)
 
+        # Apply approval filter if required (SQL-side)
+        if get_settings().REQUIRE_APPROVED_ONLY:
+            if _has_status_column():
+                stmt = stmt.where(Scenario.status == "approved")
+            else:
+                # Fallback for old schema without status column (less efficient but necessary)
+                # We can't easily filter by approved_by list in SQL without hardcoding names
+                # So we might still need python filtering for this edge case, 
+                # but "status" is the primary mechanism now.
+                pass 
+
         if limit is not None and offset is not None:
             stmt = stmt.limit(limit).offset(offset)
 
         scenarios = session.scalars(stmt).all()
         rows = [s.to_dict() for s in scenarios]
 
-    return [r for r in rows if is_approved_row(r)]
+    # Final pass for "approved_by" legacy check if needed, but primarily SQL filtered now
+    if get_settings().REQUIRE_APPROVED_ONLY and not _has_status_column():
+        return [r for r in rows if is_approved_row(r)]
+    
+    return rows
+
+
+def fetch_all_dto(
+    limit: int | None = None,
+    offset: int | None = None,
+    status_filter: str = "active",
+) -> list[ScenarioDTO]:
+    """Fetch all scenarios and return as strict DTOs.
+    
+    This is the preferred method for type-safe data access.
+    """
+    from tatlam.core.schemas import ScenarioDTO
+    
+    rows = fetch_all(limit=limit, offset=offset, status_filter=status_filter)
+    return [ScenarioDTO(**row) for row in rows]
 
 
 def fetch_count(where_sql: str = "", params: tuple[Any, ...] = ()) -> int:
@@ -252,7 +290,8 @@ def fetch_count(where_sql: str = "", params: tuple[Any, ...] = ()) -> int:
     with get_session() as session:
         stmt = select(func.count()).select_from(Scenario)
 
-        if REQUIRE_APPROVED_ONLY and _HAS_STATUS:
+        settings = get_settings()
+        if settings.REQUIRE_APPROVED_ONLY and _has_status_column():
             stmt = stmt.where(Scenario.status == "approved")
 
         result = session.execute(stmt).scalar()
@@ -434,6 +473,244 @@ def reject_scenario(sid: int, reason: str) -> bool:
         return True
 
 
+# ==== RLHF Learning Functions ====
+
+
+def add_to_hall_of_fame(
+    scenario_id: int,
+    scenario_data: dict[str, Any],
+    score: float,
+) -> int:
+    """
+    Add a successful scenario to the Hall of Fame.
+    
+    Args:
+        scenario_id: Database ID of the scenario
+        scenario_data: Full scenario data dictionary
+        score: Final quality score
+        
+    Returns:
+        ID of the created Hall of Fame entry
+    """
+    from tatlam.infra.models import HallOfFame
+    
+    entry = HallOfFame(
+        scenario_id=scenario_id,
+        category=str(scenario_data.get("category", "")),
+        score=score,
+        scenario_data_json=json.dumps(scenario_data, ensure_ascii=False),
+    )
+    
+    with get_session() as session:
+        session.add(entry)
+        session.flush()
+        entry_id = entry.id
+    
+    LOGGER.info(f"Added scenario {scenario_id} to Hall of Fame (score={score:.1f})")
+    return entry_id
+
+
+def add_to_graveyard(
+    scenario_id: int,
+    scenario_data: dict[str, Any],
+    reason: str,
+    judge_critique: str = "",
+) -> int:
+    """
+    Add a rejected scenario to the Graveyard.
+    
+    Args:
+        scenario_id: Database ID of the scenario
+        scenario_data: Full scenario data dictionary
+        reason: User's rejection reason
+        judge_critique: Judge's critique before rejection
+        
+    Returns:
+        ID of the created Graveyard entry
+        
+    Raises:
+        ValueError: If reason is empty
+    """
+    from tatlam.infra.models import Graveyard
+    
+    if not reason or not reason.strip():
+        raise ValueError("Rejection reason is mandatory for Graveyard")
+    
+    entry = Graveyard(
+        scenario_id=scenario_id,
+        category=str(scenario_data.get("category", "")),
+        rejection_reason=reason.strip(),
+        judge_critique=judge_critique,
+        scenario_data_json=json.dumps(scenario_data, ensure_ascii=False),
+    )
+    
+    with get_session() as session:
+        session.add(entry)
+        session.flush()
+        entry_id = entry.id
+    
+    LOGGER.info(f"Added scenario {scenario_id} to Graveyard: {reason[:50]}")
+    return entry_id
+
+
+def get_hall_of_fame_examples(
+    category: str | None = None,
+    limit: int = 3,
+    min_score: float = 80.0,
+) -> list[dict[str, Any]]:
+    """
+    Get high-quality examples from Hall of Fame for Few-Shot learning.
+    
+    Args:
+        category: Filter by scenario category (None = all)
+        limit: Maximum examples to return
+        min_score: Minimum score threshold
+        
+    Returns:
+        List of scenario dictionaries
+    """
+    from tatlam.infra.models import HallOfFame
+    
+    with get_session() as session:
+        stmt = select(HallOfFame).order_by(HallOfFame.score.desc())
+        
+        if category:
+            stmt = stmt.where(HallOfFame.category == category)
+        stmt = stmt.where(HallOfFame.score >= min_score)
+        stmt = stmt.limit(limit)
+        
+        entries = session.scalars(stmt).all()
+        
+        # Increment usage count
+        for entry in entries:
+            entry.used_as_example_count += 1
+        session.commit()
+        
+        return [entry.to_dict()["scenario_data"] for entry in entries]
+
+
+def get_common_rejection_reasons(limit: int = 10) -> list[tuple[str, int]]:
+    """
+    Get common rejection reasons with their frequency.
+    
+    Args:
+        limit: Maximum reasons to return
+        
+    Returns:
+        List of (reason, count) tuples sorted by frequency
+    """
+    from tatlam.infra.models import Graveyard
+    
+    with get_session() as session:
+        stmt = (
+            select(Graveyard.rejection_reason, func.count(Graveyard.id).label("count"))
+            .group_by(Graveyard.rejection_reason)
+            .order_by(func.count(Graveyard.id).desc())
+            .limit(limit)
+        )
+        
+        results = session.execute(stmt).fetchall()
+        return [(row.rejection_reason, row.count) for row in results]
+
+
+def get_graveyard_patterns(category: str | None = None, limit: int = 5) -> list[str]:
+    """
+    Get rejection patterns for use as negative constraints.
+    
+    Args:
+        category: Filter by scenario category
+        limit: Maximum patterns to return
+        
+    Returns:
+        List of rejection reason strings
+    """
+    from tatlam.infra.models import Graveyard
+    
+    with get_session() as session:
+        stmt = (
+            select(Graveyard.rejection_reason, func.count(Graveyard.id).label("count"))
+            .group_by(Graveyard.rejection_reason)
+            .order_by(func.count(Graveyard.id).desc())
+            .limit(limit)
+        )
+        
+        if category:
+            stmt = stmt.where(Graveyard.category == category)
+        
+        results = session.execute(stmt).fetchall()
+        return [row.rejection_reason for row in results]
+
+
+def log_feedback_entry(
+    entry_id: str,
+    input_context: dict[str, Any],
+    generated_output: dict[str, Any],
+    user_action: str,
+    user_reason: str | None = None,
+    revision_notes: str | None = None,
+    judge_score: float = 0.0,
+    judge_critique: str = "",
+    scenario_id: int | None = None,
+    category: str = "",
+) -> str:
+    """
+    Log a feedback entry to the database.
+    
+    Args:
+        entry_id: UUID for the entry
+        input_context: Original generation parameters
+        generated_output: The generated scenario
+        user_action: "approved" | "revised" | "rejected"
+        user_reason: User's reason (mandatory for reject)
+        revision_notes: Notes for revision requests
+        judge_score: Score from Judge
+        judge_critique: Judge's critique
+        scenario_id: Database ID if saved
+        category: Scenario category
+        
+    Returns:
+        The entry ID
+    """
+    from tatlam.infra.models import FeedbackLog
+    
+    entry = FeedbackLog(
+        id=entry_id,
+        input_context_json=json.dumps(input_context, ensure_ascii=False),
+        generated_output_json=json.dumps(generated_output, ensure_ascii=False),
+        user_action=user_action,
+        user_reason=user_reason,
+        revision_notes=revision_notes,
+        judge_score=judge_score,
+        judge_critique=judge_critique,
+        scenario_id=scenario_id,
+        category=category,
+    )
+    
+    with get_session() as session:
+        session.add(entry)
+    
+    LOGGER.debug(f"Logged feedback entry {entry_id}: {user_action}")
+    return entry_id
+
+
+def get_learning_context(category: str | None = None) -> dict[str, Any]:
+    """
+    Get complete learning context for prompt enhancement.
+    
+    Combines positive examples and negative patterns.
+    
+    Args:
+        category: Scenario category to focus on
+        
+    Returns:
+        Dictionary with examples and pitfalls
+    """
+    return {
+        "positive_examples": get_hall_of_fame_examples(category=category),
+        "negative_patterns": get_graveyard_patterns(category=category),
+    }
+
+
 def yield_all_titles_with_embeddings(
     batch_size: int = 1000,
 ) -> Generator[tuple[str, str], None, None]:
@@ -492,6 +769,15 @@ class ScenarioRepository:
         """Fetch all scenarios from the database."""
         return fetch_all(limit=limit, offset=offset, status_filter=status_filter)
 
+    def fetch_all_dto(
+        self,
+        limit: int | None = None,
+        offset: int | None = None,
+        status_filter: str = "active",
+    ) -> list[ScenarioDTO]:
+        """Fetch all scenarios as DTOs."""
+        return fetch_all_dto(limit=limit, offset=offset, status_filter=status_filter)
+
     def yield_titles_with_embeddings(
         self, batch_size: int = 1000
     ) -> Generator[tuple[str, str], None, None]:
@@ -525,6 +811,31 @@ class ScenarioRepository:
     ) -> list[dict[str, Any]]:
         """Fetch scenarios by category slug."""
         return fetch_by_category_slug(slug=slug, limit=limit, offset=offset)
+    
+    # ==== Learning Methods ====
+    
+    def add_to_hall_of_fame(
+        self,
+        scenario_id: int,
+        scenario_data: dict[str, Any],
+        score: float,
+    ) -> int:
+        """Add to Hall of Fame."""
+        return add_to_hall_of_fame(scenario_id, scenario_data, score)
+    
+    def add_to_graveyard(
+        self,
+        scenario_id: int,
+        scenario_data: dict[str, Any],
+        reason: str,
+        judge_critique: str = "",
+    ) -> int:
+        """Add to Graveyard."""
+        return add_to_graveyard(scenario_id, scenario_data, reason, judge_critique)
+    
+    def get_learning_context(self, category: str | None = None) -> dict[str, Any]:
+        """Get learning context for prompt enhancement."""
+        return get_learning_context(category)
 
 
 # Default repository instance for convenience
@@ -554,10 +865,20 @@ __all__ = [
     "fetch_by_category_slug",
     "fetch_count_by_slug",
     "insert_scenario",
+    "reject_scenario",
     "ScenarioRepository",
     "get_repository",
     "JSON_FIELDS",
     "is_approved_row",
     "db_has_column",
     "_normalize_text",
+    # Learning functions
+    "add_to_hall_of_fame",
+    "add_to_graveyard",
+    "get_hall_of_fame_examples",
+    "get_common_rejection_reasons",
+    "get_graveyard_patterns",
+    "log_feedback_entry",
+    "get_learning_context",
 ]
+

@@ -27,21 +27,21 @@ class TestBrainMock:
         from tatlam.core.brain import TrinityBrain
 
         brain = TrinityBrain(auto_initialize=False)
-        assert hasattr(brain, 'writer_client')
+        assert hasattr(brain, "writer_client")
 
     def test_trinity_brain_has_judge_client_attribute(self):
         """Verify judge_client attribute exists."""
         from tatlam.core.brain import TrinityBrain
 
         brain = TrinityBrain(auto_initialize=False)
-        assert hasattr(brain, 'judge_client')
+        assert hasattr(brain, "judge_client")
 
     def test_trinity_brain_has_simulator_client_attribute(self):
         """Verify simulator_client attribute exists."""
         from tatlam.core.brain import TrinityBrain
 
         brain = TrinityBrain(auto_initialize=False)
-        assert hasattr(brain, 'simulator_client')
+        assert hasattr(brain, "simulator_client")
 
     def test_trinity_brain_dependency_injection(self):
         """Test TrinityBrain accepts injected clients."""
@@ -55,7 +55,7 @@ class TestBrainMock:
             writer_client=mock_writer,
             judge_client=mock_judge,
             simulator_client=mock_simulator,
-            auto_initialize=False
+            auto_initialize=False,
         )
 
         assert brain.writer_client is mock_writer
@@ -71,10 +71,7 @@ class TestBrainMock:
         assert brain_no_writer.has_writer() is False
 
         # With client
-        brain_with_writer = TrinityBrain(
-            writer_client=MagicMock(),
-            auto_initialize=False
-        )
+        brain_with_writer = TrinityBrain(writer_client=MagicMock(), auto_initialize=False)
         assert brain_with_writer.has_writer() is True
 
     def test_trinity_brain_has_judge_method(self):
@@ -86,10 +83,7 @@ class TestBrainMock:
         assert brain_no_judge.has_judge() is False
 
         # With client
-        brain_with_judge = TrinityBrain(
-            judge_client=MagicMock(),
-            auto_initialize=False
-        )
+        brain_with_judge = TrinityBrain(judge_client=MagicMock(), auto_initialize=False)
         assert brain_with_judge.has_judge() is True
 
     def test_trinity_brain_has_simulator_method(self):
@@ -101,10 +95,7 @@ class TestBrainMock:
         assert brain_no_sim.has_simulator() is False
 
         # With client
-        brain_with_sim = TrinityBrain(
-            simulator_client=MagicMock(),
-            auto_initialize=False
-        )
+        brain_with_sim = TrinityBrain(simulator_client=MagicMock(), auto_initialize=False)
         assert brain_with_sim.has_simulator() is True
 
     def test_trinity_brain_get_status(self):
@@ -115,7 +106,7 @@ class TestBrainMock:
             writer_client=MagicMock(),
             judge_client=None,
             simulator_client=MagicMock(),
-            auto_initialize=False
+            auto_initialize=False,
         )
 
         status = brain.get_status()
@@ -129,24 +120,24 @@ class TestBrainMock:
         from tatlam.core.brain import TrinityBrain
 
         brain = TrinityBrain(auto_initialize=False)
-        assert hasattr(brain, 'generate_scenario_stream')
-        assert callable(getattr(brain, 'generate_scenario_stream'))
+        assert hasattr(brain, "generate_scenario_stream")
+        assert callable(brain.generate_scenario_stream)
 
     def test_trinity_brain_audit_scenario_exists(self):
         """Verify audit_scenario method exists."""
         from tatlam.core.brain import TrinityBrain
 
         brain = TrinityBrain(auto_initialize=False)
-        assert hasattr(brain, 'audit_scenario')
-        assert callable(getattr(brain, 'audit_scenario'))
+        assert hasattr(brain, "audit_scenario")
+        assert callable(brain.audit_scenario)
 
     def test_trinity_brain_chat_simulation_stream_exists(self):
         """Verify chat_simulation_stream method exists."""
         from tatlam.core.brain import TrinityBrain
 
         brain = TrinityBrain(auto_initialize=False)
-        assert hasattr(brain, 'chat_simulation_stream')
-        assert callable(getattr(brain, 'chat_simulation_stream'))
+        assert hasattr(brain, "chat_simulation_stream")
+        assert callable(brain.chat_simulation_stream)
 
     def test_trinity_brain_require_writer_raises_without_client(self):
         """Test _require_writer raises RuntimeError when client is None."""

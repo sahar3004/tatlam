@@ -465,6 +465,151 @@ class PromptManager:
 
         return missing
 
+    def format_revision_prompt(
+        self,
+        original_scenario: dict[str, Any],
+        user_feedback: str,
+        revision_sections: list[str] | None = None,
+        graveyard_pitfalls: list[str] | None = None,
+    ) -> str:
+        """
+        Build a targeted revision prompt based on user feedback.
+        
+        Part of the Iron Judge RLHF system. This prompt is used when a user
+        requests specific changes to a Judge-approved scenario.
+        
+        Args:
+            original_scenario: The scenario dictionary to revise
+            user_feedback: User's feedback on what to change
+            revision_sections: Specific sections to revise (e.g., ["steps", "background"])
+            graveyard_pitfalls: Common rejection patterns to avoid
+            
+        Returns:
+            Formatted prompt for targeted revision
+            
+        Raises:
+            PromptValidationError: If user_feedback is empty
+        """
+        import json
+        
+        if not user_feedback or not user_feedback.strip():
+            raise PromptValidationError("User feedback cannot be empty for revision")
+        
+        safe_feedback = _sanitize_user_input(user_feedback)
+        sections = revision_sections or []
+        pitfalls = graveyard_pitfalls or []
+        
+        # Format pitfalls section
+        pitfalls_section = ""
+        if pitfalls:
+            pitfalls_text = "\n".join(f"• {p}" for p in pitfalls)
+            pitfalls_section = f"""
+<negative_constraints>
+⚠️ אל תחזור על הטעויות הנפוצות הבאות:
+{pitfalls_text}
+</negative_constraints>
+"""
+        
+        # Format sections to revise
+        sections_section = ""
+        if sections:
+            sections_text = "\n".join(f"• {s}" for s in sections)
+            sections_section = f"""
+<target_sections>
+🎯 תקן רק את החלקים הבאים:
+{sections_text}
+</target_sections>
+"""
+        
+        prompt = f"""
+<revision_task>
+🔄 בקשת תיקון תרחיש
+
+המשתמש בדק את התרחיש הבא ומבקש תיקונים ספציפיים.
+אל תשנה חלקים שלא צוינו כבעייתיים.
+</revision_task>
+
+<original_scenario>
+{json.dumps(original_scenario, ensure_ascii=False, indent=2)}
+</original_scenario>
+
+<user_feedback>
+❌ המשתמש דחה/ביקש תיקון בגלל:
+"{safe_feedback}"
+</user_feedback>
+{pitfalls_section}{sections_section}
+<output_format>
+החזר את התרחיש המתוקן בפורמט JSON זהה לתרחיש המקורי.
+שמור על כל השדות הקיימים, תקן רק את הבעייתיים.
+</output_format>
+"""
+        return prompt.strip()
+
+    def format_learning_enhanced_prompt(
+        self,
+        base_prompt: str,
+        positive_examples: list[dict[str, Any]] | None = None,
+        negative_patterns: list[str] | None = None,
+    ) -> str:
+        """
+        Enhance a generation prompt with Few-Shot examples and negative constraints.
+        
+        Part of the Iron Judge RLHF system. This method injects learning
+        from the Hall of Fame (positive examples) and Graveyard (negative patterns)
+        into the generation prompt.
+        
+        Args:
+            base_prompt: The base generation prompt
+            positive_examples: Successful scenarios for Few-Shot learning
+            negative_patterns: Common rejection reasons to avoid
+            
+        Returns:
+            Enhanced prompt with learning context
+        """
+        import json
+        
+        examples = positive_examples or []
+        patterns = negative_patterns or []
+        
+        learning_section = ""
+        
+        # Add positive examples section
+        if examples:
+            examples_text = ""
+            for i, example in enumerate(examples[:3], 1):  # Max 3 examples
+                title = example.get("title", "תרחיש לדוגמה")
+                category = example.get("category", "")
+                examples_text += f"\n{i}. {title} ({category})"
+            
+            learning_section += f"""
+<approved_examples>
+📚 דוגמאות מאושרות (למד מהן):
+{examples_text}
+</approved_examples>
+"""
+        
+        # Add negative patterns section
+        if patterns:
+            patterns_text = "\n".join(f"• {p}" for p in patterns[:5])  # Max 5 patterns
+            learning_section += f"""
+<rejection_patterns>
+🚫 סיבות דחייה נפוצות (הימנע מהן!):
+{patterns_text}
+</rejection_patterns>
+"""
+        
+        if learning_section:
+            return f"""
+<learning_context>
+המערכת למדה מתרחישים קודמים. השתמש בידע הזה:
+{learning_section}
+</learning_context>
+
+{base_prompt}
+"""
+        
+        return base_prompt
+
 
 # ==== Module-Level Singleton Access ====
 
@@ -527,3 +672,4 @@ __all__ = [
     "load_system_prompt",
     "memory_addendum",
 ]
+

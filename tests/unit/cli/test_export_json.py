@@ -1,8 +1,7 @@
-
-import pytest
-from unittest.mock import MagicMock, patch, mock_open
+from unittest.mock import MagicMock, patch
 import json
 from tatlam.cli.export_json import main, fetch_rows, normalize
+
 
 class TestExportJSON:
 
@@ -10,15 +9,15 @@ class TestExportJSON:
     def test_fetch_rows_logic(self, mock_get_session):
         mock_session = MagicMock()
         mock_get_session.return_value.__enter__.return_value = mock_session
-        
+
         mock_obj = MagicMock()
         mock_obj.to_dict.return_value = {"id": 1, "title": "T"}
         mock_session.scalars.return_value.all.return_value = [mock_obj]
-        
+
         rows = fetch_rows(category="C")
         assert len(rows) == 1
         assert rows[0]["id"] == 1
-        
+
         rows2 = fetch_rows(bundle_id="B")
         assert len(rows2) == 1
 
@@ -28,7 +27,7 @@ class TestExportJSON:
         res = normalize(row)
         assert res["steps"] == ["s1"]
         assert res["other"] == "val"
-        
+
         # Test invalid json fallback
         row_bad = {"steps": "invalid"}
         res_bad = normalize(row_bad)
@@ -38,18 +37,18 @@ class TestExportJSON:
     def test_main(self, mock_get_session, tmp_path):
         mock_session = MagicMock()
         mock_get_session.return_value.__enter__.return_value = mock_session
-        
+
         mock_obj = MagicMock()
         mock_obj.to_dict.return_value = {"id": 1, "title": "T", "steps": []}
         mock_session.scalars.return_value.all.return_value = [mock_obj]
-        
+
         out_file = tmp_path / "scenarios.json"
-        
+
         args = ["--out", str(out_file), "--category", "C"]
-        
+
         ret = main(args)
         assert ret == 0
-        
+
         with open(out_file) as f:
             data = json.load(f)
             assert len(data) == 1

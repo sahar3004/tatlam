@@ -137,3 +137,7 @@ backups/*.save
 
 # Hypothesis cache
 .hypothesis/
+
+# Wal/Shm files
+*.db-shm
+*.db-wal

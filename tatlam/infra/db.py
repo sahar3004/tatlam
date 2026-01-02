@@ -133,6 +133,8 @@ def get_session() -> Generator[Session, None, None]:
         yield session
         session.commit()
     except Exception:
+        import logging
+        logging.getLogger(__name__).warning("Database session rollback due to exception", exc_info=True)
         session.rollback()
         raise
     finally:

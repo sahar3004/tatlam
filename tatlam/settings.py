@@ -111,6 +111,12 @@ class Settings(BaseSettings):
     LOCAL_BASE_URL: str = Field(default="http://127.0.0.1:8080/v1")
     LOCAL_API_KEY: str = Field(default="sk-no-key-required")
 
+    # ==== Scout Multi-Round Configuration ====
+    # Maximize free local LLM usage before passing to Claude
+    SCOUT_ROUNDS: int = Field(default=3, ge=1, le=10)
+    SCOUT_IDEAS_PER_ROUND: int = Field(default=50, ge=10, le=100)
+    SCOUT_TOP_K_TO_CLAUDE: int = Field(default=10, ge=5, le=30)
+
     # ==== OpenAI Cloud (for batch processing / embeddings) ====
     OPENAI_BASE_URL: str = Field(default="https://api.openai.com/v1")
     OPENAI_API_KEY: str | None = Field(default=None)

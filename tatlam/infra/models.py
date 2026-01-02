@@ -191,4 +191,125 @@ class ScenarioEmbedding(Base):
     vector_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
-__all__ = ["Base", "Scenario", "ScenarioEmbedding"]
+# ==== RLHF Learning Tables ====
+
+
+class HallOfFame(Base):
+    """
+    Hall of Fame: Approved scenarios used as Few-Shot examples.
+    
+    Part of the Iron Judge RLHF learning mechanism.
+    """
+    __tablename__ = "hall_of_fame"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    scenario_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    category: Mapped[str] = mapped_column(Text, nullable=False, index=True)
+    score: Mapped[float] = mapped_column(nullable=False)
+    scenario_data_json: Mapped[str] = mapped_column(Text, nullable=False)  # Full scenario as JSON
+    approved_at: Mapped[str] = mapped_column(
+        Text,
+        default=lambda: datetime.now().isoformat(),
+        nullable=False,
+        index=True,
+    )
+    used_as_example_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary."""
+        return {
+            "id": self.id,
+            "scenario_id": self.scenario_id,
+            "category": self.category,
+            "score": self.score,
+            "scenario_data": json.loads(self.scenario_data_json) if self.scenario_data_json else {},
+            "approved_at": self.approved_at,
+            "used_as_example_count": self.used_as_example_count,
+        }
+
+
+class Graveyard(Base):
+    """
+    Graveyard: Rejected scenarios with reasons for negative learning.
+    
+    Part of the Iron Judge RLHF learning mechanism.
+    """
+    __tablename__ = "graveyard"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    scenario_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    category: Mapped[str] = mapped_column(Text, nullable=False, index=True)
+    rejection_reason: Mapped[str] = mapped_column(Text, nullable=False)
+    judge_critique: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    scenario_data_json: Mapped[str] = mapped_column(Text, nullable=False)  # Full scenario as JSON
+    rejected_at: Mapped[str] = mapped_column(
+        Text,
+        default=lambda: datetime.now().isoformat(),
+        nullable=False,
+        index=True,
+    )
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary."""
+        return {
+            "id": self.id,
+            "scenario_id": self.scenario_id,
+            "category": self.category,
+            "rejection_reason": self.rejection_reason,
+            "judge_critique": self.judge_critique,
+            "scenario_data": json.loads(self.scenario_data_json) if self.scenario_data_json else {},
+            "rejected_at": self.rejected_at,
+        }
+
+
+class FeedbackLog(Base):
+    """
+    Feedback Log: Complete audit trail of user feedback.
+    
+    Captures all user interactions (approve/revise/reject) for analysis.
+    """
+    __tablename__ = "feedback_log"
+
+    id: Mapped[str] = mapped_column(Text, primary_key=True)  # UUID
+    input_context_json: Mapped[str] = mapped_column(Text, nullable=False)
+    generated_output_json: Mapped[str] = mapped_column(Text, nullable=False)
+    user_action: Mapped[str] = mapped_column(Text, nullable=False, index=True)  # approved/revised/rejected
+    user_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    revision_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    judge_score: Mapped[float] = mapped_column(default=0.0, nullable=False)
+    judge_critique: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    scenario_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    category: Mapped[str] = mapped_column(Text, default="", nullable=False, index=True)
+    timestamp: Mapped[str] = mapped_column(
+        Text,
+        default=lambda: datetime.now().isoformat(),
+        nullable=False,
+        index=True,
+    )
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary."""
+        return {
+            "id": self.id,
+            "input_context": json.loads(self.input_context_json) if self.input_context_json else {},
+            "generated_output": json.loads(self.generated_output_json) if self.generated_output_json else {},
+            "user_action": self.user_action,
+            "user_reason": self.user_reason,
+            "revision_notes": self.revision_notes,
+            "judge_score": self.judge_score,
+            "judge_critique": self.judge_critique,
+            "scenario_id": self.scenario_id,
+            "category": self.category,
+            "timestamp": self.timestamp,
+        }
+
+
+__all__ = [
+    "Base",
+    "Scenario",
+    "ScenarioEmbedding",
+    "HallOfFame",
+    "Graveyard",
+    "FeedbackLog",
+]
+

@@ -34,7 +34,7 @@ class TestDoctrine:
         prompt = load_prompt()
 
         # Check for Hebrew characters (Unicode range: U+0590 to U+05FF)
-        has_hebrew = any('\u0590' <= char <= '\u05FF' for char in prompt)
+        has_hebrew = any("\u0590" <= char <= "\u05FF" for char in prompt)
         assert has_hebrew, "Doctrine does not contain Hebrew characters"
 
     def test_doctrine_not_empty(self):
@@ -55,7 +55,7 @@ class TestDoctrine:
         expected_patterns = ["אבטחה", "תרחיש", "איום"]  # Security, Scenario, Threat
 
         found_patterns = [pattern for pattern in expected_patterns if pattern in prompt]
-        assert len(found_patterns) > 0, f"Doctrine missing expected instruction patterns"
+        assert len(found_patterns) > 0, "Doctrine missing expected instruction patterns"
 
     def test_doctrine_caching(self):
         """Test that multiple loads return consistent content."""
@@ -71,7 +71,7 @@ class TestDoctrine:
         doctrine_path = Path("system_prompt_he.txt")
 
         # Should not raise encoding errors
-        with open(doctrine_path, 'r', encoding='utf-8') as f:
+        with open(doctrine_path, encoding="utf-8") as f:
             content = f.read()
 
         assert content is not None

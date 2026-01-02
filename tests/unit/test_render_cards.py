@@ -6,7 +6,6 @@ Target: render_html() function and card generation.
 """
 
 import pytest
-from pathlib import Path
 
 
 @pytest.mark.unit
@@ -16,6 +15,7 @@ class TestRenderCards:
     def test_render_html_function_exists(self):
         """Verify render_html function is importable."""
         from tatlam.cli.render_cards import render_html
+
         assert callable(render_html)
 
     def test_render_html_with_sample_data(self, sample_scenario_data):
@@ -35,9 +35,9 @@ class TestRenderCards:
         html_output = render_html([sample_scenario_data])
 
         # Check for essential HTML tags
-        assert '<html' in html_output.lower()
-        assert '</html>' in html_output.lower()
-        assert '<body' in html_output.lower() or '<div' in html_output.lower()
+        assert "<html" in html_output.lower()
+        assert "</html>" in html_output.lower()
+        assert "<body" in html_output.lower() or "<div" in html_output.lower()
 
     def test_render_html_contains_hebrew_content(self, sample_scenario_data):
         """Test rendered HTML preserves Hebrew text."""
@@ -58,20 +58,20 @@ class TestRenderCards:
                 "title": "תרחיש 1",
                 "category": "פיננסים",
                 "difficulty": "קל",
-                "steps": [{"step": 1, "description": "צעד 1"}]
+                "steps": [{"step": 1, "description": "צעד 1"}],
             },
             {
                 "title": "תרחיש 2",
                 "category": "בריאות",
                 "difficulty": "בינוני",
-                "steps": [{"step": 1, "description": "צעד 1"}]
+                "steps": [{"step": 1, "description": "צעד 1"}],
             },
             {
                 "title": "תרחיש 3",
                 "category": "חינוך",
                 "difficulty": "קשה",
-                "steps": [{"step": 1, "description": "צעד 1"}]
-            }
+                "steps": [{"step": 1, "description": "צעד 1"}],
+            },
         ]
 
         html_output = render_html(scenarios)
@@ -89,7 +89,7 @@ class TestRenderCards:
 
         # Should still produce valid HTML structure
         assert html_output is not None
-        assert '<html' in html_output.lower() or len(html_output) == 0
+        assert "<html" in html_output.lower() or len(html_output) == 0
 
     def test_render_html_rtl_support(self, sample_scenario_data):
         """Test HTML includes RTL (Right-to-Left) support for Hebrew."""
@@ -98,7 +98,7 @@ class TestRenderCards:
         html_output = render_html([sample_scenario_data])
 
         # Check for RTL indicators
-        has_rtl = 'dir="rtl"' in html_output or 'direction: rtl' in html_output
+        has_rtl = 'dir="rtl"' in html_output or "direction: rtl" in html_output
         assert has_rtl, "HTML output missing RTL support for Hebrew"
 
     def test_render_html_includes_steps(self, sample_scenario_data):
@@ -127,7 +127,7 @@ class TestRenderCards:
         html_output = render_html([sample_scenario_data])
 
         # Check for CSS presence
-        has_css = '<style' in html_output.lower() or 'style=' in html_output.lower()
+        has_css = "<style" in html_output.lower() or "style=" in html_output.lower()
         assert has_css, "HTML output missing CSS styling"
 
     def test_render_html_handles_special_characters(self):
@@ -135,12 +135,10 @@ class TestRenderCards:
         from tatlam.cli.render_cards import render_html
 
         scenario_with_special_chars = {
-            "title": "תרחיש עם <תגיות> & \"מרכאות\"",
+            "title": 'תרחיש עם <תגיות> & "מרכאות"',
             "category": "פיננסים",
             "difficulty": "בינוני",
-            "steps": [
-                {"step": 1, "description": "צעד עם 'מרכאות' ו-<סוגריים>"}
-            ]
+            "steps": [{"step": 1, "description": "צעד עם 'מרכאות' ו-<סוגריים>"}],
         }
 
         html_output = render_html([scenario_with_special_chars])
