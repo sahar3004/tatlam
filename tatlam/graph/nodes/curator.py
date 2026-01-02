@@ -1,12 +1,12 @@
 """
 tatlam/graph/nodes/curator.py - The Curator Node
 
-The Curator uses a Cloud LLM (Gemini) to filter the raw seeds from the Scout.
+The Curator uses Gemini 3 Flash to filter the refined seeds from the Scout.
 It selects only the most promising, doctrine-aligned, and interesting ideas
 before passing them to the Writer.
 
 Key Features:
-- Uses Cloud LLM for high-quality filtering
+- Uses Gemini 3 Flash for fast, high-quality filtering
 - Applies doctrine knowledge for safety/legality checks
 - Selects top N seeds based on operational value
 """
@@ -185,7 +185,7 @@ def curator_node(state: SwarmState) -> SwarmState:
     try:
         response_text = _call_curator_llm(
             cloud_client,
-            settings.VALIDATOR_MODEL,  # Use the validator model (fast, cheap)
+            settings.CLERK_MODEL_NAME,  # Gemini 3 Flash
             user_prompt,
             system_prompt
         )

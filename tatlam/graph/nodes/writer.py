@@ -1,15 +1,16 @@
 """
 tatlam/graph/nodes/writer.py - The Writer Node
 
-The Writer generates scenario candidates using the local LLM.
-It leverages the existing prompt engineering from run_batch.py
-and supports critique-driven regeneration for repair cycles.
+The Writer generates full scenario candidates using Claude Sonnet 4.5.
+It expands seed ideas from the Scout/Curator pipeline into complete,
+doctrine-compliant training scenarios.
 
 Key Features:
-- Uses local LLM (Qwen) with cloud fallback
+- Uses Claude Sonnet 4.5 as primary model (Cloud First)
+- Local LLM available as fallback
+- Incorporates seed ideas from Scout pipeline
 - Incorporates Gold examples for quality
-- Supports repair mode with critique feedback
-- Structured logging for observability
+- Supports repair mode with Judge critique feedback
 """
 from __future__ import annotations
 
