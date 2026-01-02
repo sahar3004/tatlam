@@ -1,0 +1,12 @@
+rules:
+  - id: "loc_underground_evacuation"
+    category: "operational"
+    content: "Evacuation must consider bottlenecks (escalators/elevators); blast effects are amplified in enclosed spaces."
+    context:
+      location_type: "underground"
+
+  - id: "loc_underground_biker_response"
+    category: "operational"
+    content: "In Underground (Tatak) sectors, there is no permanent motorcycle unit; response times are longer (approx 10 mins). Do not rely on immediate arrival."
+    context:
+      location_type: "underground"

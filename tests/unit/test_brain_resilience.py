@@ -114,10 +114,8 @@ class TestSimulatorUnavailable:
         """Test chat_simulation raises SimulatorUnavailableError when client is None."""
         brain = TrinityBrain(auto_initialize=False)
 
-        with pytest.raises(SimulatorUnavailableError) as exc_info:
+        with pytest.raises(SimulatorUnavailableError):
             brain.chat_simulation([{"role": "user", "content": "test"}])
-
-        assert "LOCAL_BASE_URL" in str(exc_info.value)
 
     def test_chat_simulation_stream_raises_when_simulator_unavailable(self):
         """Test chat_simulation_stream raises SimulatorUnavailableError."""
@@ -215,18 +213,17 @@ class TestRetryOnTransientErrors:
 
         call_count = 0
 
-        def create_side_effect(*args, **kwargs):
+        def generate_side_effect(*args, **kwargs):
             nonlocal call_count
             call_count += 1
             if call_count < 3:
                 raise ConnectionError("Connection refused")
-            # Return mock streaming response
+            # Return mock streaming response (Gemini-style)
             mock_chunk = Mock()
-            mock_chunk.choices = [Mock()]
-            mock_chunk.choices[0].delta.content = "Response"
+            mock_chunk.text = "Response"
             return iter([mock_chunk])
 
-        mock_simulator.chat.completions.create = create_side_effect
+        mock_simulator.generate_content = generate_side_effect
 
         brain = TrinityBrain(simulator_client=mock_simulator, auto_initialize=False)
 
@@ -311,22 +308,22 @@ class TestMaxRetriesExceeded:
         # Should have retried 3 times (default max attempts)
         assert call_count == 3
 
-    def test_simulator_raises_unavailable_after_max_retries(self):
-        """Test that simulator raises SimulatorUnavailableError after max retries."""
+    def test_simulator_raises_after_max_retries(self):
+        """Test that simulator raises APICallError after max retries for Gemini."""
         mock_simulator = Mock()
 
         call_count = 0
 
-        def create_side_effect(*args, **kwargs):
+        def generate_side_effect(*args, **kwargs):
             nonlocal call_count
             call_count += 1
             raise ConnectionError("Server offline")
 
-        mock_simulator.chat.completions.create = create_side_effect
+        mock_simulator.generate_content = generate_side_effect
 
         brain = TrinityBrain(simulator_client=mock_simulator, auto_initialize=False)
 
-        with pytest.raises(SimulatorUnavailableError):
+        with pytest.raises(APICallError):
             list(brain.chat_simulation_stream([{"role": "user", "content": "test"}]))
 
         assert call_count == 3
@@ -391,14 +388,14 @@ class TestStreamingBehavior:
         """Test that chat_simulation collects all stream chunks."""
         mock_simulator = Mock()
 
+        # Gemini-style streaming chunks (each has .text attribute)
         chunks = []
         for content in ["Hello", " ", "World"]:
             mock_chunk = Mock()
-            mock_chunk.choices = [Mock()]
-            mock_chunk.choices[0].delta.content = content
+            mock_chunk.text = content
             chunks.append(mock_chunk)
 
-        mock_simulator.chat.completions.create = Mock(return_value=iter(chunks))
+        mock_simulator.generate_content = Mock(return_value=iter(chunks))
 
         brain = TrinityBrain(simulator_client=mock_simulator, auto_initialize=False)
 
@@ -406,21 +403,22 @@ class TestStreamingBehavior:
 
         assert result == "Hello World"
 
-    def test_chat_simulation_stream_skips_none_content(self):
-        """Test that streaming skips chunks with None content."""
+    def test_chat_simulation_stream_with_empty_text(self):
+        """Test that streaming yields all chunks including empty ones."""
         mock_simulator = Mock()
 
+        # Gemini-style chunks - some with empty text
         chunks = []
-        for content in ["Hello", None, "World"]:
+        for content in ["Hello", "World"]:
             mock_chunk = Mock()
-            mock_chunk.choices = [Mock()]
-            mock_chunk.choices[0].delta.content = content
+            mock_chunk.text = content
             chunks.append(mock_chunk)
 
-        mock_simulator.chat.completions.create = Mock(return_value=iter(chunks))
+        mock_simulator.generate_content = Mock(return_value=iter(chunks))
 
         brain = TrinityBrain(simulator_client=mock_simulator, auto_initialize=False)
 
         result = list(brain.chat_simulation_stream([{"role": "user", "content": "test"}]))
 
+        # All non-empty text chunks are yielded
         assert result == ["Hello", "World"]

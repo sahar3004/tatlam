@@ -62,9 +62,23 @@ class TestDatabaseSchema:
         # Insert Hebrew text
         hebrew_text = "בדיקת עברית מלאה עם ניקוד: שָׁלוֹם"
         cursor.execute("""
-            INSERT INTO scenarios (title, category, steps, bundle_id, external_id)
-            VALUES (?, ?, ?, ?, ?)
-        """, (hebrew_text, "פיגועים פשוטים", "[]", "bundle-1", "ext-1"))  # Valid CATS category
+            INSERT INTO scenarios (
+                title, category, steps, bundle_id, external_id,
+                threat_level, likelihood, complexity, location, background, operational_background,
+                cctv_usage, authority_notes, end_state_success, end_state_failure,
+                required_response, debrief_points, comms, decision_points, escalation_conditions,
+                lessons_learned, variations, validation,
+                owner, approved_by, status, created_at, media_link
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            hebrew_text, "פיגועים פשוטים", "[]", "bundle-1", "ext-1",
+            "low", "low", "low", "loc", "bg", "op_bg",
+            "none", "none", "win", "lose",
+            "[]", "[]", "[]", "[]", "[]", "[]", "[]", "[]",
+            "web", "", "pending", "2025-01-01", ""
+        ))
+        in_memory_db.commit()
 
         # Retrieve it back
         cursor.execute("SELECT title FROM scenarios WHERE id = last_insert_rowid()")
@@ -86,9 +100,22 @@ class TestDatabaseSchema:
         steps_json = json.dumps(steps_data, ensure_ascii=False)
 
         cursor.execute("""
-            INSERT INTO scenarios (title, category, steps, bundle_id, external_id)
-            VALUES (?, ?, ?, ?, ?)
-        """, ("כותרת בדיקה json", "פיגועים פשוטים", steps_json, "bundle-1", "ext-1"))  # Valid CATS category
+            INSERT INTO scenarios (
+                title, category, steps, bundle_id, external_id,
+                threat_level, likelihood, complexity, location, background, operational_background,
+                cctv_usage, authority_notes, end_state_success, end_state_failure,
+                required_response, debrief_points, comms, decision_points, escalation_conditions,
+                lessons_learned, variations, validation,
+                owner, approved_by, status, created_at, media_link
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            "כותרת בדיקה json", "פיגועים פשוטים", steps_json, "bundle-1", "ext-1",
+            "low", "low", "low", "loc", "bg", "op_bg",
+            "none", "none", "win", "lose",
+            "[]", "[]", "[]", "[]", "[]", "[]", "[]", "[]",
+            "web", "", "pending", "2025-01-01", ""
+        ))
 
         cursor.execute("SELECT steps FROM scenarios WHERE id = last_insert_rowid()")
         result = cursor.fetchone()
@@ -107,9 +134,22 @@ class TestDatabaseSchema:
         # Try inserting minimal record
         try:
             cursor.execute("""
-                INSERT INTO scenarios (title, category, steps, bundle_id, external_id)
-                VALUES (?, ?, ?, ?, ?)
-            """, ("כותרת nullable", "פיגועים פשוטים", "[]", "bundle-1", "ext-1"))  # Valid CATS category
+                INSERT INTO scenarios (
+                    title, category, steps, bundle_id, external_id,
+                    threat_level, likelihood, complexity, location, background, operational_background,
+                    cctv_usage, authority_notes, end_state_success, end_state_failure,
+                    required_response, debrief_points, comms, decision_points, escalation_conditions,
+                    lessons_learned, variations, validation,
+                    owner, approved_by, status, created_at, media_link
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                "כותרת nullable", "פיגועים פשוטים", "[]", "bundle-1", "ext-1",
+                "low", "low", "low", "loc", "bg", "op_bg",
+                "none", "none", "win", "lose",
+                "[]", "[]", "[]", "[]", "[]", "[]", "[]", "[]",
+                "web", "", "pending", "2025-01-01", ""
+            ))
             in_memory_db.commit()
             success = True
         except sqlite3.IntegrityError:
@@ -124,9 +164,22 @@ class TestDatabaseSchema:
         # Insert various Unicode characters
         unicode_test = "עברית + English + 中文 + 🔥 Emoji"
         cursor.execute("""
-            INSERT INTO scenarios (title, category, steps, bundle_id, external_id)
-            VALUES (?, ?, ?, ?, ?)
-        """, (unicode_test, "פיגועים פשוטים", "[]", "bundle-1", "ext-1"))  # Valid CATS category
+            INSERT INTO scenarios (
+                title, category, steps, bundle_id, external_id,
+                threat_level, likelihood, complexity, location, background, operational_background,
+                cctv_usage, authority_notes, end_state_success, end_state_failure,
+                required_response, debrief_points, comms, decision_points, escalation_conditions,
+                lessons_learned, variations, validation,
+                owner, approved_by, status, created_at, media_link
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            unicode_test, "פיגועים פשוטים", "[]", "bundle-1", "ext-1",
+            "low", "low", "low", "loc", "bg", "op_bg",
+            "none", "none", "win", "lose",
+            "[]", "[]", "[]", "[]", "[]", "[]", "[]", "[]",
+            "web", "", "pending", "2025-01-01", ""
+        ))
 
         cursor.execute("SELECT title FROM scenarios WHERE id = last_insert_rowid()")
         result = cursor.fetchone()

@@ -21,7 +21,8 @@ SQLAlchemy>=2.0.0           # Modern ORM with type hints
 
 # Multi-Agent Workflow
 langgraph>=0.0.50           # LangGraph for multi-agent orchestration
-numpy>=1.24.0               # Embeddings and similarity calculations
+numpy>=1.26.0,<2.0.0          # Embeddings and similarity calculations (MUST stay <2.0 for binary compat)
+scipy>=1.10.0,<1.14.0         # Scientific computing (compatible with numpy 1.x)
 
 # Local LLM (llama-cpp-python)
 # NOTE: For Apple Silicon (M1/M2/M3/M4) with Metal GPU support,

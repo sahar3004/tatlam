@@ -1,11 +1,16 @@
 # AGENTS.md — Tatlam Project
 
-> Hebrew security scenario generation system using Trinity AI architecture (Writer→Judge→Simulator).
+> Hebrew security scenario generation system using Multi-Agent AI Pipeline.
 
 ## Stack
 - **Core**: Python 3.9+ | SQLite+WAL | Pydantic 2.0 | SQLAlchemy 2.0
 - **UI**: Streamlit
-- **AI**: Claude (Writer) → Gemini (Judge) → Local LLM/llama.cpp (Simulator)
+- **AI Pipeline**:
+  - **Scout** (Local LLM → Claude refinement): Seed generation
+  - **Writer** (Claude): Scenario authoring
+  - **Judge** (Gemini): Quality scoring
+  - **Curator**: Selection and filtering
+  - **Simulator** (Gemini): Training simulations
 
 ## Commands
 
@@ -26,22 +31,33 @@
 
 ```
 tatlam/
-├── settings.py      # Pydantic config (SINGLE SOURCE OF TRUTH)
-├── core/            # Pure logic (NO I/O) ← NEVER import infra here
-│   ├── brain.py     # TrinityBrain orchestration
+├── settings.py         # Pydantic config (SINGLE SOURCE OF TRUTH)
+├── core/               # Pure logic (NO I/O) ← NEVER import infra here
+│   ├── brain.py        # TrinityBrain orchestration
 │   ├── llm_factory.py  # Client protocols + DI
+│   ├── doctrine.py     # Security doctrine & scoring
+│   ├── prompts.py      # Prompt templates
+│   ├── rules.py        # Rule engine for knowledge base
 │   └── categories.py   # Hebrew normalization
-├── infra/           # I/O layer
-│   ├── db.py        # SQLAlchemy engine (WAL mode)
-│   ├── models.py    # Scenario ORM
-│   └── repo.py      # CRUD
-└── cli/             # Entry points
+├── graph/              # Multi-Agent Pipeline
+│   └── nodes/
+│       ├── scout.py    # 2-stage seed generation (Local→Claude)
+│       ├── writer.py   # Scenario authoring (Claude)
+│       ├── judge.py    # Quality scoring (Gemini)
+│       ├── curator.py  # Selection & filtering
+│       └── clerk.py    # Persistence
+├── infra/              # I/O layer
+│   ├── db.py           # SQLAlchemy engine (WAL mode)
+│   ├── models.py       # Scenario ORM
+│   └── repo.py         # CRUD with rejection tracking
+├── knowledge/          # Hebrew knowledge base (JSON)
+└── cli/                # Entry points
 
 tests/
-├── conftest.py      # Fixtures: in_memory_db, mock_brain
-├── unit/            # Fast, isolated
-├── integration/     # DB tests
-└── llm_evals/       # @pytest.mark.slow
+├── conftest.py         # Fixtures: in_memory_db, mock_brain
+├── unit/               # Fast, isolated
+├── integration/        # DB tests
+└── llm_evals/          # @pytest.mark.slow
 ```
 
 ## Code Style
@@ -88,11 +104,17 @@ with get_session() as session:
 ## Environment
 
 ```bash
-ANTHROPIC_API_KEY=       # Writer
-GOOGLE_API_KEY=          # Judge
+ANTHROPIC_API_KEY=       # Writer + Scout refinement
+GOOGLE_API_KEY=          # Judge + Simulator
 DB_PATH=db/tatlam.db
+
+# Model Configuration
 WRITER_MODEL_NAME=claude-sonnet-4-20250514
 JUDGE_MODEL_NAME=gemini-2.0-flash
+SIMULATOR_MODEL_NAME=gemini-2.0-flash
+SCOUT_MODEL_NAME=claude-sonnet-4-20250514
+
+# Local LLM (Scout Stage 1)
 LOCAL_MODEL=qwen-2.5-32b-instruct
 LOCAL_BASE_URL=http://127.0.0.1:8000/v1
 ```

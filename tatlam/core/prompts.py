@@ -166,12 +166,14 @@ class PromptManager:
         """Get the batch processing system prompt (from file)."""
         return self._batch_prompt
 
-    def get_trinity_prompt(self, role: str) -> str:
+    def get_trinity_prompt(self, role: str, venue: str = "allenby", context: dict[str, Any] | None = None) -> str:
         """
         Get the Trinity system prompt for a specific role.
 
         Args:
             role: One of "writer", "judge", or "simulator"
+            venue: Venue identifier ("allenby" or "jaffa")
+            context: Optional context for rule engine rules
 
         Returns:
             The system prompt for the specified role
@@ -184,7 +186,7 @@ class PromptManager:
 
         if role not in ("writer", "judge", "simulator"):
             raise ValueError(f"Invalid role: {role}. Must be one of: writer, judge, simulator")
-        return get_system_prompt(role)
+        return get_system_prompt(role, venue=venue, context=context)
 
     def format_scenario_prompt(
         self,
@@ -236,14 +238,48 @@ class PromptManager:
         from tatlam.core.categories import CATS
         valid_categories = ", ".join([meta.get("title", "") for meta in CATS.values() if meta.get("title") != "לא מסווג"][:8])
 
+        # Determine venue from category
+        # Determine venue from category/input
+        venue = "allenby"
+        if safe_category:
+            from tatlam.core.categories import category_to_slug
+            slug = category_to_slug(safe_category)
+            if slug == "tachanot-iliyot":
+                venue = "jaffa"
+
+        if "עילי" in safe_input or "יפו" in safe_input:
+            venue = "jaffa"
+            
+        if venue == "jaffa":
+            logger.info("Detected Surface Station context (Jaffa Line) from input/category")
+
         # Build the prompt with clear demarcation
         category_clause = ""
         if safe_category:
             category_clause = f"\n- הקטגוריה המבוקשת: {safe_category}"
 
+        # Adjust Prompt based on Venue
+        # If Jaffa, we remove the strict distance constraint for "Touch" as it's harder to enforce
+        # But we KEEP strict safety.
+        
+        # Inject dynamic rules based on venue
+        if venue == "jaffa":
+            safety_rules = """🚨 כללי ברזל לתחנה עילית (Jaffa Line):
+- אין שערים/גדרות! סריקה ויזואלית ותגובה מהירה.
+- אין לגעת בחפץ חשוד! (מרחק 50 מ').
+- טווחי רכב חשוד: אופנוע 100 מ', רכב 200 מ' (ברחוב הפתוח).
+- פתיחה באש: אך ורק לפי Ultima Ratio (סכנת חיים מיידית). זהירות על עוברי אורח!"""
+            doctrine_ref = "תורת ההפעלה - ציר יפו (Surface Doctrine)"
+        else:
+            safety_rules = """🚨 כללי ברזל (הפרה = תרחיש פסול):
+- אין לגעת בחפץ חשוד! טווח מינימלי 50 מ'
+- טווחי רכב חשוד: אופנוע 100 מ', רכב 200 מ', משאית 400 מ'
+- פתיחה באש: רק לפי Ultima Ratio"""
+            doctrine_ref = "תורת ההפעלה (Trinity Doctrine - Allenby)"
+
         prompt = f"""
 <doctrine_compliance>
-כל תרחיש חייב לעמוד בתורת ההפעלה (Trinity Doctrine).
+כל תרחיש חייב לעמוד ב{doctrine_ref}.
 </doctrine_compliance>
 
 <user_request>
@@ -266,10 +302,7 @@ class PromptManager:
 </required_format>
 
 <safety_rules>
-🚨 כללי ברזל (הפרה = תרחיש פסול):
-- אין לגעת בחפץ חשוד! טווח מינימלי 50 מ'
-- טווחי רכב חשוד: אופנוע 100 מ', רכב 200 מ', משאית 400 מ'
-- פתיחה באש: רק לפי Ultima Ratio (אמצעי + כוונה + סכנת חיים מיידית)
+{safety_rules}
 - חיפוש: רק בחשד סביר לפי חוק הסמכויות 2005
 - איסור אפליה: ללא פרופיילינג גזעי/דתי
 </safety_rules>
@@ -346,6 +379,7 @@ class PromptManager:
         self,
         scenario_context: str | None = None,
         character_type: str = "civilian",
+        venue: str = "allenby",
     ) -> str:
         """
         Format the system prompt for the Simulator.
@@ -364,7 +398,7 @@ class PromptManager:
         if character_type not in valid_types:
             raise ValueError(f"Invalid character_type: {character_type}. Must be one of: {valid_types}")
 
-        base_prompt = self.get_trinity_prompt("simulator")
+        base_prompt = self.get_trinity_prompt("simulator", venue=venue)
 
         context_section = ""
         if scenario_context:

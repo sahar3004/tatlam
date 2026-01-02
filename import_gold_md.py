@@ -6,7 +6,7 @@ import sys
 import unicodedata
 from datetime import datetime
 
-from run_batch import check_and_repair, dedup_and_embed_titles, ensure_db, insert_bundle
+from tatlam.core.batch_tools import check_and_repair, dedup_and_embed_titles, ensure_db, insert_bundle_to_db as insert_bundle
 
 # ------------------------------- קונפיג וזיהוי סקשנים -------------------------------
 

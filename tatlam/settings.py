@@ -16,7 +16,7 @@ import os
 from enum import Enum
 from functools import lru_cache
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -87,21 +87,21 @@ class Settings(BaseSettings):
 
     # ==== Trinity Architecture: Writer (Claude/Anthropic) ====
     WRITER_MODEL_PROVIDER: Literal["anthropic"] = "anthropic"
-    WRITER_MODEL_NAME: str = Field(default="claude-sonnet-4.5")
+    WRITER_MODEL_NAME: str = Field(default="claude-sonnet-4-5-20250929")
     ANTHROPIC_API_KEY: str | None = Field(default=None)
 
     # ==== Trinity Architecture: Judge (Claude Opus for deep critique) ====
     JUDGE_MODEL_PROVIDER: Literal["anthropic"] = "anthropic"
-    JUDGE_MODEL_NAME: str = Field(default="claude-opus-4.5")
+    JUDGE_MODEL_NAME: str = Field(default="claude-opus-4-5-20251101")
     
     # ==== Trinity Architecture: Clerk (Gemini Flash for JSON formatting) ====
     CLERK_MODEL_PROVIDER: Literal["google"] = "google"
-    CLERK_MODEL_NAME: str = Field(default="gemini-3-flash")
+    CLERK_MODEL_NAME: str = Field(default="gemini-3-flash-preview")
     GOOGLE_API_KEY: str | None = Field(default=None)
 
     # ==== Trinity Architecture: Simulator (Gemini Flash for chat) ====
     SIMULATOR_MODEL_PROVIDER: Literal["google"] = "google"
-    SIMULATOR_MODEL_NAME: str = Field(default="gemini-3-flash")
+    SIMULATOR_MODEL_NAME: str = Field(default="gemini-3-flash-preview")
 
     # ==== Trinity Architecture: Scout (Local Qwen for idea generation) ====
     LOCAL_MODEL_NAME: str = Field(default="qwen2.5-coder-32b-instruct")

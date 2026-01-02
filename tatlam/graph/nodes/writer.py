@@ -99,7 +99,7 @@ def _call_anthropic(client: Any, model: str, system: str, user_prompt: str) -> s
     return (response.content[0].text if response.content else "").strip()
 
 
-def _get_doctrine_context() -> str:
+def _get_doctrine_context(venue_type: str = "allenby") -> str:
     """
     Extract key doctrine elements for the Writer prompt.
     This ensures the Writer generates scenarios aligned with the doctrine.
@@ -108,30 +108,48 @@ def _get_doctrine_context() -> str:
 
     doctrine = TRINITY_DOCTRINE
 
-    # Safety distances
-    safety = doctrine.get("procedures", {}).get("suspicious_object", {}).get("safety_distances", {})
+    if venue_type == "jaffa":
+        # Surface doctrine
+        venue = doctrine.get("venue_surface_jaffa", {})
+        safety_rules = """
+🚨 כללי ברזל ליפו (Surface):
+- אין לגעת בחפץ חשוד! (50 מ')
+- אופנוע 100 מ', רכב 200 מ'
+- אין שערים = סריקה ויזואלית ותגובה רכובה
+"""
+        venue_desc = f"""
+🏢 ציר יפו (רכבת קלה סביבה פתוחה):
+- סוג: {venue.get('specs', {}).get('type', 'מערכת פתוחה')}
+- כוח: אופנוענים + מאבטחי רכבות (אין עמדות קבועות)
+- איום: {venue.get('threats_specific', ['ירי', 'אבנים'])[0]}
+"""
+    else:
+        # Allenby doctrine
+        safety = doctrine.get("procedures", {}).get("suspicious_object", {}).get("safety_distances", {})
+        venue_data = doctrine.get("venue_allenby", {})
+        
+        safety_rules = f"""
+🚨 טווחי בטיחות (אלנבי):
+- חפץ חשוד עירוני: {safety.get('object_urban', '50 מטר')}
+- רכב: {safety.get('car', '100 מטר')} | משאית: {safety.get('truck', '400 מטר')}
+"""
+        venue_desc = f"""
+🏢 תחנת אלנבי:
+- עומק: {venue_data.get('specs', {}).get('depth', '28 מטר')}
+- מפלס -2: שטח סטרילי (כל אדם = אירוע)
+"""
 
-    # Legal framework
+    # Legal framework (Shared)
     legal = doctrine.get("legal_framework", {})
     fire = legal.get("open_fire_regulations", {})
 
-    # Venue context
-    venue = doctrine.get("venue_allenby", {})
-
     return f"""
 📚 תורת ההפעלה (DOCTRINE) - חובה!
-
-🚨 טווחי בטיחות:
-- חפץ חשוד עירוני: {safety.get('object_urban', '50 מטר')}
-- רכב: {safety.get('car', '100 מטר')} | משאית: {safety.get('truck', '400 מטר')}
-
+{safety_rules}
 ⚖️ פתיחה באש (Ultima Ratio):
 - עקרון: {fire.get('core_principle', 'אמצעי אחרון')}
 - תנאים: סכנת חיים + אמצעי + כוונה
-
-🏢 תחנת אלנבי:
-- עומק: {venue.get('specs', {}).get('depth', '28 מטר')}
-- מפלס -2: שטח סטרילי (כל אדם = אירוע)
+{venue_desc}
 """
 
 
@@ -146,8 +164,18 @@ def _build_generation_prompt(state: SwarmState, repair_critique: str = "") -> st
     count = state.batch_size
     bundle_id = state.bundle_id
 
+    bundle_id = state.bundle_id
+
+    # Determine venue
+    venue_type = "allenby"
+    if "jaffa" in str(state.category).lower() or "surface" in str(state.category).lower() or "tachanot-iliyot" in str(state.category).lower():
+        venue_type = "jaffa"
+    
+    if "יפו" in str(state.category) or "עילי" in str(state.category):
+        venue_type = "jaffa"
+        
     # Get doctrine context
-    doctrine_context = _get_doctrine_context()
+    doctrine_context = _get_doctrine_context(venue_type)
 
     # Repair mode
     repair_section = ""
@@ -298,8 +326,33 @@ def writer_node(state: SwarmState) -> SwarmState:
     user_prompt = _build_generation_prompt(state, repair_critique)
 
     # Load system prompt
-    from tatlam.core.prompts import load_system_prompt, memory_addendum
-    system_prompt = load_system_prompt()
+    from tatlam.core.prompts import get_prompt_manager, memory_addendum
+    
+    # Use prompt manager to get dynamic system prompt (injecting venue)
+    pm = get_prompt_manager()
+    
+    # Infer venue type again for system prompt
+    venue_type = "allenby"
+    if "jaffa" in str(state.category).lower() or "surface" in str(state.category).lower() or "tachanot-iliyot" in str(state.category).lower():
+        venue_type = "jaffa"
+    if "יפו" in str(state.category) or "עילי" in str(state.category):
+        venue_type = "jaffa"
+        
+    # Build Rule Engine Context
+    rule_context = {
+        "category": "suspicious_object" if "חפץ חשוד" in state.category else "general", # Map Hebrew to rule keys
+        "venue": venue_type,
+        "location_type": "surface" if venue_type == "jaffa" else "underground",
+        "risk_level": "high" # default
+    }
+    
+    # Simple mapping for common Hebrew categories to English rule keys
+    if "חפץ חשוד" in state.category:
+        rule_context["category"] = "suspicious_object"
+    elif "רכב חשוד" in state.category:
+        rule_context["category"] = "suspicious_vehicle"
+        
+    system_prompt = pm.get_trinity_prompt("writer", venue=venue_type, context=rule_context)
     memory_msg = memory_addendum()
 
     # Get LLM clients

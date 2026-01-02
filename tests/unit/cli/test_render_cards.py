@@ -69,7 +69,7 @@ class TestRenderCards:
             {}
         ]
         html = render_html(scenarios)
-        assert "<html>" in html
+        assert "<html" in html
         assert "T1" in html
         assert "ללא כותרת" in html
         assert "<li>s1</li>" in html

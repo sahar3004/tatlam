@@ -11,22 +11,26 @@ The migration to SQLAlchemy provides:
 """
 from __future__ import annotations
 
+import logging
 import json
 import unicodedata
 from datetime import datetime
 from typing import Any, Generator
 
+import numpy as np
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 
 from tatlam.infra.db import get_session
-from tatlam.infra.models import Scenario
+from tatlam.infra.models import Scenario, ScenarioEmbedding
 from tatlam.settings import get_settings
 
 # Get settings for module-level constants
 _settings = get_settings()
 REQUIRE_APPROVED_ONLY = _settings.REQUIRE_APPROVED_ONLY
 TABLE_NAME = _settings.TABLE_NAME
+
+LOGGER = logging.getLogger(__name__)
 
 # Cache for column existence checks
 _column_cache: dict[tuple[str, str], bool] = {}
@@ -50,6 +54,30 @@ def db_has_column(table: str, col: str) -> bool:
 
     # Fallback for unknown tables - assume column exists
     return True
+
+
+def save_embedding(title: str, vec: np.ndarray) -> None:
+    """Save or update an embedding.
+
+    Parameters
+    ----------
+    title : str
+        The scenario title (key).
+    vec : np.ndarray
+        The embedding vector.
+    """
+    try:
+        with get_session() as session:
+            # Use merge logic (upsert)
+            emb = session.get(ScenarioEmbedding, title)
+            if not emb:
+                emb = ScenarioEmbedding(title=title, vector_json=json.dumps(vec.tolist()))
+                session.add(emb)
+            else:
+                emb.vector_json = json.dumps(vec.tolist())
+            session.commit()
+    except Exception as e:
+        LOGGER.warning("Failed to save embedding for '%s': %s", title, e)
 
 
 _HAS_STATUS = db_has_column(TABLE_NAME, "status")
@@ -161,7 +189,11 @@ def fetch_all_basic_categories() -> list[dict[str, Any]]:
     return [r for r in rows if is_approved_row(r)]
 
 
-def fetch_all(limit: int | None = None, offset: int | None = None) -> list[dict[str, Any]]:
+def fetch_all(
+    limit: int | None = None,
+    offset: int | None = None,
+    status_filter: str = "active",
+) -> list[dict[str, Any]]:
     """Fetch all scenarios with optional pagination.
 
     Parameters
@@ -170,6 +202,9 @@ def fetch_all(limit: int | None = None, offset: int | None = None) -> list[dict[
         Maximum number of results to return.
     offset : int | None
         Number of results to skip.
+    status_filter : str
+        Filter by status: "active" (pending/approved), "all", "rejected", etc.
+        Default is "active" to exclude rejected items.
 
     Returns
     -------
@@ -178,6 +213,12 @@ def fetch_all(limit: int | None = None, offset: int | None = None) -> list[dict[
     """
     with get_session() as session:
         stmt = select(Scenario).order_by(Scenario.created_at.desc(), Scenario.id.desc())
+
+        # Apply status filtering
+        if status_filter == "active":
+            stmt = stmt.where(Scenario.status != "rejected")
+        elif status_filter != "all":
+            stmt = stmt.where(Scenario.status == status_filter)
 
         if limit is not None and offset is not None:
             stmt = stmt.limit(limit).offset(offset)
@@ -365,6 +406,33 @@ def insert_scenario(data: dict[str, Any], owner: str = "web", pending: bool = Tr
     return new_id
 
 
+
+def reject_scenario(sid: int, reason: str) -> bool:
+    """
+    Reject a scenario safely (surgical update).
+
+    This sets the status to 'rejected' and logs the reason, removing it from
+    standard views but keeping it for learning.
+
+    Args:
+        sid: Scenario ID
+        reason: Text explaining rejection
+
+    Returns:
+        bool: True if updated, False if not found
+    """
+    with get_session() as session:
+        scenario = session.get(Scenario, sid)
+        if not scenario:
+            return False
+            
+        scenario.status = "rejected"
+        scenario.rejection_reason = reason
+        session.commit()
+        LOGGER.info(f"Rejected scenario {sid}: {reason}")
+        return True
+
+
 def yield_all_titles_with_embeddings(
     batch_size: int = 1000,
 ) -> Generator[tuple[str, str], None, None]:
@@ -415,10 +483,13 @@ class ScenarioRepository:
     """
 
     def fetch_all(
-        self, limit: int | None = None, offset: int | None = None
+        self,
+        limit: int | None = None,
+        offset: int | None = None,
+        status_filter: str = "active",
     ) -> list[dict[str, Any]]:
         """Fetch all scenarios from the database."""
-        return fetch_all(limit=limit, offset=offset)
+        return fetch_all(limit=limit, offset=offset, status_filter=status_filter)
 
     def yield_titles_with_embeddings(
         self, batch_size: int = 1000
@@ -445,6 +516,10 @@ class ScenarioRepository:
     ) -> int:
         """Insert a new scenario into the database."""
         return insert_scenario(data=data, owner=owner, pending=pending)
+        
+    def reject_scenario(self, sid: int, reason: str) -> bool:
+        """Reject a scenario with a reason."""
+        return reject_scenario(sid, reason)
 
     def fetch_by_category_slug(
         self, slug: str, limit: int | None = None, offset: int | None = None

@@ -7,7 +7,7 @@ It supports both production use (real clients) and testing (mock injection).
 Trinity Architecture:
 - Writer: Claude (Anthropic) - Generates scenarios
 - Judge: Gemini (Google) - Audits and evaluates
-- Simulator: Local LLM (OpenAI-compatible) - Chat simulations
+- Simulator: Gemini Flash (Google) - Chat simulations
 
 Usage:
     # Production - creates real clients
@@ -62,15 +62,55 @@ class JudgeClientProtocol(Protocol):
 
 @runtime_checkable
 class SimulatorClientProtocol(Protocol):
-    """Protocol for Simulator (OpenAI-like) clients."""
+    """Protocol for Simulator (Gemini-like) clients."""
 
-    @property
-    def chat(self) -> Any:
-        """Access to chat completions API."""
+    def generate_content(self, prompt: str, **kwargs: Any) -> Any:
+        """Generate content from prompt with optional streaming."""
         ...
 
 
 # ==== Client Container ====
+
+
+
+class AnthropicJudgeAdapter:
+    """
+    Adapter to make Anthropic client look like a Google GenerativeModel.
+    
+    This allows the Judge node (designed for Gemini) to use Claude
+    without rewriting the core logic in brain.py.
+    """
+    
+    def __init__(self, client: Any, model_name: str):
+        self.client = client
+        self.model_name = model_name
+
+    def generate_content(self, prompt: str) -> Any:
+        """
+        Mimic Google's generate_content using Anthropic's messages API.
+        
+        Args:
+            prompt: The full prompt string (system + user)
+            
+        Returns:
+            Object with .text attribute, matching Google's response object
+        """
+        try:
+            response = self.client.messages.create(
+                model=self.model_name,
+                max_tokens=4096,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            content = response.content[0].text if response.content else ""
+        except Exception as e:
+            raise e
+
+        # Return object with .text attribute
+        class Response:
+            def __init__(self, text: str):
+                self.text = text
+                
+        return Response(content)
 
 
 @dataclass
@@ -144,6 +184,18 @@ def create_judge_client(api_key: str | None = None) -> "genai.GenerativeModel | 
     import google.generativeai as genai
 
     settings = get_settings()
+    
+    # Check if we should use Anthropic instead
+    if settings.JUDGE_MODEL_PROVIDER == "anthropic":
+        logger.debug("Judge configured to use Anthropic adapter")
+        try:
+            anthropic_client = create_writer_client(api_key=settings.ANTHROPIC_API_KEY)
+            if anthropic_client:
+                return AnthropicJudgeAdapter(anthropic_client, settings.JUDGE_MODEL_NAME) # type: ignore
+        except Exception as e:
+             logger.warning("Failed to create Anthropic adapter for Judge: %s. Falling back to Google.", e)
+
+    # Fallback/Default to Google
     key = api_key if api_key is not None else settings.GOOGLE_API_KEY
 
     if not key:
@@ -162,35 +214,38 @@ def create_judge_client(api_key: str | None = None) -> "genai.GenerativeModel | 
 
 
 def create_simulator_client(
-    base_url: str | None = None,
     api_key: str | None = None,
-) -> "OpenAI | None":
+) -> "genai.GenerativeModel | None":
     """
-    Create an OpenAI-compatible client for the Simulator role (local LLM).
+    Create a Google Generative AI client for the Simulator role (Gemini Flash).
 
     Args:
-        base_url: Optional base URL override. If not provided, uses settings.
         api_key: Optional API key override. If not provided, uses settings.
 
     Returns:
-        OpenAI client configured for local server.
+        GenerativeModel or None if not configured.
 
     Raises:
-        ConfigurationError: If initialization fails.
+        ConfigurationError: If initialization fails with a valid key.
     """
-    from openai import OpenAI
+    import google.generativeai as genai
 
     settings = get_settings()
-    url = base_url if base_url is not None else settings.LOCAL_BASE_URL
-    key = api_key if api_key is not None else settings.LOCAL_API_KEY
+    key = api_key if api_key is not None else settings.GOOGLE_API_KEY
+
+    if not key:
+        logger.warning("GOOGLE_API_KEY not set. Simulator (Gemini Flash) will be unavailable.")
+        return None
 
     try:
-        client = OpenAI(base_url=url, api_key=key)
-        logger.debug("Local OpenAI client initialized at: %s", url)
-        return client
+        genai.configure(api_key=key)
+        model = genai.GenerativeModel(settings.SIMULATOR_MODEL_NAME)
+        logger.debug("Gemini Simulator client initialized with model: %s",
+                     settings.SIMULATOR_MODEL_NAME)
+        return model
     except Exception as e:
-        logger.error("Failed to initialize local OpenAI client: %s", e)
-        raise ConfigurationError(f"Failed to initialize local OpenAI client: {e}") from e
+        logger.error("Failed to initialize Gemini Simulator client: %s", e)
+        raise ConfigurationError(f"Failed to initialize Gemini Simulator client: {e}") from e
 
 
 def create_cloud_client(
@@ -230,7 +285,6 @@ def create_all_clients(
     *,
     writer_key: str | None = None,
     judge_key: str | None = None,
-    simulator_url: str | None = None,
     simulator_key: str | None = None,
     fail_on_missing: bool = False,
 ) -> TrinityClients:
@@ -241,9 +295,8 @@ def create_all_clients(
 
     Args:
         writer_key: Optional Anthropic API key override.
-        judge_key: Optional Google API key override.
-        simulator_url: Optional local LLM base URL override.
-        simulator_key: Optional local LLM API key override.
+        judge_key: Optional Google API key override for Judge.
+        simulator_key: Optional Google API key override for Simulator.
         fail_on_missing: If True, raise ConfigurationError when any client fails.
 
     Returns:
@@ -263,7 +316,7 @@ def create_all_clients(
         if fail_on_missing:
             raise
 
-    # Judge (Google)
+    # Judge (Google Gemini)
     try:
         clients.judge = create_judge_client(judge_key)
     except ConfigurationError as e:
@@ -271,9 +324,9 @@ def create_all_clients(
         if fail_on_missing:
             raise
 
-    # Simulator (Local)
+    # Simulator (Google Gemini Flash)
     try:
-        clients.simulator = create_simulator_client(simulator_url, simulator_key)
+        clients.simulator = create_simulator_client(simulator_key)
     except ConfigurationError as e:
         errors.append(f"Simulator: {e}")
         if fail_on_missing:
@@ -397,7 +450,7 @@ class LLMRouter:
                 )
                 user_messages = [m for m in messages if m["role"] != "system"]
                 return self.anthropic_client.messages.create(
-                    model=kwargs.get("model", "claude-3-5-sonnet-20241022"),
+                    model=kwargs.get("model", "claude-sonnet-4-5-20250929"),
                     max_tokens=kwargs.get("max_tokens", 4096),
                     system=system_msg or "",
                     messages=user_messages,

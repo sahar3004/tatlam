@@ -88,6 +88,7 @@ class Scenario(Base):
     owner: Mapped[str] = mapped_column(Text, default="web", nullable=False)
     approved_by: Mapped[str] = mapped_column(Text, default="", nullable=False)
     status: Mapped[str] = mapped_column(Text, default="pending", nullable=False, index=True)  # Index for filtering
+    rejection_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[str] = mapped_column(
         Text,
         default=lambda: datetime.now().isoformat(),
@@ -157,6 +158,7 @@ class Scenario(Base):
             "owner": self.owner,
             "approved_by": self.approved_by,
             "status": self.status,
+            "rejection_reason": self.rejection_reason,
             "created_at": self.created_at,
         }
 

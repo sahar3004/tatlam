@@ -1,0 +1,36 @@
+rules:
+  - id: "so_civilian_reaction"
+    category: "behavior"
+    content: "Civilians should display curiosity or mild concern, NOT immediate hysteria, unless 'simanei_habla' (wires/oil) are present."
+    context:
+      category: "suspicious_object"
+
+  - id: "so_protocol_identification"
+    category: "operational"
+    content: "It IS PERMITTED to visually check a name tag on the object if visible, but DO NOT touch, move, or use a radio/phone near it."
+    context:
+      category: "suspicious_object"
+
+  - id: "so_protocol_owner_return"
+    category: "operational"
+    content: "If a claimed owner returns: Verify identity via ID, cross-reference with CCTV (Shichzur), and question them. If suspicious, detain."
+    context:
+      category: "suspicious_object"
+
+  - id: "so_protocol_train_skip"
+    category: "operational"
+    content: "Trains can be ordered to 'Skip Station' (Dilug) to prevent unloading passengers into a danger zone."
+    context:
+      category: "suspicious_object"
+
+  - id: "so_protocol_wait_for_ramash"
+    category: "operational"
+    content: "If no clear signs of sabotage (wires/oil), wait for Control Center (Ramash) classification before declaring full 'Suspicious Object' emergency."
+    context:
+      category: "suspicious_object"
+    
+  - id: "so_structure_concise_decisions"
+    category: "style"
+    content: "Decision Points (Nekudot Hachra'a) must be concise active dilemmas, not long paragraphs."
+    context:
+      category: "suspicious_object"

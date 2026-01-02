@@ -10,6 +10,13 @@ from functools import lru_cache
 from pathlib import Path
 
 
+from functools import lru_cache
+from pathlib import Path
+from tatlam.core.rules import RuleEngine
+
+# Initialize Rule Engine (Singleton-like)
+rule_engine = RuleEngine()
+
 @lru_cache(maxsize=1)
 def load_prompt() -> str:
     """Load the system prompt from system_prompt_he.txt.
@@ -140,6 +147,37 @@ TRINITY_DOCTRINE = {
         ]
     },
 
+    # פרק 2ב: זירת הפעולה - תחנות עיליות (ציר יפו)
+    "venue_surface_jaffa": {
+        "specs": {
+            "type": "מערכת פתוחה (Open System)",
+            "environment": "רחוב עירוני פתוח ללא גדרות (Perimeter-less)",
+            "context": "ציר יפו (אוכלוסייה מעורבת, צפיפות, היסטוריה עוינת)"
+        },
+        "levels": {
+            "surface": {
+                "name": "מפלס הרציף/רחוב",
+                "features": ["תחנה פתוחה", "מעברי חצייה", "תנועה מעורבת (רכב/הולכי רגל)"],
+                "risks": ["השלכת אבנים/בקת\"ב מרחוב סמוך", "דריסה לתוך הרציף"]
+            },
+            "train_interior": {
+                "name": "תוך הרכבת",
+                "status": "חלל סגור",
+                "risk": "מלכודת מוות (Kill Box) בעת אירוע ירי/דקירה"
+            }
+        },
+        "force_structure": {
+            "motorcycle_unit": "יחידת אופנוענים ניידת (תגובה תוך 2-4 דקות)",
+            "train_guard": "מאבטח רכבת (דילוגים לתחנה וסריקה ויזואלית)",
+            "concept": "אין אבטחה סטטית. אין שערים. הגנה מבוססת הרתעה ותגובה."
+        },
+        "threats_specific": [
+            "פח\"ע ירי (כמו פיגוע אוקטובר 2024)",
+            "יידוי אבנים/בקת\"ב",
+            "חסימת מסילה (ונדליזם לאומני)"
+        ]
+    },
+
     # פרק 3: סמכויות ומשפט (האלגוריתם של השופט)
     "legal_framework": {
         "search_authority": {
@@ -233,18 +271,20 @@ TRINITY_DOCTRINE = {
     }
 }
 
-def get_system_prompt(role: str) -> str:
+def get_system_prompt(role: str, venue: str = "allenby", context: dict | None = None) -> str:
     """
     בונה את הנחיית המערכת (System Prompt) באופן דינמי.
-    
+
     כל התפקידים מקבלים את system_prompt_he.txt המלא (עם המועצה והדוקטרינה)
-    בתוספת הנחיות ספציפיות לתפקיד.
-    
+    בתוספת הנחיות ספציפיות לתפקיד וחוקים דינמיים מה-RuleEngine.
+
     Args:
         role: אחד מ-"writer", "judge", "simulator"
-        
+        venue: זירת הפעולה - "allenby" (ברירת מחדל) או "jaffa" (תחנה עילית)
+        context: מילון הקשר לסינון חוקים (category, location_type, וכו')
+
     Returns:
-        הפרומפט המלא לתפקיד המבוקש
+        הפרומפט המלא לתפקיד המבוקש עם הזירה והחוקים המתאימים
     """
     # Critical language guardrails to prevent hallucinations
     language_guard = (
@@ -255,15 +295,45 @@ def get_system_prompt(role: str) -> str:
         "4. שמור על דמות אמינה ומקצועית."
     )
 
-    # Load full system prompt for ALL roles
+    # Load base system prompt
     try:
-        full_prompt = load_prompt()
+        base_prompt = load_prompt()
     except FileNotFoundError:
-        # Fallback if file not found
-        full_prompt = (
+        base_prompt = (
             "אתה חלק ממערכת 'תתל\"מ Trinity' לאימון ביטחוני.\n"
             "עליך לפעול אך ורק לפי 'תורת ההפעלה' (Doctrine) המוגדרת להלן.\n"
             "כל חריגה מהנהלים, המשקלים או הסמכויות תחשב לכישלון.\n\n"
+        )
+
+    # Dynamic Venue Injection
+    # We replace Chapter 2 in the text prompt if venue is 'jaffa'
+    if venue == "jaffa":
+        jaffa_doctrine = (
+            "פרק 2: זירת הפעולה – ציר יפו (Surface Station - Jaffa Line)\n"
+            "(תחום אחריות: אופנוענים + מאבטחי רכבות)\n\n"
+            "2.1 מאפייני זירה: מערכת פתוחה (Open System), רחוב עירוני ללא גדרות.\n"
+            "2.2 כוח אבטחה: אין שערים ואין עמדות סטטיות. האבטחה מתבססת על יחידות אופנוענים (תגובה 2-4 דק') "
+            "ומאבטחי רכבות (סריקה בדילוגים מהקרון לרציף).\n"
+            "2.3 איומים ייחודיים: פח\"ע ירי (כמו אוקטובר 2024), יידוי אבנים/בקת\"ב, חסימת מסילה.\n"
+            "2.4 שטחים מתים: מעברי חצייה, גינות סמוכות, תוך הרכבת (Kill Box).\n"
+        )
+        
+        # Replace the Allenby section in the prompt
+        # We look for the marker "פרק 2: זירת הפעולה" until the next chapter or end of section
+        import re
+        allenby_pattern = r"(פרק 2: זירת הפעולה.*?)(\n\nפרק 3)"
+        
+        # Note: DOTALL is crucial to match across newlines
+        base_prompt = re.sub(allenby_pattern, f"{jaffa_doctrine}\\2", base_prompt, flags=re.DOTALL)
+        
+        # Also replace "מהנדס בטיחות ושטח" context usually found in the Council description
+        base_prompt = base_prompt.replace(
+            "מתמקד במבנה תחנת \"אלנבי\"", 
+            "מתמקד במתווה הפתוח של ציר יפו (Surface)"
+        )
+        base_prompt = base_prompt.replace(
+            "תיק שטח - תחנת \"אלנבי\"",
+            "תיק שטח - ציר יפו (רכבת קלה ת\"א)"
         )
 
     # Role-specific addendums
@@ -354,5 +424,17 @@ def get_system_prompt(role: str) -> str:
     }
 
     addendum = role_addendum.get(role, "")
-    return full_prompt + addendum + language_guard
+    
+    # Dynamic Rules Injection
+    rules_section = ""
+    if context:
+        # Ensure context has venue info if not present
+        if "location_type" not in context:
+            context["location_type"] = "surface" if venue == "jaffa" else "underground"
+            
+        formatted_rules = rule_engine.format_rules_for_prompt(context)
+        if formatted_rules:
+            rules_section = f"\n\n*** הנחיות דינמיות וחוקים מעודכנים (Active Rules) ***\n{formatted_rules}\n"
+
+    return base_prompt + addendum + rules_section + language_guard
 

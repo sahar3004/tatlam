@@ -3,6 +3,7 @@ from pathlib import Path
 from datetime import datetime
 import json
 import pandas as pd
+from typing import Any
 
 # Logging setup
 from tatlam.logging_setup import configure_logging
@@ -179,19 +180,29 @@ def home_view() -> None:
             status = "מנותק"
         st.metric("🧠 סטטוס מוח", status, delta=None)
 
-    # Metric 4: Local model
+    # Metric 4: Local scout model
     with col4:
         model_short = settings.LOCAL_MODEL_NAME.split("-")[0].upper()
-        st.metric("🤖 מודל מקומי", model_short, delta="3.3-70B")
+        st.metric("🔭 סייר מקומי", model_short, delta="Qwen")
 
     st.markdown("---")
 
     # System architecture overview with enhanced cards
     st.subheader("🎯 ארכיטקטורת המערכת")
 
-    col_a, col_b, col_c = st.columns(3)
+    col_a, col_b, col_c, col_d = st.columns(4)
 
     with col_a:
+        with st.container(border=True):
+            st.markdown("""
+            ### 🔭 הסיירים (Scouts)
+
+            **Qwen (Local) + Claude Sonnet 4.5**
+
+            תפקיד: סריקה וזיהוי איומים
+            """)
+
+    with col_b:
         with st.container(border=True):
             st.markdown("""
             ### 🖊️ הכותב (Writer)
@@ -201,22 +212,22 @@ def home_view() -> None:
             תפקיד: יצירת תרחישי אימון מציאותיים
             """)
 
-    with col_b:
+    with col_c:
         with st.container(border=True):
             st.markdown("""
             ### ⚖️ השופט (Judge)
 
-            **Gemini 2.0 Pro**
+            **Claude Opus 4.5**
 
             תפקיד: ביקורת ודירוג ביצועים
             """)
 
-    with col_c:
+    with col_d:
         with st.container(border=True):
             st.markdown("""
             ### 💬 הסימולטור (Simulator)
 
-            **Llama 3.3 70B (Local)**
+            **Gemini 3 Flash**
             
             תפקיד: גילום יריבים ואזרחים
             """)
@@ -261,11 +272,11 @@ def home_view() -> None:
             """, unsafe_allow_html=True)
 
     with status_col3:
-        # Local model status (always show as available since it's configured)
+        # Local scout model status (Qwen)
         st.markdown("""
         <div style="display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(59, 130, 246, 0.1); border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.3);">
             <div style="width: 12px; height: 12px; border-radius: 50%; background: #3b82f6; box-shadow: 0 0 10px #3b82f6;"></div>
-            <span style="color: #60a5fa; font-weight: 500;">מודל מקומי - מוגדר</span>
+            <span style="color: #60a5fa; font-weight: 500;">סייר מקומי (Qwen) - מוגדר</span>
         </div>
         """, unsafe_allow_html=True)
 
@@ -286,93 +297,243 @@ def generate_scenario_view() -> None:
 
     brain = st.session_state.brain
 
-    # Prompt input (Hebrew)
-    st.subheader("הנחיות לתרחיש")
-    prompt = st.text_area(
-        "תאר את התרחיש הרצוי:",
-        height=150,
-        placeholder="דוגמה: צור תרחיש אבטחה הכולל חבילה חשודה שנמצאה ברציף הרכבת...",
-        help="תאר בפירוט את התרחיש שברצונך שהמערכת תייצר. ציין הקשר, רמת סיכון ופרטים נדרשים."
-    )
+    # Tabs for generator modes
+    tab1, tab2 = st.tabs(["🏗️ מחולל מובנה", "✍️ כתיבה חופשית"])
 
-    col1, col2 = st.columns([1, 4])
+    # --- Mode 1: Structured Generation ---
+    with tab1:
+        st.info("🔹 בחר פרמטרים או השאר על 'אקראי' לאתגר מפתיע.")
+        
+        with st.form("structured_gen_form"):
+            col1, col2 = st.columns(2, gap="large")
+            
+            with col1:
+                venue_options = ["אקראי", "תחנת תת״ק", "תחנה עילית"]
+                venue = st.selectbox("📍 זירה / מיקום", venue_options)
+                
+                role_options = ["אקראי", "מאבטח", "אופנוען"]
+                role = st.selectbox("👮 תפקיד מתרגל", role_options)
 
-    with col1:
-        generate_button = st.button("🚀 צור תרחיש", type="primary", use_container_width=True)
+            with col2:
+                threat_options = [
+                    "אקראי", 
+                    "חפץ חשוד",
+                    "פיגוע",
+                    "פיגוע משולב",
+                    "מטען ודאי",
+                    "רכב תופת",
+                    "רכב מתפרץ",
+                    "רחפנים",
+                    "חומ״ס/שריפה",
+                    "סדר ציבורי",
+                    "אירוע רפואי"
+                ]
+                category = st.selectbox("⚠️ סוג איום", threat_options)
+                
+                complexity = st.select_slider(
+                    "רמת מורכבות",
+                    options=["נמוכה", "בינונית", "גבוהה", "גבוהה מאוד"],
+                    value="בינונית"
+                )
 
-    with col2:
-        if st.button("🗑️ נקה", use_container_width=True):
-            if "last_scenario" in st.session_state:
-                del st.session_state.last_scenario
-            if "scenario_prompt" in st.session_state:
-                del st.session_state.scenario_prompt
-            st.rerun()
+            st.divider() # Visual separator
 
-    # Generate scenario
-    if generate_button and prompt:
-        logger.info(f"User requested scenario generation with prompt: {prompt[:100]}...")
-        st.markdown("---")
-        st.subheader("תרחיש שנוצר")
+            extra_instructions = st.text_area(
+                "הערות נוספות (אופציונלי)",
+                placeholder="למשל: 'כלול אלמנט של לחץ זמן' או 'הוסף אזרח שמפריע לטיפול'",
+                height=80
+            )
 
-        try:
-            # Stream the generation
-            scenario_text = st.write_stream(brain.generate_scenario_stream(prompt))
+            st.markdown("<br>", unsafe_allow_html=True) # Spacer before button
 
-            # Store in session state
-            st.session_state.last_scenario = scenario_text
-            st.session_state.scenario_prompt = prompt
-            logger.info(f"Scenario generated successfully, length: {len(scenario_text)} characters")
+            submitted_structured = st.form_submit_button("🚀 צור תרחיש מובנה", type="primary", use_container_width=True)
 
-        except Exception as e:
-            logger.error(f"Error generating scenario: {e}", exc_info=True)
-            st.error(f"❌ שגיאה ביצירת תרחיש: {e}")
-            return
+        if submitted_structured:
+            # Construct prompt from parameters
+            prompt = (
+                f"צור תרחיש אימון חדש ומפורט.\n"
+                f"1. זירה: {venue}\n"
+                f"2. תפקיד לתרגול: {role}\n"
+                f"3. סוג איום מרכזי: {category}\n"
+                f"4. רמת מורכבות: {complexity}\n"
+            )
+            if extra_instructions:
+                prompt += f"5. דגשים נוספים: {extra_instructions}\n"
+            
+            prompt += "\nעליך להקפיד על יצירתיות, בטיחות, ועמידה בדוקטרינה.\n"
+            if "אקראי" in [venue, role, category]:
+                prompt += "עבור שדות שסומנו כ-'אקראי', בחר אפשרות מאתגרת ומגוונת שתפתיע את המתאמן.\n"
 
-    # Display saved scenario and actions
+            # Map the Hebrew selection to internal venue code
+            venue_ctx = "jaffa" if venue == "תחנה עילית" else "allenby"
+            
+            # Execute generation
+            _execute_generation(brain, prompt, venue_context=venue_ctx)
+
+
+    # --- Mode 2: Free Text Generation ---
+    with tab2:
+        with st.form("free_text_gen_form"):
+            free_prompt = st.text_area(
+                "תאר את התרחיש הרצוי או הדבק טקסט לשיפור:",
+                height=200,
+                placeholder="דוגמה: צור תרחיש אבטחה הכולל חבילה חשודה שנמצאה ברציף הרכבת, כאשר במקביל ישנה התראת צבע אדום...",
+                help="תאר בפירוט את התרחיש שברצונך שהמערכת תייצר."
+            )
+            
+            submitted_free = st.form_submit_button("🚀 צור / שפר תרחיש", type="primary", use_container_width=True)
+
+        if submitted_free:
+            if not free_prompt.strip():
+                st.warning("נא להזין טקסט לפני השליחה.")
+            else:
+                # Naive check for context in free text
+                venue_ctx = "jaffa" if "עילית" in free_prompt or "יפו" in free_prompt else "allenby"
+                _execute_generation(brain, free_prompt, venue_context=venue_ctx)
+
+    # --- Result Display ---
     if "last_scenario" in st.session_state:
         st.markdown("---")
-        st.subheader("פעולות")
+        st.subheader("📝 תוצאה סופית")
+        
+        # Container for the result to give it visual weight
+        with st.container(border=True):
+            # Toolbar
+            col_actions, col_copy = st.columns([3, 1])
+            
+            with col_actions:
+                c1, c2, c3 = st.columns(3, gap="small")
+                with c1:
+                    if st.button("💾 שמור למאגר", use_container_width=True, help="שמור את התרחיש לארכיון המבצעי"):
+                        with st.spinner("שומר..."):
+                            success, message = save_scenario(st.session_state.last_scenario)
+                            if success:
+                                st.success("נשמר בהצלחה!")
+                                st.balloons()
+                            else:
+                                st.error(message)
 
-        col1, col2, col3 = st.columns(3)
+                with c2:
+                    # Rejection with Popover (Streamlit 1.30+)
+                    with st.popover("❌ דחה (ללמידה)", use_container_width=True, help="סמן כשגוי ותעד סיבה לשיפור המודל"):
+                        st.markdown("##### 🗑️ דחיית תרחיש")
+                        reason = st.text_input("סיבת הדחייה:", placeholder="לדוגמה: לא תואם דוקטרינה, מסוכן מדי...")
+                        if st.button("אשר דחייה", type="primary", use_container_width=True):
+                            if reason.strip():
+                                # We need an ID to reject. If it wasn't saved yet, we act as if we reject the 'concept'.
+                                # But for the 'learning loop', we probably want to save it with status='rejected'.
+                                # So, let's save it strictly as rejected.
+                                try:
+                                    # Reuse save logic but force status
+                                    data = parse_md_to_scenario(st.session_state.last_scenario)
+                                    # Insert as rejected directly via repo
+                                    from tatlam.infra.repo import get_repository
+                                    repo = get_repository()
+                                    # We simulate saving then updating, or just insert with a special flag if we had one.
+                                    # Since insert_scenario defaults to pending, let's just insert then reject.
+                                    # Optimization: Modify insert_scenario later to accept initial status, 
+                                    # but for now "surgical" means use the tool we built.
+                                    
+                                    # 1. Insert (if not exists, or get ID) -> Wait, if we haven't saved, we don't have an ID.
+                                    # We should save it as a "Rejected Candidate".
+                                    # Let's use internal repo insert logic but manually.
+                                    # Or simpler:
+                                    row_id = repo.insert_scenario(data, pending=True) # Insert first
+                                    _reject_scenario_handler(row_id, reason) # Then reject immediately
+                                    
+                                except Exception as e:
+                                    st.error(f"שגיאה: {e}")
+                            else:
+                                st.warning("נא לכתוב סיבה.")
 
-        with col1:
-            if st.button("💾 שמור למאגר", type="primary", use_container_width=True):
-                with st.spinner("שומר תרחיש..."):
-                    success, message = save_scenario(st.session_state.last_scenario)
-                    if success:
-                        st.success(message)
-                        st.balloons()
-                        logger.info("Scenario saved successfully, showing balloons")
+                with c3:
+                    st.download_button(
+                        "⬇️ קובץ להורדה",
+                        data=st.session_state.last_scenario,
+                        file_name=f"scenario_{datetime.now().strftime('%Y%m%d_%H%M')}.md",
+                        mime="text/markdown",
+                        use_container_width=True
+                    )
 
-                        # Option to clear for next scenario
-                        st.info("💡 תרחיש נשמר! ניתן לייצר תרחיש חדש או להמשיך לערוך.")
-                    else:
-                        st.error(message)
-                        logger.error(f"Failed to save scenario: {message}")
+            # Display Audit Result if it exists
+            if "audit_result" in st.session_state:
+                with st.expander("⚖️ דו״ח ביקורת שיפוטית (לחץ לסגירה)", expanded=True):
+                    st.markdown(st.session_state.audit_result)
+                    if st.button("סגור דוח", key="close_audit"):
+                        del st.session_state.audit_result
+                        st.rerun()
 
-        with col2:
-            if st.button("⚖️ ביקורת שופט", use_container_width=True):
-                logger.info("User requested scenario audit")
-                with st.spinner("מבצע ביקורת..."):
-                    try:
-                        audit_result = brain.audit_scenario(st.session_state.last_scenario)
-                        st.info("**תוצאות ביקורת:**")
-                        st.markdown(audit_result)
-                        logger.info("Scenario audit completed successfully")
-                    except Exception as e:
-                        logger.error(f"Audit failed: {e}", exc_info=True)
-                        st.error(f"❌ הביקורת נכשלה: {e}")
-
-        with col3:
-            if st.button("📋 העתק טקסט", use_container_width=True):
-                st.code(st.session_state.last_scenario, language="markdown")
-                st.caption("בחר את הטקסט והעתק ידנית")
-
-        # Show the last generated scenario
-        st.markdown("---")
-        st.subheader("תרחיש אחרון שנוצר")
-        with st.expander("הצג תרחיש", expanded=False):
+            st.divider()
+            
+            # The Scenario Text
             st.markdown(st.session_state.last_scenario)
+
+
+def _execute_generation(brain: TrinityBrain, prompt: str, venue_context: str = "allenby"):
+    """Internal helper to execute generation and handle state."""
+    logger.info(f"Generating scenario with prompt: {prompt[:100]}... Context: {venue_context}")
+    
+    st.markdown("---")
+    st.subheader("🔄 מעבד נתונים...")
+    
+    try:
+        # Stream the generation
+        scenario_placeholder = st.empty()
+        full_response = ""
+        
+        # Use st.spinner for the initial connection delay
+        with st.spinner("המוח חושב... (Trinity Brain Processing)"):
+            # Pass venue context to ensure correct Doctrine is loaded
+            stream = brain.generate_scenario_stream(prompt, venue=venue_context)
+            
+            # Stream output chunks
+            for chunk in stream:
+                full_response += chunk
+                scenario_placeholder.markdown(full_response + "▌")
+                
+        # Final render without cursor
+        scenario_placeholder.markdown(full_response)
+
+        # Update session state with generated text
+        st.session_state.last_scenario = full_response
+        st.session_state.scenario_prompt = prompt
+        
+        # --- Mandatory Judge Audit ---
+        st.markdown("---")
+        with st.status("⚖️ מבצע ביקורת שיפוטית (חובה)...", expanded=True) as status:
+            try:
+                st.write("מנתח עמידה בדוקטרינה...")
+                audit_result = brain.audit_scenario(full_response)
+                st.session_state.audit_result = audit_result
+                status.update(label="✅ הביקורת הושלמה בהצלחה!", state="complete", expanded=False)
+            except Exception as e:
+                logger.error(f"Audit failed: {e}")
+                st.session_state.audit_result = f"❌ כשל בביקורת: {e}"
+                status.update(label="❌ הביקורת נכשלה", state="error")
+
+        logger.info(f"Scenario generated and audited, length: {len(full_response)}")
+
+    except Exception as e:
+        logger.error(f"Error generating scenario: {e}", exc_info=True)
+        st.error(f"❌ שגיאה ביצירת תרחיש: {e}")
+
+
+def _reject_scenario_handler(sid: int, reason: str):
+    """Handle scenario rejection."""
+    from tatlam.infra.repo import get_repository
+    repo = get_repository()
+    
+    if repo.reject_scenario(sid, reason):
+        st.toast(f"התרחיש נדחה ונשמר ללמידה. סיבה: {reason}")
+        # Clear session state to reset view
+        if "last_scenario" in st.session_state:
+            del st.session_state.last_scenario
+        if "audit_result" in st.session_state:
+            del st.session_state.audit_result
+        st.rerun()
+    else:
+        st.error("שגיאה בדחיית התרחיש (לא נמצא ב-DB?)")
+
 
 
 def get_db_scenarios(status_filter: str = "all") -> list[dict[str, Any]]:

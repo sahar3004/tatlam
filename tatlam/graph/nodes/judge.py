@@ -99,8 +99,23 @@ def _score_with_llm(scenario: dict[str, Any], rubric: str) -> tuple[float, str]:
         logger.warning("Anthropic client unavailable for Judge: %s", e)
         return 70.0, "לא ניתן לבצע הערכת LLM"
 
-    # Get Judge system prompt
-    judge_prompt = get_system_prompt("judge")
+    # Infer context for Rule Engine
+    category_str = str(scenario.get("category", ""))
+    location_str = str(scenario.get("location", ""))
+    
+    venue = "allenby"
+    if "jaffa" in location_str.lower() or "surface" in location_str.lower() or "יפו" in location_str or "עילי" in location_str:
+        venue = "jaffa"
+    
+    rule_context = {
+        "category": "suspicious_object" if "חפץ חשוד" in category_str else "general",
+        "venue": venue,
+        "location_type": "surface" if venue == "jaffa" else "underground",
+        "risk_level": "high"
+    }
+
+    # Get Judge system prompt with active rules
+    judge_prompt = get_system_prompt("judge", venue=venue, context=rule_context)
 
     # Build the evaluation prompt with actionable repair instructions
     scenario_json = json.dumps(scenario, ensure_ascii=False, indent=2)

@@ -47,30 +47,21 @@ class TestLLMFactory:
         assert client is None
 
     @patch('tatlam.core.llm_factory.get_settings')
-    @patch('openai.OpenAI')
-    @patch('requests.get')
-    def test_create_simulator_client_success(self, mock_get, mock_openai, mock_settings):
-        mock_settings.return_value.LOCAL_BASE_URL = "http://loc:123"
-        mock_settings.return_value.LOCAL_API_KEY = "key"
-        
-        # Mock health check
-        mock_get.return_value.status_code = 200
-        
-        client = create_simulator_client()
-        assert client is not None
-        mock_openai.assert_called()
+    def test_create_simulator_client_success(self, mock_settings):
+        mock_settings.return_value.GOOGLE_API_KEY = "test-key"
+        mock_settings.return_value.SIMULATOR_MODEL_NAME = "gemini-3-flash-preview"
+        with patch('google.generativeai.GenerativeModel') as mock_model:
+            with patch('google.generativeai.configure') as mock_conf:
+                client = create_simulator_client()
+                assert client is not None
+                mock_conf.assert_called_with(api_key="test-key")
 
     @patch('tatlam.core.llm_factory.get_settings')
-    @patch('requests.get')
-    def test_create_simulator_client_offline(self, mock_get, mock_settings):
-        mock_settings.return_value.LOCAL_BASE_URL = "http://loc:123"
-        mock_get.return_value.status_code = 503
-        
-        # Wait, create_simulator_client currently does NOT check health check in implementation shown in view_file.
-        # It just creates client. So offline check test was hallucinated or referenced non-existent code.
-        # I should remove this test or expect success (client creation doesn't validate connection usually).
+    def test_create_simulator_client_missing_key(self, mock_settings):
+        mock_settings.return_value.GOOGLE_API_KEY = ""
+        # Returns None when no key
         client = create_simulator_client()
-        assert client is not None
+        assert client is None
 
     def test_client_local(self):
         # Legacy function coverage

@@ -115,6 +115,8 @@ def sample_scenario_data():
     return {
         "title": "בדיקת תרחיש לדוגמה",
         "category": "פיגועים פשוטים",  # Valid category from CATS
+        "bundle_id": "TEST-BUNDLE",
+        "external_id": "EXT-001",
         "difficulty": "בינוני",
         "bundle": "חבילה 1",
         "steps": [

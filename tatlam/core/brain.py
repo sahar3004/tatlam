@@ -495,6 +495,7 @@ class TrinityBrain:
         *,
         max_tokens: int = 4096,
         temperature: float = 0.8,
+        venue: str = "allenby",  # New parameter context
     ) -> Generator[str, None, None]:
         """
         Generate a scenario using the Writer (Claude) with real-time streaming.
@@ -506,6 +507,7 @@ class TrinityBrain:
             prompt: The prompt describing what scenario to generate
             max_tokens: Maximum tokens to generate (default: 4096)
             temperature: Creativity level 0-1 (default: 0.8)
+            venue: 'allenby' (underground) or 'jaffa' (surface) context.
 
         Yields:
             Text chunks as they are generated in real-time
@@ -520,7 +522,7 @@ class TrinityBrain:
             raise PromptValidationError("Prompt cannot be empty")
 
         client = self._require_writer()
-        system_prompt = get_system_prompt("writer")
+        system_prompt = get_system_prompt("writer", venue=venue)
 
         @retry(**_RETRY_STRATEGY)
         def _call_api() -> Any:
@@ -624,7 +626,7 @@ class TrinityBrain:
         timeout: float = 30.0,
     ) -> Generator[str, None, None]:
         """
-        Run a chat simulation using the Simulator (Local Llama) with streaming.
+        Run a chat simulation using the Simulator (Gemini Flash) with streaming.
 
         Args:
             messages: List of message dicts with 'role' and 'content' keys
@@ -640,48 +642,60 @@ class TrinityBrain:
         """
         client = self._require_simulator()
 
-        # Inject System Doctrine if missing
-        current_messages = list(messages)
-        system_msg = {"role": "system", "content": get_system_prompt("simulator")}
+        # Build system prompt
+        system_prompt = get_system_prompt("simulator")
 
-        if not current_messages:
-            current_messages = [system_msg]
-        elif current_messages[0].get("role") != "system":
-            current_messages.insert(0, system_msg)
-        # else: system prompt already exists, keep user's version
+        # Convert OpenAI-style messages to Gemini prompt format
+        # Gemini doesn't have separate system/user/assistant, so we combine them
+        prompt_parts = [system_prompt, "\n\n"]
+        
+        for msg in messages:
+            role = msg.get("role", "user")
+            content = msg.get("content", "")
+            if role == "system":
+                # Skip system messages as we already added the doctrine
+                continue
+            elif role == "user":
+                prompt_parts.append(f"מאבטח: {content}\n")
+            elif role == "assistant":
+                prompt_parts.append(f"יריב/אזרח: {content}\n")
+        
+        full_prompt = "".join(prompt_parts)
+
+        # Configure generation settings
+        import google.generativeai as genai
+        generation_config = genai.GenerationConfig(
+            temperature=temperature,
+            top_p=0.9,
+        )
 
         @retry(**_RETRY_STRATEGY)
         def _call_api() -> Any:
-            return client.chat.completions.create(
-                model=self._settings.LOCAL_MODEL_NAME,
-                messages=current_messages,
+            return client.generate_content(
+                full_prompt,
+                generation_config=generation_config,
                 stream=True,
-                temperature=temperature,
-                top_p=0.9,
-                frequency_penalty=0.2,
             )
 
         try:
             stream = _call_api()
             for chunk in stream:
-                if chunk.choices[0].delta.content is not None:
-                    yield chunk.choices[0].delta.content
+                if chunk.text:
+                    yield chunk.text
         except RetryError as e:
             logger.error("Simulator API call failed after retries: %s", e.last_attempt.exception())
-            # For local simulator, raise specific error for UI to show "offline" badge
             raise SimulatorUnavailableError(
                 f"Simulator offline or unreachable: {e.last_attempt.exception()}"
             ) from e
-        except ConnectionError as e:
-            # Immediate failure for connection errors (no retry)
-            logger.error("Simulator connection failed: %s", e)
-            raise SimulatorUnavailableError(f"Simulator offline: {e}") from e
         except Exception as e:
-            # Check for connection errors that indicate offline server
+            # Check for common Gemini errors
             error_str = str(e).lower()
-            if any(kw in error_str for kw in ["connection refused", "connect error", "no route"]):
-                logger.error("Simulator is offline: %s", e)
-                raise SimulatorUnavailableError(f"Simulator offline: {e}") from e
+            if "api key" in error_str or "401" in error_str:
+                logger.error("Simulator authentication failed: %s", e)
+                raise SimulatorUnavailableError(f"Simulator auth failed: {e}") from e
+            
+            if _is_retryable_google_error(e):
+                logger.warning("Simulator API error (would retry): %s", e)
 
             logger.error("Failed to run chat simulation: %s", e)
             raise APICallError(f"Failed to run chat simulation: {e}") from e

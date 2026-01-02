@@ -1,0 +1,12 @@
+rules:
+  - id: "loc_surface_evacuation"
+    category: "operational"
+    content: "Evacuation in surface stations can assume civilians disperse into the open street; secure a perimeter rather than a single exit."
+    context:
+      location_type: "surface"
+
+  - id: "loc_surface_access"
+    category: "operational"
+    content: "Surface stations often lack physical turnstiles; access control relies on manpower and roving inspectors."
+    context:
+      location_type: "surface"

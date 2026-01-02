@@ -114,17 +114,26 @@ def _call_claude_refinement(client: Any, model: str, raw_ideas: str, category: s
     return (response.content[0].text if response.content else "").strip()
 
 
-def _build_scout_prompt(category: str, count: int = 25) -> str:
+def _build_scout_prompt(category: str, count: int = 25, venue_type: str = "allenby") -> str:
     """Build the prompt for Stage 1 seed generation."""
-    return f"""🎯 משימה: ייצור {count} רעיונות גולמיים ומגוונים לתרחישי אבטחה
-
-📂 קטגוריה: "{category}"
-
-📍 זירת הפעולה: תחנת רכבת קלה "אלנבי" בתל אביב
+    
+    venue_desc = """📍 זירת הפעולה: תחנת רכבת קלה "אלנבי" בתל אביב
    - מפלס 0: רחוב, כניסה ראשית
    - מפלס -1: כרטוס, בידוק, מבואה
    - מפלס -2: קומה טכנית (סטרילי)
-   - מפלס -3: רציפים
+   - מפלס -3: רציפים"""
+
+    if venue_type == "jaffa":
+        venue_desc = """📍 זירת הפעולה: ציר יפו (רכבת קלה - עילי)
+   - מפלס רחוב/רציף: חשוף לרחוב ללא גדרות
+   - בתוך הרכבת: חלל סגור וצפוף
+   - סביבה: אוכלוסייה מעורבת, צפיפות עירונית, אין שערים"""
+
+    return f"""🎯 משימה: ייצור {count} רעיונות גולמיים ומגוונים לתרחישי אבטחה (זירה: {venue_type})
+
+📂 קטגוריה: "{category}"
+
+{venue_desc}
 
 📋 כללים:
 1. כל רעיון בשורה נפרדת
@@ -221,7 +230,12 @@ def scout_node(state: SwarmState) -> SwarmState:
             logger.info("Scout Stage 1: Generating raw ideas with Local Qwen")
             
             system_prompt = "אתה יוצר רעיונות יצירתי ומגוון. תפקידך להציע רעיונות מאתגרים ולא שגרתיים לתרחישי אבטחה."
-            user_prompt = _build_scout_prompt(state.category, seed_count)
+            # Determine venue
+            venue_type = "allenby"
+            if "jaffa" in str(state.category).lower() or "surface" in str(state.category).lower() or "tachanot-iliyot" in str(state.category).lower():
+                venue_type = "jaffa"
+                
+            user_prompt = _build_scout_prompt(state.category, seed_count, venue_type)
             
             raw_ideas = _call_local_llm(
                 local_client,

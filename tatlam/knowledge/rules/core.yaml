@@ -1,0 +1,20 @@
+rules:
+  - id: "fmt_json_strict"
+    category: "system"
+    content: "Output MUST be valid JSON with no comments or markdown formatting outside the JSON block."
+    context: {}
+
+  - id: "fmt_hebrew_only"
+    category: "terminology"
+    content: "All scenario narrative text MUST be in Hebrew (Metada keys can be English)."
+    context: {}
+
+  - id: "term_case_background"
+    category: "terminology"
+    content: "Use the term 'סיפור מקרה' for Case Background."
+    context: {}
+    
+  - id: "term_decision_points"
+    category: "terminology"
+    content: "Use the term 'נקודות הכרעה' for Decision Points."
+    context: {}

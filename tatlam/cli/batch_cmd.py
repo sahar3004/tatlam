@@ -9,6 +9,7 @@ import argparse
 import sys
 
 from tatlam import configure_logging
+import os
 
 
 def main() -> None:
@@ -51,18 +52,35 @@ Environment Variables:
     args = parser.parse_args()
 
     # Import here to avoid circular dependencies and keep startup fast
-    from run_batch import run_batch, run_batch_async
+    # Import new workflow logic
+    from tatlam.graph.workflow import run_scenario_generation, run_scenario_generation_async
+    import asyncio
 
     # Execute batch processing
     try:
+        # Default parameters for legacy batch command
+        count = int(os.getenv("CANDIDATE_COUNT", "8"))
+        
         if args.use_async:
-            result = run_batch_async(args.category, owner=args.owner)
+            result_obj = asyncio.run(run_scenario_generation_async(
+                category=args.category,
+                target_count=count
+            ))
         else:
-            result = run_batch(args.category, owner=args.owner)
+            result_obj = run_scenario_generation(
+                category=args.category,
+                target_count=count
+            )
+            
+        # Convert internal result object to dict-like logic if needed, 
+        # or just use attributes. The legacy code expects a dict with 'bundle_id'.
+        # But run_scenario_generation returns a dataclass/pydantic object.
+        bundle_id = result_obj.bundle_id
+        scenario_count = len(result_obj.approved_scenarios)
 
         # Success
-        bundle_id = result.get("bundle_id", "unknown")
-        scenario_count = len(result.get("scenarios", []))
+
+
         print(f"\n✅ Batch complete: {bundle_id}")
         print(f"   Generated {scenario_count} scenarios")
         sys.exit(0)

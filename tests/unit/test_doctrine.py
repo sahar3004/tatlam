@@ -52,7 +52,7 @@ class TestDoctrine:
 
         # Check for common instruction patterns (adjust based on actual content)
         # These are examples - adjust to match actual doctrine content
-        expected_patterns = ["תרחיש", "בדיקה", "QA"]  # Scenario, Test, QA
+        expected_patterns = ["אבטחה", "תרחיש", "איום"]  # Security, Scenario, Threat
 
         found_patterns = [pattern for pattern in expected_patterns if pattern in prompt]
         assert len(found_patterns) > 0, f"Doctrine missing expected instruction patterns"

@@ -10,7 +10,7 @@ if [[ -d .venv ]]; then
 fi
 
 echo "[qa:baseline] pytest + coverage"
-pytest --cov=tatlam --cov=app --cov=run_batch \
+pytest --cov=tatlam --cov=app \
   --cov-report=xml:"$OUT/coverage/coverage.xml" \
   --cov-report=term-missing | tee "$OUT/logs/pytest.txt" || true
 
