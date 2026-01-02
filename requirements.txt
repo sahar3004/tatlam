@@ -19,6 +19,10 @@ pydantic>=2.0.0             # Strict data validation for LLM outputs
 # Database ORM
 SQLAlchemy>=2.0.0           # Modern ORM with type hints
 
+# Multi-Agent Workflow
+langgraph>=0.0.50           # LangGraph for multi-agent orchestration
+numpy>=1.24.0               # Embeddings and similarity calculations
+
 # Local LLM (llama-cpp-python)
 # NOTE: For Apple Silicon (M1/M2/M3/M4) with Metal GPU support,
 # install manually with:

@@ -87,16 +87,24 @@ class Settings(BaseSettings):
 
     # ==== Trinity Architecture: Writer (Claude/Anthropic) ====
     WRITER_MODEL_PROVIDER: Literal["anthropic"] = "anthropic"
-    WRITER_MODEL_NAME: str = Field(default="claude-sonnet-4-20250514")
+    WRITER_MODEL_NAME: str = Field(default="claude-sonnet-4-20250514")  # Claude 4.5 Sonnet
     ANTHROPIC_API_KEY: str | None = Field(default=None)
 
-    # ==== Trinity Architecture: Judge (Gemini/Google) ====
-    JUDGE_MODEL_PROVIDER: Literal["google"] = "google"
-    JUDGE_MODEL_NAME: str = Field(default="gemini-2.0-flash")
+    # ==== Trinity Architecture: Judge (Claude Opus for deep critique) ====
+    JUDGE_MODEL_PROVIDER: Literal["anthropic"] = "anthropic"
+    JUDGE_MODEL_NAME: str = Field(default="claude-opus-4-20250514")  # Claude 4.5 Opus
+    
+    # ==== Trinity Architecture: Clerk (Gemini Flash for JSON formatting) ====
+    CLERK_MODEL_PROVIDER: Literal["google"] = "google"
+    CLERK_MODEL_NAME: str = Field(default="gemini-2.5-flash-preview-05-20")  # Gemini 3 Flash
     GOOGLE_API_KEY: str | None = Field(default=None)
 
-    # ==== Trinity Architecture: Simulator (Local/OpenAI-compatible) ====
-    LOCAL_MODEL_NAME: str = Field(default="llama-3.3-70b-instruct")
+    # ==== Trinity Architecture: Simulator (Gemini Flash for chat) ====
+    SIMULATOR_MODEL_PROVIDER: Literal["google"] = "google"
+    SIMULATOR_MODEL_NAME: str = Field(default="gemini-2.5-flash-preview-05-20")  # Gemini 3 Flash
+
+    # ==== Trinity Architecture: Scout (Local Qwen for idea generation) ====
+    LOCAL_MODEL_NAME: str = Field(default="qwen2.5-coder-32b-instruct")  # Local Qwen
     LOCAL_BASE_URL: str = Field(default="http://127.0.0.1:8080/v1")
     LOCAL_API_KEY: str = Field(default="sk-no-key-required")
 

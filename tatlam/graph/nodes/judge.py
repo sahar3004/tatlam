@@ -82,25 +82,27 @@ def _build_judge_rubric() -> str:
 )
 def _score_with_llm(scenario: dict[str, Any], rubric: str) -> tuple[float, str]:
     """
-    Score a scenario using the cloud LLM.
+    Score a scenario using Claude Opus for deep, actionable critique.
 
     Returns:
         (score, critique)
     """
-    from tatlam.core.llm_factory import client_cloud, ConfigurationError
+    from tatlam.core.llm_factory import create_writer_client, ConfigurationError
 
     settings = get_settings()
 
     try:
-        cloud = client_cloud()
+        anthropic_client = create_writer_client()
+        if not anthropic_client:
+            raise ConfigurationError("Anthropic client not available")
     except (ConfigurationError, Exception) as e:
-        logger.warning("Cloud client unavailable for Judge: %s", e)
+        logger.warning("Anthropic client unavailable for Judge: %s", e)
         return 70.0, "לא ניתן לבצע הערכת LLM"
 
     # Get Judge system prompt
     judge_prompt = get_system_prompt("judge")
 
-    # Build the evaluation prompt
+    # Build the evaluation prompt with actionable repair instructions
     scenario_json = json.dumps(scenario, ensure_ascii=False, indent=2)
 
     eval_prompt = f"""
@@ -109,31 +111,43 @@ def _score_with_llm(scenario: dict[str, Any], rubric: str) -> tuple[float, str]:
 📋 תרחיש להערכה:
 {scenario_json}
 
-הוראות:
+הוראות למהלך הביקורת:
 1. בצע את סריקת הבטיחות/חוקיות/איכות (Audit Logic) ותעד ב-audit_log.
 2. דרג את התרחיש לפי הקריטריונים (0-100).
-3. ציין נקודות חוזק וחולשה.
+3. ציין נקודות חוזק וחולשה **ספציפיות** (לא כלליות).
 4. אם יש כשל קריטי (בטיחות/חוקיות) - ציון 0.
-5. החזר JSON בפורמט:
+
+🔧 הוראות לשיפור (CRITICAL - זה מה שהכותב יקבל):
+אם הציון נמוך מ-80, עליך לספק הוראות תיקון מדויקות וברורות:
+- מה בדיוק צריך לשנות? (ציין שדה ספציפי)
+- למה זה בעייתי? (הפניה לדוקטרינה/חוק)
+- איך לתקן? (הצע ניסוח חלופי או כיוון)
+
+פורמט פלט (JSON בלבד):
 {{
-  "audit_log": "תמצית הסריקה (בטיחות, חוקיות, טקטיקה)...",
+  "audit_log": "תמצית הסריקה: [בטיחות: X], [חוקיות: Y], [איכות: Z]",
   "score": int,
-  "critique": "סיכום מילולי...",
-  "strengths": [...],
-  "weaknesses": [...]
+  "critique": "סיכום כללי של האיכות...",
+  "strengths": ["חוזקה 1 (ספציפית)", "חוזקה 2"],
+  "weaknesses": ["חולשה 1 (ספציפית)", "חולשה 2"],
+  "repair_instructions": [
+    {{"field": "שדה לתיקון", "issue": "הבעיה", "fix": "הצעה לתיקון"}},
+    ...
+  ]
 }}
 """
 
-    response = cloud.chat.completions.create(
-        model=settings.VALIDATOR_MODEL,
+    # Call Anthropic Claude Opus
+    response = anthropic_client.messages.create(
+        model=settings.JUDGE_MODEL_NAME,
+        max_tokens=2048,
+        system=judge_prompt,
         messages=[
-            {"role": "system", "content": judge_prompt},
             {"role": "user", "content": eval_prompt},
         ],
-        response_format={"type": "json_object"},
     )
 
-    text = (response.choices[0].message.content or "{}").strip()
+    text = (response.content[0].text if response.content else "{}").strip()
 
     try:
         result = json.loads(text)
@@ -144,6 +158,7 @@ def _score_with_llm(scenario: dict[str, Any], rubric: str) -> tuple[float, str]:
         # Add strengths/weaknesses and audit log to critique
         strengths = result.get("strengths", [])
         weaknesses = result.get("weaknesses", [])
+        repair_instructions = result.get("repair_instructions", [])
 
         if audit_log:
              critique = f"🔍 לוג בדיקה:\n{audit_log}\n\n📝 סיכום:\n{critique}"
@@ -152,6 +167,16 @@ def _score_with_llm(scenario: dict[str, Any], rubric: str) -> tuple[float, str]:
             critique += f"\n\n✅ חוזקות: {', '.join(strengths)}"
         if weaknesses:
             critique += f"\n\n❌ חולשות: {', '.join(weaknesses)}"
+        
+        # Add actionable repair instructions for the Writer
+        if repair_instructions:
+            repair_text = "\n\n🔧 הוראות תיקון לכותב:\n"
+            for instr in repair_instructions:
+                field = instr.get("field", "כללי")
+                issue = instr.get("issue", "")
+                fix = instr.get("fix", "")
+                repair_text += f"• [{field}]: {issue} → {fix}\n"
+            critique += repair_text
 
         return score, critique.strip()
 
