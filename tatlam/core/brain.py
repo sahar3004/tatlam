@@ -21,12 +21,14 @@ Usage:
         auto_initialize=False,
     )
 """
+
 from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Generator
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Generator, TypedDict
+from typing import TYPE_CHECKING, Any, TypedDict
 
 from tenacity import (
     RetryError,
@@ -62,21 +64,25 @@ logger = logging.getLogger(__name__)
 
 class WriterUnavailableError(RuntimeError):
     """Raised when the Writer (Claude) client is not available."""
+
     pass
 
 
 class JudgeUnavailableError(RuntimeError):
     """Raised when the Judge (Gemini) client is not available."""
+
     pass
 
 
 class SimulatorUnavailableError(RuntimeError):
     """Raised when the Simulator (Local LLM) client is not available or offline."""
+
     pass
 
 
 class APICallError(RuntimeError):
     """Raised when an API call fails after all retries."""
+
     pass
 
 
@@ -85,6 +91,7 @@ class APICallError(RuntimeError):
 
 class BrainResponseMetadata(TypedDict, total=False):
     """Metadata about a brain response."""
+
     model: str
     tokens_used: int
     finish_reason: str
@@ -107,6 +114,7 @@ class BrainResponse(TypedDict):
         print(response["content"])
         print(response["timestamp"])
     """
+
     content: str
     metadata: BrainResponseMetadata
     timestamp: str
@@ -123,62 +131,71 @@ BRAIN_DECISION_SCHEMA = {
         "role": {
             "type": "string",
             "enum": ["BRAIN", "ADJUDICATOR"],
-            "description": "Agent role in the Trinity system"
+            "description": "Agent role in the Trinity system",
         },
         "threat_level": {
             "type": "string",
-            "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL", "נמוכה", "בינונית", "גבוהה", "גבוהה מאוד"],
-            "description": "Threat level assessment (supports both English and Hebrew)"
+            "enum": [
+                "LOW",
+                "MEDIUM",
+                "HIGH",
+                "CRITICAL",
+                "נמוכה",
+                "בינונית",
+                "גבוהה",
+                "גבוהה מאוד",
+            ],
+            "description": "Threat level assessment (supports both English and Hebrew)",
         },
         "category": {
             "type": "string",
             "enum": ["SECURITY", "SAFETY", "MEDICAL", "SERVICE"],
-            "description": "Incident category classification"
+            "description": "Incident category classification",
         },
         "identified_vector": {
             "type": "string",
             "enum": ["FOOT", "VEHICLE", "AERIAL", "NONE"],
-            "description": "Attack vector if identified"
+            "description": "Attack vector if identified",
         },
         "decision": {
             "type": "string",
-            "description": "Short description of the recommended action"
+            "description": "Short description of the recommended action",
         },
         "reasoning": {
             "type": "string",
-            "description": "Doctrine-based explanation for the decision"
+            "description": "Doctrine-based explanation for the decision",
         },
         "council_consensus": {
             "type": "string",
-            "description": "Summary of the 3-expert internal debate (Nimrod Shelo, Eli Navarro, Yarden Levi)"
+            "description": "Summary of the 3-expert internal debate (Nimrod Shelo, Eli Navarro, Yarden Levi)",
         },
         "references": {
             "type": "array",
             "items": {"type": "string"},
-            "description": "List of legal/doctrinal sources used (e.g., authority frameworks, SOPs)"
+            "description": "List of legal/doctrinal sources used (e.g., authority frameworks, SOPs)",
         },
         "doctrine_violation": {
             "type": "boolean",
-            "description": "Whether the scenario involves a doctrine violation"
+            "description": "Whether the scenario involves a doctrine violation",
         },
         "score": {
             "type": "integer",
             "minimum": 0,
             "maximum": 100,
-            "description": "Quality/compliance score (0-100)"
+            "description": "Quality/compliance score (0-100)",
         },
         "action_plan": {
             "type": "array",
             "items": {"type": "string"},
-            "description": "Step-by-step action plan"
+            "description": "Step-by-step action plan",
         },
         "content": {
             "type": "string",
-            "description": "Full text response if needed (backward compatibility)"
-        }
+            "description": "Full text response if needed (backward compatibility)",
+        },
     },
     "required": ["threat_level", "category", "decision", "reasoning"],
-    "additionalProperties": True  # Allow flexibility for additional context
+    "additionalProperties": True,  # Allow flexibility for additional context
 }
 
 # JSON Schema for Scenario Bundle Generation (matches system_prompt_he.txt)
@@ -186,10 +203,7 @@ BRAIN_DECISION_SCHEMA = {
 SCENARIO_BUNDLE_SCHEMA = {
     "type": "object",
     "properties": {
-        "bundle_id": {
-            "type": "string",
-            "description": "Unique identifier for this bundle"
-        },
+        "bundle_id": {"type": "string", "description": "Unique identifier for this bundle"},
         "scenarios": {
             "type": "array",
             "items": {
@@ -200,79 +214,56 @@ SCENARIO_BUNDLE_SCHEMA = {
                     "category": {"type": "string"},
                     "threat_level": {
                         "type": "string",
-                        "enum": ["נמוכה", "בינונית", "גבוהה", "גבוהה מאוד"]
+                        "enum": ["נמוכה", "בינונית", "גבוהה", "גבוהה מאוד"],
                     },
-                    "likelihood": {
-                        "type": "string",
-                        "enum": ["נמוכה", "בינונית", "גבוהה"]
-                    },
-                    "complexity": {
-                        "type": "string",
-                        "enum": ["נמוכה", "בינונית", "גבוהה"]
-                    },
+                    "likelihood": {"type": "string", "enum": ["נמוכה", "בינונית", "גבוהה"]},
+                    "complexity": {"type": "string", "enum": ["נמוכה", "בינונית", "גבוהה"]},
                     "location": {"type": "string"},
                     "background": {"type": "string"},
-                    "steps": {
-                        "type": "array",
-                        "items": {"type": "string"}
-                    },
-                    "required_response": {
-                        "type": "array",
-                        "items": {"type": "string"}
-                    },
-                    "debrief_points": {
-                        "type": "array",
-                        "items": {"type": "string"}
-                    },
+                    "steps": {"type": "array", "items": {"type": "string"}},
+                    "required_response": {"type": "array", "items": {"type": "string"}},
+                    "debrief_points": {"type": "array", "items": {"type": "string"}},
                     "operational_background": {"type": "string"},
-                    "media_link": {
-                        "type": ["string", "null"]
-                    },
-                    "mask_usage": {
-                        "type": ["string", "null"],
-                        "enum": ["כן", "לא", None]
-                    },
+                    "media_link": {"type": ["string", "null"]},
+                    "mask_usage": {"type": ["string", "null"], "enum": ["כן", "לא", None]},
                     "authority_notes": {"type": "string"},
                     "cctv_usage": {"type": "string"},
-                    "comms": {
-                        "type": "array",
-                        "items": {"type": "string"}
-                    },
-                    "decision_points": {
-                        "type": "array",
-                        "items": {"type": "string"}
-                    },
-                    "escalation_conditions": {
-                        "type": "array",
-                        "items": {"type": "string"}
-                    },
+                    "comms": {"type": "array", "items": {"type": "string"}},
+                    "decision_points": {"type": "array", "items": {"type": "string"}},
+                    "escalation_conditions": {"type": "array", "items": {"type": "string"}},
                     "end_state_success": {"type": "string"},
                     "end_state_failure": {"type": "string"},
-                    "lessons_learned": {
-                        "type": "array",
-                        "items": {"type": "string"}
-                    },
-                    "variations": {
-                        "type": "array",
-                        "items": {"type": "string"}
-                    },
+                    "lessons_learned": {"type": "array", "items": {"type": "string"}},
+                    "variations": {"type": "array", "items": {"type": "string"}},
                     "validation": {
                         "type": "array",
                         "items": {
                             "type": "string",
-                            "enum": ["json_valid", "unique_title", "no_fabrication", "ethical_balance_ok"]
-                        }
-                    }
+                            "enum": [
+                                "json_valid",
+                                "unique_title",
+                                "no_fabrication",
+                                "ethical_balance_ok",
+                            ],
+                        },
+                    },
                 },
                 "required": [
-                    "title", "category", "threat_level", "likelihood", "complexity",
-                    "location", "background", "steps", "required_response"
-                ]
-            }
-        }
+                    "title",
+                    "category",
+                    "threat_level",
+                    "likelihood",
+                    "complexity",
+                    "location",
+                    "background",
+                    "steps",
+                    "required_response",
+                ],
+            },
+        },
     },
     "required": ["bundle_id", "scenarios"],
-    "additionalProperties": False
+    "additionalProperties": False,
 }
 
 # Legacy schema for backward compatibility (simple 3-field structure)
@@ -350,6 +341,7 @@ def _is_retryable_anthropic_error(exc: Exception) -> bool:
             APIStatusError,
             RateLimitError,
         )
+
         # Retry on rate limits and connection errors
         if isinstance(exc, (RateLimitError, APIConnectionError)):
             return True
@@ -369,6 +361,7 @@ def _is_retryable_openai_error(exc: Exception) -> bool:
             APIStatusError,
             RateLimitError,
         )
+
         if isinstance(exc, (RateLimitError, APIConnectionError)):
             return True
         if isinstance(exc, APIStatusError) and exc.status_code >= 500:
@@ -544,7 +537,11 @@ class TrinityBrain:
         except Exception as e:
             # Check if this is a non-retryable auth error
             error_str = str(e).lower()
-            if "authentication" in error_str or "401" in error_str or "invalid api key" in error_str:
+            if (
+                "authentication" in error_str
+                or "401" in error_str
+                or "invalid api key" in error_str
+            ):
                 logger.error("Writer authentication failed: %s", e)
                 raise APICallError(f"Writer authentication failed: {e}") from e
 
@@ -648,7 +645,7 @@ class TrinityBrain:
         # Convert OpenAI-style messages to Gemini prompt format
         # Gemini doesn't have separate system/user/assistant, so we combine them
         prompt_parts = [system_prompt, "\n\n"]
-        
+
         for msg in messages:
             role = msg.get("role", "user")
             content = msg.get("content", "")
@@ -659,11 +656,12 @@ class TrinityBrain:
                 prompt_parts.append(f"מאבטח: {content}\n")
             elif role == "assistant":
                 prompt_parts.append(f"יריב/אזרח: {content}\n")
-        
+
         full_prompt = "".join(prompt_parts)
 
         # Configure generation settings
         import google.generativeai as genai
+
         generation_config = genai.GenerationConfig(
             temperature=temperature,
             top_p=0.9,
@@ -693,7 +691,7 @@ class TrinityBrain:
             if "api key" in error_str or "401" in error_str:
                 logger.error("Simulator authentication failed: %s", e)
                 raise SimulatorUnavailableError(f"Simulator auth failed: {e}") from e
-            
+
             if _is_retryable_google_error(e):
                 logger.warning("Simulator API error (would retry): %s", e)
 
@@ -1017,14 +1015,11 @@ class TrinityBrain:
                 model=self._settings.LOCAL_MODEL_NAME,
                 messages=[
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": enhanced_prompt}
+                    {"role": "user", "content": enhanced_prompt},
                 ],
                 max_tokens=max_tokens,
                 temperature=temperature,
-                response_format={
-                    "type": "json_object",
-                    "schema": BRAIN_SCHEMA
-                },
+                response_format={"type": "json_object", "schema": BRAIN_SCHEMA},
             )
 
         try:
@@ -1039,7 +1034,11 @@ class TrinityBrain:
             missing_fields = [f for f in required_fields if f not in result]
 
             if missing_fields:
-                logger.warning("Response missing required fields: %s. Got keys: %s", missing_fields, result.keys())
+                logger.warning(
+                    "Response missing required fields: %s. Got keys: %s",
+                    missing_fields,
+                    result.keys(),
+                )
                 # Fallback to ensure required fields exist
                 result.setdefault("threat_level", "בינונית")
                 result.setdefault("category", "SECURITY")
@@ -1071,25 +1070,25 @@ class TrinityBrain:
 def validate_scenario(scenario: dict[str, Any]) -> dict[str, Any]:
     """
     וולידציה של תרחיש מול הדוקטרינה.
-    
+
     Args:
         scenario: מילון תרחיש (מ-parse_md_to_scenario או ממקור אחר)
-        
+
     Returns:
         מילון עם:
         - is_valid: bool
         - doctrine_score: int (0-100)
         - errors: list[str]
         - warnings: list[str]
-        
+
     Example:
         >>> result = validate_scenario({"title": "...", "category": "...", ...})
         >>> print(f"Score: {result['doctrine_score']}")
     """
     from tatlam.core.validators import validate_scenario_doctrine
-    
+
     validation_result = validate_scenario_doctrine(scenario)
-    
+
     return {
         "is_valid": validation_result.is_valid,
         "doctrine_score": validation_result.doctrine_score,

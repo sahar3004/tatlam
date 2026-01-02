@@ -47,19 +47,20 @@ def setup_logging(verbose: bool = False) -> None:
 def get_valid_categories() -> list[str]:
     """Get list of valid category names."""
     from tatlam.core.categories import CATS
+
     return [meta.get("title", "") for meta in CATS.values() if meta.get("title")]
 
 
 def validate_category(category: str) -> str:
     """Validate and normalize category name."""
-    from tatlam.core.categories import category_to_slug, CATS
+    from tatlam.core.categories import CATS, category_to_slug
 
     slug = category_to_slug(category)
     if slug is None:
         valid = get_valid_categories()
         raise ValueError(
-            f"Invalid category: '{category}'. Valid categories:\n" +
-            "\n".join(f"  - {c}" for c in valid)
+            f"Invalid category: '{category}'. Valid categories:\n"
+            + "\n".join(f"  - {c}" for c in valid)
         )
 
     # Return the canonical Hebrew name
@@ -101,7 +102,7 @@ def run_sync(args: argparse.Namespace) -> int:
     print(f"Iterations: {result.iteration}")
 
     if result.metrics:
-        print(f"\nMetrics:")
+        print("\nMetrics:")
         print(f"  Average Score: {result.metrics.average_score:.1f}")
         print(f"  Highest Score: {result.metrics.highest_score:.1f}")
         print(f"  Duplicates Skipped: {result.metrics.total_duplicates_skipped}")
@@ -175,34 +176,39 @@ Valid Categories:
     )
 
     parser.add_argument(
-        "--category", "-c",
+        "--category",
+        "-c",
         required=True,
         help="Scenario category (Hebrew name)",
     )
 
     parser.add_argument(
-        "--count", "-n",
+        "--count",
+        "-n",
         type=int,
         default=5,
         help="Number of scenarios to generate (default: 5)",
     )
 
     parser.add_argument(
-        "--threshold", "-t",
+        "--threshold",
+        "-t",
         type=float,
         default=70.0,
         help="Minimum score to approve scenario (default: 70.0)",
     )
 
     parser.add_argument(
-        "--max-iterations", "-i",
+        "--max-iterations",
+        "-i",
         type=int,
         default=5,
         help="Maximum generation iterations (default: 5)",
     )
 
     parser.add_argument(
-        "--batch-size", "-b",
+        "--batch-size",
+        "-b",
         type=int,
         default=8,
         help="Candidates per generation cycle (default: 8)",
@@ -216,7 +222,8 @@ Valid Categories:
     )
 
     parser.add_argument(
-        "--verbose", "-v",
+        "--verbose",
+        "-v",
         action="store_true",
         help="Enable verbose logging",
     )

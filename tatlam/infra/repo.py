@@ -9,13 +9,15 @@ The migration to SQLAlchemy provides:
 - WAL mode for better concurrency
 - Cleaner transaction management
 """
+
 from __future__ import annotations
 
-import logging
 import json
+import logging
 import unicodedata
+from collections.abc import Generator
 from datetime import datetime
-from typing import Any, Generator
+from typing import Any
 
 import numpy as np
 from sqlalchemy import func, select
@@ -406,7 +408,6 @@ def insert_scenario(data: dict[str, Any], owner: str = "web", pending: bool = Tr
     return new_id
 
 
-
 def reject_scenario(sid: int, reason: str) -> bool:
     """
     Reject a scenario safely (surgical update).
@@ -425,7 +426,7 @@ def reject_scenario(sid: int, reason: str) -> bool:
         scenario = session.get(Scenario, sid)
         if not scenario:
             return False
-            
+
         scenario.status = "rejected"
         scenario.rejection_reason = reason
         session.commit()
@@ -457,9 +458,9 @@ def yield_all_titles_with_embeddings(
 
     with get_session() as session:
         # Use yield_per for memory-efficient batching
-        stmt = select(
-            ScenarioEmbedding.title, ScenarioEmbedding.vector_json
-        ).execution_options(yield_per=batch_size)
+        stmt = select(ScenarioEmbedding.title, ScenarioEmbedding.vector_json).execution_options(
+            yield_per=batch_size
+        )
 
         for row in session.execute(stmt):
             title, vector_json = row
@@ -505,9 +506,7 @@ class ScenarioRepository:
         """Fetch a single scenario by ID."""
         return fetch_one(sid)
 
-    def fetch_count(
-        self, where_sql: str = "", params: tuple[Any, ...] = ()
-    ) -> int:
+    def fetch_count(self, where_sql: str = "", params: tuple[Any, ...] = ()) -> int:
         """Count scenarios matching optional filter criteria."""
         return fetch_count(where_sql=where_sql, params=params)
 
@@ -516,7 +515,7 @@ class ScenarioRepository:
     ) -> int:
         """Insert a new scenario into the database."""
         return insert_scenario(data=data, owner=owner, pending=pending)
-        
+
     def reject_scenario(self, sid: int, reason: str) -> bool:
         """Reject a scenario with a reason."""
         return reject_scenario(sid, reason)

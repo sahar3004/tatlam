@@ -21,7 +21,7 @@ class TestHebrewQuality:
         sample_hebrew = "הבדיקה עברה בהצלחה"
 
         # Basic check: Hebrew characters present
-        has_hebrew = any('\u0590' <= char <= '\u05FF' for char in sample_hebrew)
+        has_hebrew = any("\u0590" <= char <= "\u05FF" for char in sample_hebrew)
         assert has_hebrew
 
     def test_hebrew_gender_agreement(self, mock_brain):
@@ -38,7 +38,7 @@ class TestHebrewQuality:
         sample_with_nikud = "שָׁלוֹם עוֹלָם"
 
         # If nikud is used, it should be consistent
-        has_nikud = any('\u0591' <= char <= '\u05C7' for char in sample_with_nikud)
+        has_nikud = any("\u0591" <= char <= "\u05C7" for char in sample_with_nikud)
 
         if has_nikud:
             # Check consistency (all words should have nikud)
@@ -81,7 +81,7 @@ class TestHebrewQuality:
         sample = "בדיקה של 'ערך' במערכת."
 
         # Should have proper punctuation
-        assert '.' in sample or ',' in sample or '!' in sample
+        assert "." in sample or "," in sample or "!" in sample
 
     def test_hebrew_sentence_structure(self, mock_brain):
         """Test natural Hebrew sentence structure."""

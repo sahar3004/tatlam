@@ -7,12 +7,10 @@ This module contains integration and unit tests to verify the refactored codebas
 - System Health Check: Trinity Brain initialization
 """
 
-import json
 import os
 import sqlite3
 import tempfile
-from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -21,10 +19,11 @@ import pytest
 # Test Fixtures and Helpers
 # ==============================================================================
 
+
 @pytest.fixture
 def temp_db_path():
     """Create a temporary database file for testing."""
-    with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.db') as f:
+    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".db") as f:
         temp_path = f.name
     yield temp_path
     # Cleanup
@@ -37,7 +36,7 @@ def temp_db_path():
 @pytest.fixture
 def in_memory_db():
     """Create an in-memory SQLite database for testing."""
-    con = sqlite3.connect(':memory:')
+    con = sqlite3.connect(":memory:")
     con.row_factory = sqlite3.Row
     yield con
     con.close()
@@ -52,7 +51,8 @@ def init_test_schema(con: sqlite3.Connection, table_name: str = "scenarios"):
     cur = con.cursor()
 
     # Create main scenarios table
-    cur.execute(f"""
+    cur.execute(
+        f"""
         CREATE TABLE IF NOT EXISTS {table_name} (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             bundle_id TEXT,
@@ -85,15 +85,18 @@ def init_test_schema(con: sqlite3.Connection, table_name: str = "scenarios"):
             status TEXT,
             created_at TEXT
         )
-    """)
+    """
+    )
 
     # Create embeddings table
-    cur.execute("""
+    cur.execute(
+        """
         CREATE TABLE IF NOT EXISTS embeddings (
             title TEXT PRIMARY KEY,
             vector_json TEXT
         )
-    """)
+    """
+    )
 
     con.commit()
 
@@ -101,6 +104,7 @@ def init_test_schema(con: sqlite3.Connection, table_name: str = "scenarios"):
 # ==============================================================================
 # Test 2.1: Infrastructure Unit Test
 # ==============================================================================
+
 
 def test_db_schema_consistency(in_memory_db):
     """
@@ -118,10 +122,12 @@ def test_db_schema_consistency(in_memory_db):
 
     # Verify table exists
     cur = in_memory_db.cursor()
-    cur.execute("""
+    cur.execute(
+        """
         SELECT name FROM sqlite_master
         WHERE type='table' AND name='scenarios'
-    """)
+    """
+    )
     result = cur.fetchone()
     assert result is not None, "scenarios table should exist"
     assert result[0] == "scenarios"
@@ -130,23 +136,47 @@ def test_db_schema_consistency(in_memory_db):
     cur.execute("PRAGMA table_info(scenarios)")
     columns = {row[1] for row in cur.fetchall()}  # row[1] is column name
 
-    critical_columns = {'title', 'steps', 'category'}
-    assert critical_columns.issubset(columns), \
-        f"Missing critical columns. Expected {critical_columns}, found {columns}"
+    critical_columns = {"title", "steps", "category"}
+    assert critical_columns.issubset(
+        columns
+    ), f"Missing critical columns. Expected {critical_columns}, found {columns}"
 
     # Additional verification: check expected columns from schema
     expected_columns = {
-        'id', 'bundle_id', 'external_id', 'title', 'category',
-        'threat_level', 'likelihood', 'complexity', 'location', 'background',
-        'steps', 'required_response', 'debrief_points',
-        'operational_background', 'media_link', 'mask_usage',
-        'authority_notes', 'cctv_usage', 'comms', 'decision_points',
-        'escalation_conditions', 'end_state_success', 'end_state_failure',
-        'lessons_learned', 'variations', 'validation',
-        'owner', 'approved_by', 'status', 'created_at'
+        "id",
+        "bundle_id",
+        "external_id",
+        "title",
+        "category",
+        "threat_level",
+        "likelihood",
+        "complexity",
+        "location",
+        "background",
+        "steps",
+        "required_response",
+        "debrief_points",
+        "operational_background",
+        "media_link",
+        "mask_usage",
+        "authority_notes",
+        "cctv_usage",
+        "comms",
+        "decision_points",
+        "escalation_conditions",
+        "end_state_success",
+        "end_state_failure",
+        "lessons_learned",
+        "variations",
+        "validation",
+        "owner",
+        "approved_by",
+        "status",
+        "created_at",
     }
-    assert expected_columns.issubset(columns), \
-        f"Schema mismatch. Missing columns: {expected_columns - columns}"
+    assert expected_columns.issubset(
+        columns
+    ), f"Schema mismatch. Missing columns: {expected_columns - columns}"
 
 
 def test_db_schema_with_get_engine(temp_db_path, monkeypatch):
@@ -161,11 +191,12 @@ def test_db_schema_with_get_engine(temp_db_path, monkeypatch):
 
     # Need to reload config modules to pick up env vars
     import sys
+
     # Clear relevant modules
     for mod in list(sys.modules.keys()):
-        if mod.startswith("tatlam.infra") or mod in ['tatlam.settings']:
+        if mod.startswith("tatlam.infra") or mod in ["tatlam.settings"]:
             del sys.modules[mod]
-    
+
     from tatlam.infra.db import get_engine, init_db_sqlalchemy
     from sqlalchemy import inspect as sa_inspect
 
@@ -175,14 +206,14 @@ def test_db_schema_with_get_engine(temp_db_path, monkeypatch):
     # Verify we can query the schema
     engine = get_engine()
     inspector = sa_inspect(engine)
-    
-    assert "scenarios" in inspector.get_table_names()
 
+    assert "scenarios" in inspector.get_table_names()
 
 
 # ==============================================================================
 # Test 2.2: Repository Integration Test
 # ==============================================================================
+
 
 def test_insert_scenario_json_serialization(temp_db_path, monkeypatch):
     """
@@ -196,8 +227,9 @@ def test_insert_scenario_json_serialization(temp_db_path, monkeypatch):
 
     # Reload modules to pick up new config
     import sys
+
     for mod in list(sys.modules.keys()):
-        if mod.startswith("tatlam.infra") or mod in ['tatlam.settings']:
+        if mod.startswith("tatlam.infra") or mod in ["tatlam.settings"]:
             del sys.modules[mod]
 
     from tatlam.infra.db import init_db_sqlalchemy
@@ -215,11 +247,7 @@ def test_insert_scenario_json_serialization(temp_db_path, monkeypatch):
         "complexity": "נמוכה",
         "location": "תחנת רכבת ירושלים",
         "background": "Test background for serialization",
-        "steps": [
-            "שלב ראשון - זיהוי חפץ חשוד",
-            "שלב שני - דיווח למוקד",
-            "שלב שלישי - פינוי האזור"
-        ],
+        "steps": ["שלב ראשון - זיהוי חפץ חשוד", "שלב שני - דיווח למוקד", "שלב שלישי - פינוי האזור"],
         "required_response": ["תגובה 1", "תגובה 2"],
         "debrief_points": ["נקודה 1", "נקודה 2"],
         "decision_points": ["החלטה 1", "החלטה 2"],
@@ -229,7 +257,7 @@ def test_insert_scenario_json_serialization(temp_db_path, monkeypatch):
         "operational_background": "רקע מבצעי",
         "media_link": "",
         "mask_usage": "לא",
-        "bundle_id": "TEST-BUNDLE-001"
+        "bundle_id": "TEST-BUNDLE-001",
     }
 
     # Insert scenario
@@ -252,21 +280,21 @@ def test_insert_scenario_json_serialization(temp_db_path, monkeypatch):
     # Assuming standard behavior, let's verify.
 
     # Verify steps field
-    assert isinstance(row['steps'], list), f"Expected list, got {type(row['steps'])}"
-    assert len(row['steps']) == 3
-    assert row['steps'][0] == "שלב ראשון - זיהוי חפץ חשוד"
+    assert isinstance(row["steps"], list), f"Expected list, got {type(row['steps'])}"
+    assert len(row["steps"]) == 3
+    assert row["steps"][0] == "שלב ראשון - זיהוי חפץ חשוד"
 
     # Verify other JSON fields
-    assert isinstance(row['required_response'], list)
-    assert isinstance(row['debrief_points'], list)
-    assert isinstance(row['decision_points'], list)
-    assert isinstance(row['escalation_conditions'], list)
-    assert isinstance(row['lessons_learned'], list)
-    assert isinstance(row['variations'], list)
+    assert isinstance(row["required_response"], list)
+    assert isinstance(row["debrief_points"], list)
+    assert isinstance(row["decision_points"], list)
+    assert isinstance(row["escalation_conditions"], list)
+    assert isinstance(row["lessons_learned"], list)
+    assert isinstance(row["variations"], list)
 
     # Verify non-JSON fields remain as strings
-    assert row['title'] == "Test Scenario - JSON Serialization"
-    assert row['category'] == "חפץ חשוד"
+    assert row["title"] == "Test Scenario - JSON Serialization"
+    assert row["category"] == "חפץ חשוד"
 
 
 def test_insert_scenario_duplicate_title(temp_db_path, monkeypatch):
@@ -280,8 +308,9 @@ def test_insert_scenario_duplicate_title(temp_db_path, monkeypatch):
     monkeypatch.setenv("TABLE_NAME", "scenarios")
 
     import sys
+
     for mod in list(sys.modules.keys()):
-        if mod.startswith("tatlam.infra") or mod in ['tatlam.settings']:
+        if mod.startswith("tatlam.infra") or mod in ["tatlam.settings"]:
             del sys.modules[mod]
 
     from tatlam.infra.db import init_db_sqlalchemy
@@ -294,7 +323,7 @@ def test_insert_scenario_duplicate_title(temp_db_path, monkeypatch):
     scenario1 = {
         "title": "Duplicate Test Scenario",
         "category": "חפץ חשוד",  # Valid category that maps to "chefetz-chashud"
-        "steps": ["step 1"]
+        "steps": ["step 1"],
     }
     insert_scenario(scenario1, owner="test_user")
 
@@ -302,7 +331,7 @@ def test_insert_scenario_duplicate_title(temp_db_path, monkeypatch):
     scenario2 = {
         "title": "Duplicate Test Scenario",  # Same title
         "category": "פיגועים פשוטים",  # Different valid category
-        "steps": ["different step"]
+        "steps": ["different step"],
     }
 
     with pytest.raises(ValueError, match="scenario already exists"):
@@ -312,6 +341,7 @@ def test_insert_scenario_duplicate_title(temp_db_path, monkeypatch):
 # ==============================================================================
 # Test 2.3: System Health Check (Mocked)
 # ==============================================================================
+
 
 def test_trinity_brain_initialization_success():
     """
@@ -326,16 +356,16 @@ def test_trinity_brain_initialization_success():
     from tatlam.core.brain import TrinityBrain
 
     # Create mock clients
-    mock_writer = MagicMock(name='MockAnthropicClient')
-    mock_judge = MagicMock(name='MockGeminiModel')
-    mock_simulator = MagicMock(name='MockOpenAIClient')
+    mock_writer = MagicMock(name="MockAnthropicClient")
+    mock_judge = MagicMock(name="MockGeminiModel")
+    mock_simulator = MagicMock(name="MockOpenAIClient")
 
     # Use dependency injection (new pattern)
     brain = TrinityBrain(
         writer_client=mock_writer,
         judge_client=mock_judge,
         simulator_client=mock_simulator,
-        auto_initialize=False
+        auto_initialize=False,
     )
 
     # Verify all three clients were set
@@ -363,22 +393,28 @@ def test_trinity_brain_initialization_missing_keys():
     get_settings.cache_clear()
 
     # Mock environment with missing keys
-    with patch.dict(os.environ, {
-        'ANTHROPIC_API_KEY': '',
-        'GOOGLE_API_KEY': '',
-        'LOCAL_BASE_URL': 'http://localhost:8080/v1',
-        'LOCAL_API_KEY': 'mock-local-key'
-    }, clear=False):
+    with patch.dict(
+        os.environ,
+        {
+            "ANTHROPIC_API_KEY": "",
+            "GOOGLE_API_KEY": "",
+            "LOCAL_BASE_URL": "http://localhost:8080/v1",
+            "LOCAL_API_KEY": "mock-local-key",
+        },
+        clear=False,
+    ):
         # Clear settings cache to pick up new env vars
         get_settings.cache_clear()
 
         # Mock the factory functions directly to return None as they do in production code
         # when keys are missing
-        with patch('tatlam.core.brain.create_writer_client', return_value=None), \
-             patch('tatlam.core.brain.create_judge_client', return_value=None), \
-             patch('tatlam.core.brain.create_simulator_client') as mock_sim:
-            
-            mock_sim.return_value = MagicMock(name='MockOpenAIClient')
+        with (
+            patch("tatlam.core.brain.create_writer_client", return_value=None),
+            patch("tatlam.core.brain.create_judge_client", return_value=None),
+            patch("tatlam.core.brain.create_simulator_client") as mock_sim,
+        ):
+
+            mock_sim.return_value = MagicMock(name="MockOpenAIClient")
 
             # Instantiate TrinityBrain with auto_initialize=True
             brain = TrinityBrain(auto_initialize=True)
@@ -406,23 +442,27 @@ def test_trinity_brain_initialization_client_failure():
     # Clear settings cache
     get_settings.cache_clear()
 
-    with patch.dict(os.environ, {
-        'ANTHROPIC_API_KEY': 'mock-key',
-        'GOOGLE_API_KEY': 'mock-key',
-        'LOCAL_BASE_URL': 'http://localhost:8080/v1',
-        'LOCAL_API_KEY': 'mock-local-key'
-    }, clear=False):
+    with patch.dict(
+        os.environ,
+        {
+            "ANTHROPIC_API_KEY": "mock-key",
+            "GOOGLE_API_KEY": "mock-key",
+            "LOCAL_BASE_URL": "http://localhost:8080/v1",
+            "LOCAL_API_KEY": "mock-local-key",
+        },
+        clear=False,
+    ):
         get_settings.cache_clear()
 
         # Make create_writer_client raise a ConfigurationError
-        with patch('tatlam.core.brain.create_writer_client') as mock_create_writer:
+        with patch("tatlam.core.brain.create_writer_client") as mock_create_writer:
             mock_create_writer.side_effect = ConfigurationError("Connection error")
 
-            with patch('tatlam.core.brain.create_judge_client') as mock_create_judge:
-                mock_create_judge.return_value = MagicMock(name='MockGeminiModel')
+            with patch("tatlam.core.brain.create_judge_client") as mock_create_judge:
+                mock_create_judge.return_value = MagicMock(name="MockGeminiModel")
 
-                with patch('tatlam.core.brain.create_simulator_client') as mock_create_sim:
-                    mock_create_sim.return_value = MagicMock(name='MockOpenAIClient')
+                with patch("tatlam.core.brain.create_simulator_client") as mock_create_sim:
+                    mock_create_sim.return_value = MagicMock(name="MockOpenAIClient")
 
                     # Should not raise - error should be caught and logged
                     # Test passes if it raises ConfigurationError OR if it swallows it.
@@ -440,6 +480,7 @@ def test_trinity_brain_initialization_client_failure():
 # Additional Integration Tests
 # ==============================================================================
 
+
 def test_json_fields_empty_handling(temp_db_path, monkeypatch):
     """
     Test that normalize_row correctly handles empty/null JSON fields.
@@ -447,10 +488,12 @@ def test_json_fields_empty_handling(temp_db_path, monkeypatch):
     monkeypatch.setenv("DB_PATH", temp_db_path)
 
     import sys
+
     for mod in list(sys.modules.keys()):
-        if mod.startswith("tatlam.infra") or mod in ['tatlam.settings']:
+        if mod.startswith("tatlam.infra") or mod in ["tatlam.settings"]:
             del sys.modules[mod]
     from tatlam.settings import get_settings
+
     get_settings.cache_clear()
 
     from tatlam.infra.db import init_db_sqlalchemy
@@ -459,10 +502,7 @@ def test_json_fields_empty_handling(temp_db_path, monkeypatch):
     init_db_sqlalchemy()
 
     # Scenario with minimal fields (no steps, etc.)
-    minimal_scenario = {
-        "title": "Minimal Scenario",
-        "category": "חפץ חשוד"
-    }
+    minimal_scenario = {"title": "Minimal Scenario", "category": "חפץ חשוד"}
 
     scenario_id = insert_scenario(minimal_scenario, owner="test")
 
@@ -470,9 +510,9 @@ def test_json_fields_empty_handling(temp_db_path, monkeypatch):
     row = fetch_one(scenario_id)
 
     # Empty JSON fields should be empty lists (handled by model defaults and to_dict)
-    assert row['steps'] == []
-    assert row['required_response'] == []
-    assert row['debrief_points'] == []
+    assert row["steps"] == []
+    assert row["required_response"] == []
+    assert row["debrief_points"] == []
 
 
 if __name__ == "__main__":

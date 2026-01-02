@@ -16,18 +16,20 @@ Usage:
     # Convert to dict for existing code
     scenario.to_dict()
 """
+
 from __future__ import annotations
 
 import json
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import Index, Integer, String, Text
+from sqlalchemy import Integer, Text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
 class Base(DeclarativeBase):
     """Base class for all ORM models."""
+
     pass
 
 
@@ -40,6 +42,7 @@ class Scenario(Base):
     All JSON fields (steps, required_response, etc.) are stored as TEXT
     in SQLite but handled as Python lists/dicts through the to_dict() method.
     """
+
     __tablename__ = "scenarios"
 
     # Primary key
@@ -54,7 +57,9 @@ class Scenario(Base):
     category: Mapped[str] = mapped_column(Text, nullable=False, index=True)  # Index for filtering
 
     # Risk assessment
-    threat_level: Mapped[str] = mapped_column(Text, default="", nullable=False, index=True)  # Index for prioritization
+    threat_level: Mapped[str] = mapped_column(
+        Text, default="", nullable=False, index=True
+    )  # Index for prioritization
     likelihood: Mapped[str] = mapped_column(Text, default="", nullable=False)
     complexity: Mapped[str] = mapped_column(Text, default="", nullable=False)
 
@@ -87,13 +92,15 @@ class Scenario(Base):
     # Metadata
     owner: Mapped[str] = mapped_column(Text, default="web", nullable=False)
     approved_by: Mapped[str] = mapped_column(Text, default="", nullable=False)
-    status: Mapped[str] = mapped_column(Text, default="pending", nullable=False, index=True)  # Index for filtering
+    status: Mapped[str] = mapped_column(
+        Text, default="pending", nullable=False, index=True
+    )  # Index for filtering
     rejection_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[str] = mapped_column(
         Text,
         default=lambda: datetime.now().isoformat(),
         nullable=False,
-        index=True  # Index for sorting
+        index=True,  # Index for sorting
     )
 
     # JSON fields that need parsing in to_dict()
@@ -172,9 +179,9 @@ class Scenario(Base):
         return f"<Scenario(id={self.id}, title='{self.title[:30]}...')>"
 
 
-
 class ScenarioEmbedding(Base):
     """ORM model for scenario embeddings."""
+
     __tablename__ = "embeddings"  # Using default name from sqlite usage if possible, usually 'scenario_embeddings' or 'embeddings'
 
     # Primary key should wrap the unique title or just be id

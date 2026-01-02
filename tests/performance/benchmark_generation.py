@@ -159,7 +159,6 @@ class TestGenerationBenchmarks:
 
     def test_retry_logic_performance(self, mock_brain):
         """Test performance of retry logic on failures."""
-        import random
 
         attempts = 0
         max_attempts = 3
@@ -201,7 +200,7 @@ class TestGenerationBenchmarks:
                 "title": f"תרחיש {i}",
                 "category": "פיננסים",
                 "difficulty": "בינוני",
-                "steps": [{"step": 1, "description": "צעד"}]
+                "steps": [{"step": 1, "description": "צעד"}],
             }
             for i in range(50)
         ]
@@ -229,15 +228,15 @@ class TestGenerationBenchmarks:
             "title": "תרחיש בדיקה",
             "category": "פיננסים",
             "difficulty": "בינוני",
-            "steps": [{"step": 1, "description": "צעד"}]
+            "steps": [{"step": 1, "description": "צעד"}],
         }
 
         # Step 2: Validate
-        from tatlam.core.validators import validate_json_schema
         # Validation would happen here
 
         # Step 3: Store
         from tatlam.infra.repo import insert_scenario
+
         scenario_id = insert_scenario(generated_scenario)
 
         elapsed_time = time.time() - start_time

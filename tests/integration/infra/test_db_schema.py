@@ -20,14 +20,16 @@ class TestDatabaseSchema:
     def test_scenarios_table_exists(self, in_memory_db):
         """Verify 'scenarios' table is created."""
         cursor = in_memory_db.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT name FROM sqlite_master
             WHERE type='table' AND name='scenarios'
-        """)
+        """
+        )
         result = cursor.fetchone()
 
         assert result is not None
-        assert result[0] == 'scenarios'
+        assert result[0] == "scenarios"
 
     def test_scenarios_table_schema(self, in_memory_db):
         """Verify 'scenarios' table has correct columns."""
@@ -38,10 +40,12 @@ class TestDatabaseSchema:
         column_names = [col[1] for col in columns]
 
         # Expected columns based on actual schema
-        expected_columns = ['id', 'title', 'category', 'steps']
+        expected_columns = ["id", "title", "category", "steps"]
 
         for expected_col in expected_columns:
-            assert expected_col in column_names, f"Column '{expected_col}' missing from scenarios table"
+            assert (
+                expected_col in column_names
+            ), f"Column '{expected_col}' missing from scenarios table"
 
     def test_scenarios_table_has_primary_key(self, in_memory_db):
         """Verify 'scenarios' table has primary key."""
@@ -53,7 +57,7 @@ class TestDatabaseSchema:
         primary_keys = [col for col in columns if col[5] == 1]
 
         assert len(primary_keys) > 0, "No primary key found in scenarios table"
-        assert primary_keys[0][1] == 'id', "Primary key should be 'id' column"
+        assert primary_keys[0][1] == "id", "Primary key should be 'id' column"
 
     def test_database_supports_hebrew(self, in_memory_db):
         """Test database can store and retrieve Hebrew text."""
@@ -61,7 +65,8 @@ class TestDatabaseSchema:
 
         # Insert Hebrew text
         hebrew_text = "בדיקת עברית מלאה עם ניקוד: שָׁלוֹם"
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO scenarios (
                 title, category, steps, bundle_id, external_id,
                 threat_level, likelihood, complexity, location, background, operational_background,
@@ -71,13 +76,38 @@ class TestDatabaseSchema:
                 owner, approved_by, status, created_at, media_link
             )
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            hebrew_text, "פיגועים פשוטים", "[]", "bundle-1", "ext-1",
-            "low", "low", "low", "loc", "bg", "op_bg",
-            "none", "none", "win", "lose",
-            "[]", "[]", "[]", "[]", "[]", "[]", "[]", "[]",
-            "web", "", "pending", "2025-01-01", ""
-        ))
+        """,
+            (
+                hebrew_text,
+                "פיגועים פשוטים",
+                "[]",
+                "bundle-1",
+                "ext-1",
+                "low",
+                "low",
+                "low",
+                "loc",
+                "bg",
+                "op_bg",
+                "none",
+                "none",
+                "win",
+                "lose",
+                "[]",
+                "[]",
+                "[]",
+                "[]",
+                "[]",
+                "[]",
+                "[]",
+                "[]",
+                "web",
+                "",
+                "pending",
+                "2025-01-01",
+                "",
+            ),
+        )
         in_memory_db.commit()
 
         # Retrieve it back
@@ -95,11 +125,12 @@ class TestDatabaseSchema:
 
         steps_data = [
             {"step": 1, "description": "צעד ראשון"},
-            {"step": 2, "description": "צעד שני"}
+            {"step": 2, "description": "צעד שני"},
         ]
         steps_json = json.dumps(steps_data, ensure_ascii=False)
 
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO scenarios (
                 title, category, steps, bundle_id, external_id,
                 threat_level, likelihood, complexity, location, background, operational_background,
@@ -109,13 +140,38 @@ class TestDatabaseSchema:
                 owner, approved_by, status, created_at, media_link
             )
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            "כותרת בדיקה json", "פיגועים פשוטים", steps_json, "bundle-1", "ext-1",
-            "low", "low", "low", "loc", "bg", "op_bg",
-            "none", "none", "win", "lose",
-            "[]", "[]", "[]", "[]", "[]", "[]", "[]", "[]",
-            "web", "", "pending", "2025-01-01", ""
-        ))
+        """,
+            (
+                "כותרת בדיקה json",
+                "פיגועים פשוטים",
+                steps_json,
+                "bundle-1",
+                "ext-1",
+                "low",
+                "low",
+                "low",
+                "loc",
+                "bg",
+                "op_bg",
+                "none",
+                "none",
+                "win",
+                "lose",
+                "[]",
+                "[]",
+                "[]",
+                "[]",
+                "[]",
+                "[]",
+                "[]",
+                "[]",
+                "web",
+                "",
+                "pending",
+                "2025-01-01",
+                "",
+            ),
+        )
 
         cursor.execute("SELECT steps FROM scenarios WHERE id = last_insert_rowid()")
         result = cursor.fetchone()
@@ -133,7 +189,8 @@ class TestDatabaseSchema:
 
         # Try inserting minimal record
         try:
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO scenarios (
                     title, category, steps, bundle_id, external_id,
                     threat_level, likelihood, complexity, location, background, operational_background,
@@ -143,13 +200,38 @@ class TestDatabaseSchema:
                     owner, approved_by, status, created_at, media_link
                 )
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                "כותרת nullable", "פיגועים פשוטים", "[]", "bundle-1", "ext-1",
-                "low", "low", "low", "loc", "bg", "op_bg",
-                "none", "none", "win", "lose",
-                "[]", "[]", "[]", "[]", "[]", "[]", "[]", "[]",
-                "web", "", "pending", "2025-01-01", ""
-            ))
+            """,
+                (
+                    "כותרת nullable",
+                    "פיגועים פשוטים",
+                    "[]",
+                    "bundle-1",
+                    "ext-1",
+                    "low",
+                    "low",
+                    "low",
+                    "loc",
+                    "bg",
+                    "op_bg",
+                    "none",
+                    "none",
+                    "win",
+                    "lose",
+                    "[]",
+                    "[]",
+                    "[]",
+                    "[]",
+                    "[]",
+                    "[]",
+                    "[]",
+                    "[]",
+                    "web",
+                    "",
+                    "pending",
+                    "2025-01-01",
+                    "",
+                ),
+            )
             in_memory_db.commit()
             success = True
         except sqlite3.IntegrityError:
@@ -163,7 +245,8 @@ class TestDatabaseSchema:
 
         # Insert various Unicode characters
         unicode_test = "עברית + English + 中文 + 🔥 Emoji"
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO scenarios (
                 title, category, steps, bundle_id, external_id,
                 threat_level, likelihood, complexity, location, background, operational_background,
@@ -173,13 +256,38 @@ class TestDatabaseSchema:
                 owner, approved_by, status, created_at, media_link
             )
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            unicode_test, "פיגועים פשוטים", "[]", "bundle-1", "ext-1",
-            "low", "low", "low", "loc", "bg", "op_bg",
-            "none", "none", "win", "lose",
-            "[]", "[]", "[]", "[]", "[]", "[]", "[]", "[]",
-            "web", "", "pending", "2025-01-01", ""
-        ))
+        """,
+            (
+                unicode_test,
+                "פיגועים פשוטים",
+                "[]",
+                "bundle-1",
+                "ext-1",
+                "low",
+                "low",
+                "low",
+                "loc",
+                "bg",
+                "op_bg",
+                "none",
+                "none",
+                "win",
+                "lose",
+                "[]",
+                "[]",
+                "[]",
+                "[]",
+                "[]",
+                "[]",
+                "[]",
+                "[]",
+                "web",
+                "",
+                "pending",
+                "2025-01-01",
+                "",
+            ),
+        )
 
         cursor.execute("SELECT title FROM scenarios WHERE id = last_insert_rowid()")
         result = cursor.fetchone()

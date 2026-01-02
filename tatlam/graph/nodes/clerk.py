@@ -11,23 +11,23 @@ Key Features:
 - Coerces fields to correct types
 - Handles multi-scenario bundles
 """
+
 from __future__ import annotations
 
-import json
 import logging
 from typing import Any
 
 from tenacity import (
+    before_sleep_log,
     retry,
+    retry_if_exception_type,
     stop_after_attempt,
     wait_exponential,
-    retry_if_exception_type,
-    before_sleep_log,
 )
 
-from tatlam.graph.state import SwarmState, ScenarioCandidate, ScenarioStatus, WorkflowPhase
-from tatlam.core.utils import strip_markdown_and_parse_json
 from tatlam.core.bundles import coerce_bundle_shape
+from tatlam.core.utils import strip_markdown_and_parse_json
+from tatlam.graph.state import ScenarioCandidate, ScenarioStatus, SwarmState, WorkflowPhase
 from tatlam.settings import get_settings
 
 logger = logging.getLogger(__name__)
@@ -43,9 +43,9 @@ logger = logging.getLogger(__name__)
 def _refine_to_json(client: Any, model: str, draft_text: str) -> str:
     """Call cloud LLM to convert draft text to JSON."""
     from tatlam.core.doctrine import get_system_prompt
-    
+
     system_prompt = get_system_prompt("clerk")
-    
+
     response = client.chat.completions.create(
         model=model,
         messages=[
@@ -122,7 +122,8 @@ def clerk_node(state: SwarmState) -> SwarmState:
 
     # Find raw drafts to process
     raw_candidates = [
-        c for c in state.candidates
+        c
+        for c in state.candidates
         if c.data.get("_is_raw_draft") and c.status == ScenarioStatus.DRAFT
     ]
 
@@ -133,7 +134,7 @@ def clerk_node(state: SwarmState) -> SwarmState:
     logger.info("Clerk processing %d raw drafts", len(raw_candidates))
 
     # Get cloud client for JSON refinement
-    from tatlam.core.llm_factory import client_cloud, ConfigurationError
+    from tatlam.core.llm_factory import ConfigurationError, client_cloud
 
     cloud_client = None
     try:
@@ -164,7 +165,7 @@ def clerk_node(state: SwarmState) -> SwarmState:
                 refined_text = _refine_to_json(
                     cloud_client,
                     settings.GEN_MODEL,
-                    f"הפוך את הטקסט הבא ל-JSON חוקי עם scenarios: [...]\n\n{draft_text}"
+                    f"הפוך את הטקסט הבא ל-JSON חוקי עם scenarios: [...]\n\n{draft_text}",
                 )
             except Exception as e2:
                 logger.error("Second refinement attempt failed: %s", e2)
@@ -200,15 +201,11 @@ def clerk_node(state: SwarmState) -> SwarmState:
         raw_candidate.status = ScenarioStatus.ARCHIVED
 
     # Remove raw drafts and add formatted candidates
-    state.candidates = [
-        c for c in state.candidates
-        if not c.data.get("_is_raw_draft")
-    ]
+    state.candidates = [c for c in state.candidates if not c.data.get("_is_raw_draft")]
     state.candidates.extend(new_candidates)
 
     logger.info(
-        "Clerk completed: created %d formatted candidates from raw drafts",
-        len(new_candidates)
+        "Clerk completed: created %d formatted candidates from raw drafts", len(new_candidates)
     )
 
     return state

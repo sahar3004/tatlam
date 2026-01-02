@@ -29,15 +29,20 @@ class TestHallucinations:
     def test_no_invented_fields(self, mock_brain):
         """Test that LLM doesn't invent new fields not in schema."""
         expected_fields = {
-            "title", "category", "difficulty", "bundle",
-            "steps", "expected_behavior", "testing_tips"
+            "title",
+            "category",
+            "difficulty",
+            "bundle",
+            "steps",
+            "expected_behavior",
+            "testing_tips",
         }
 
         sample_scenario = {
             "title": "תרחיש",
             "category": "פיננסים",
             "difficulty": "בינוני",
-            "steps": []
+            "steps": [],
         }
 
         # All fields should be in expected set
@@ -57,7 +62,7 @@ class TestHallucinations:
         sample_steps = [
             {"step": 1, "description": "צעד 1"},
             {"step": 2, "description": "צעד 2"},
-            {"step": 3, "description": "צעד 3"}
+            {"step": 3, "description": "צעד 3"},
         ]
 
         step_numbers = [s["step"] for s in sample_steps]
@@ -71,7 +76,7 @@ class TestHallucinations:
         sample_steps = [
             {"step": 1, "description": "צעד 1"},
             {"step": 2, "description": "צעד 2"},
-            {"step": 3, "description": "צעד 3"}
+            {"step": 3, "description": "צעד 3"},
         ]
 
         step_numbers = [s["step"] for s in sample_steps]
@@ -81,9 +86,7 @@ class TestHallucinations:
 
     def test_steps_not_empty(self, mock_brain):
         """Test that scenarios always have at least one step."""
-        sample_steps = [
-            {"step": 1, "description": "צעד ראשון"}
-        ]
+        sample_steps = [{"step": 1, "description": "צעד ראשון"}]
 
         # Should have at least one step
         assert len(sample_steps) >= 1
@@ -94,7 +97,7 @@ class TestHallucinations:
             "title": "בדיקת תשלום",
             "category": "פיננסים",
             "expected_behavior": "התשלום מצליח",
-            "testing_tips": "בדוק שהתשלום מצליח"
+            "testing_tips": "בדוק שהתשלום מצליח",
         }
 
         # expected_behavior and testing_tips should align
@@ -107,9 +110,7 @@ class TestHallucinations:
         financial_scenario = {
             "title": "בדיקת העברת כסף",
             "category": "פיננסים",
-            "steps": [
-                {"step": 1, "description": "פתח את אפליקציית הבנק"}
-            ]
+            "steps": [{"step": 1, "description": "פתח את אפליקציית הבנק"}],
         }
 
         # Category is finance, content should be finance-related
@@ -128,7 +129,7 @@ class TestHallucinations:
                 {"step": 1, "description": "פתח את האפליקציה"},
                 {"step": 2, "description": "הזן שם משתמש"},
                 {"step": 3, "description": "הזן סיסמה"},
-                {"step": 4, "description": "לחץ על כניסה"}
+                {"step": 4, "description": "לחץ על כניסה"},
             ]
         }
 
@@ -157,7 +158,7 @@ class TestHallucinations:
             "steps": [
                 {"step": 1, "description": "פתח את האפליקציה"},
                 {"step": 2, "description": "בחר תפריט באפליקציה"},
-                {"step": 3, "description": "צא מהאפליקציה"}
+                {"step": 3, "description": "צא מהאפליקציה"},
             ]
         }
 

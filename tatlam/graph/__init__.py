@@ -26,9 +26,10 @@ Usage:
     )
     result = graph.invoke(initial_state)
 """
+
 from __future__ import annotations
 
-from tatlam.graph.state import SwarmState, ScenarioCandidate, SwarmMetrics
+from tatlam.graph.state import ScenarioCandidate, SwarmMetrics, SwarmState
 from tatlam.graph.workflow import create_scenario_graph
 
 __all__ = [

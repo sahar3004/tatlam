@@ -10,18 +10,19 @@ Key Features:
 - Applies doctrine knowledge for safety/legality checks
 - Selects top N seeds based on operational value
 """
+
 from __future__ import annotations
 
 import json
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from tenacity import (
+    before_sleep_log,
     retry,
+    retry_if_exception_type,
     stop_after_attempt,
     wait_exponential,
-    retry_if_exception_type,
-    before_sleep_log,
 )
 
 from tatlam.graph.state import SwarmState, WorkflowPhase
@@ -33,9 +34,9 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def _get_cloud_client() -> "OpenAI | None":
+def _get_cloud_client() -> OpenAI | None:
     """Get the cloud LLM client."""
-    from tatlam.core.llm_factory import client_cloud, ConfigurationError
+    from tatlam.core.llm_factory import ConfigurationError, client_cloud
 
     try:
         return client_cloud()
@@ -47,10 +48,10 @@ def _get_cloud_client() -> "OpenAI | None":
 def _get_doctrine_context() -> str:
     """Get key doctrine elements for filtering."""
     from tatlam.core.doctrine import TRINITY_DOCTRINE
-    
+
     doctrine = TRINITY_DOCTRINE
     safety = doctrine.get("procedures", {}).get("suspicious_object", {}).get("safety_distances", {})
-    
+
     return f"""
 קריטריוני סינון מהדוקטרינה:
 - טווח בטיחות מחפץ חשוד: {safety.get('object_urban', '50 מטר')}
@@ -67,7 +68,7 @@ def _get_doctrine_context() -> str:
     before_sleep=before_sleep_log(logger, logging.WARNING),
     reraise=True,
 )
-def _call_curator_llm(client: "OpenAI", model: str, prompt: str, system_prompt: str) -> str:
+def _call_curator_llm(client: OpenAI, model: str, prompt: str, system_prompt: str) -> str:
     """Call cloud LLM for curation."""
     response = client.chat.completions.create(
         model=model,
@@ -83,7 +84,7 @@ def _call_curator_llm(client: "OpenAI", model: str, prompt: str, system_prompt: 
 def _build_curator_prompt(seeds: list[str], select_count: int, category: str) -> str:
     """Build the prompt for seed curation."""
     seeds_text = "\n".join([f"{i+1}. {seed}" for i, seed in enumerate(seeds)])
-    
+
     return f"""
 🎯 משימה: בחר את {select_count} הרעיונות הטובים ביותר מתוך הרשימה
 
@@ -118,14 +119,14 @@ def _parse_curated_seeds(response_text: str, original_seeds: list[str]) -> list[
     try:
         data = json.loads(response_text)
         selected = data.get("selected_seeds", [])
-        
+
         if isinstance(selected, list) and len(selected) > 0:
             # Return the selected seeds
             return [str(s) for s in selected if isinstance(s, str) and len(s) > 5]
-        
+
     except (json.JSONDecodeError, KeyError) as e:
         logger.warning("Failed to parse curator response: %s", e)
-    
+
     # Fallback: return first N original seeds
     return original_seeds[:8]
 
@@ -133,40 +134,39 @@ def _parse_curated_seeds(response_text: str, original_seeds: list[str]) -> list[
 def curator_node(state: SwarmState) -> SwarmState:
     """
     Curator Node: Filter scout seeds using Cloud LLM.
-    
+
     This node:
     1. Takes raw seeds from scout_seeds
     2. Asks Cloud LLM to select the best ones
     3. Updates scout_seeds with only the winners
-    
+
     Args:
         state: Current SwarmState
-        
+
     Returns:
         Updated SwarmState with filtered scout_seeds
     """
     state.log_phase_change(WorkflowPhase.CURATING)
-    
+
     # Check if we have seeds to curate
     if not state.scout_seeds:
         logger.info("Curator skipped: no seeds from Scout")
         return state
-    
+
     logger.info(
-        "Curator starting: filtering %d seeds down to %d",
-        len(state.scout_seeds), state.batch_size
+        "Curator starting: filtering %d seeds down to %d", len(state.scout_seeds), state.batch_size
     )
-    
+
     # Get cloud client
     cloud_client = _get_cloud_client()
-    
+
     if not cloud_client:
         logger.warning("Curator skipped: Cloud LLM not available, using all seeds")
-        state.scout_seeds = state.scout_seeds[:state.batch_size]
+        state.scout_seeds = state.scout_seeds[: state.batch_size]
         return state
-    
+
     settings = get_settings()
-    
+
     # Build prompts
     doctrine_context = _get_doctrine_context()
     system_prompt = f"""אתה אוצר (Curator) במערכת Trinity לאבטחת תחבורה ציבורית.
@@ -176,35 +176,29 @@ def curator_node(state: SwarmState) -> SwarmState:
 
 החזר JSON בלבד."""
 
-    user_prompt = _build_curator_prompt(
-        state.scout_seeds, 
-        state.batch_size, 
-        state.category
-    )
-    
+    user_prompt = _build_curator_prompt(state.scout_seeds, state.batch_size, state.category)
+
     try:
         response_text = _call_curator_llm(
-            cloud_client,
-            settings.CLERK_MODEL_NAME,  # Gemini 3 Flash
-            user_prompt,
-            system_prompt
+            cloud_client, settings.CLERK_MODEL_NAME, user_prompt, system_prompt  # Gemini 3 Flash
         )
-        
+
         # Parse response
         curated_seeds = _parse_curated_seeds(response_text, state.scout_seeds)
-        
+
         logger.info(
             "Curator completed: selected %d seeds from %d",
-            len(curated_seeds), len(state.scout_seeds)
+            len(curated_seeds),
+            len(state.scout_seeds),
         )
-        
+
         state.scout_seeds = curated_seeds
-        
+
     except Exception as e:
         logger.warning("Curator failed: %s, using first %d seeds", e, state.batch_size)
         state.metrics.llm_errors += 1
-        state.scout_seeds = state.scout_seeds[:state.batch_size]
-    
+        state.scout_seeds = state.scout_seeds[: state.batch_size]
+
     return state
 
 

@@ -1,17 +1,20 @@
-import yaml
 import logging
-from pathlib import Path
 from dataclasses import dataclass, field
-from typing import List, Dict, Any, Optional
+from pathlib import Path
+from typing import Any, Dict, List
+
+import yaml
 
 # Configure logging
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class Rule:
     """
     Represents a single knowledge rule or constraint.
     """
+
     id: str
     category: str
     content: str
@@ -26,7 +29,7 @@ class Rule:
         """
         if not self.context:
             return True
-        
+
         for key, required_value in self.context.items():
             if key not in context:
                 return False
@@ -38,17 +41,19 @@ class Rule:
                 return False
         return True
 
+
 class RuleEngine:
     """
     Manages the loading, indexing, and retrieval of rules from the knowledge base.
     """
+
     def __init__(self, knowledge_base_path: str = "tatlam/knowledge/rules"):
         # Resolve path relative to the project root if needed
         self.kb_path = Path(knowledge_base_path)
         if not self.kb_path.is_absolute():
             # Assuming run from project root
             self.kb_path = Path.cwd() / knowledge_base_path
-            
+
         self.rules: List[Rule] = []
         self._load_rules()
 
@@ -67,21 +72,21 @@ class RuleEngine:
                 logger.error(f"Failed to load rules from {yaml_file}: {e}")
 
     def _load_file(self, file_path: Path):
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding="utf-8") as f:
             data = yaml.safe_load(f)
-            
-        if not data or 'rules' not in data:
+
+        if not data or "rules" not in data:
             return
 
         source_name = file_path.stem
-        for item in data['rules']:
+        for item in data["rules"]:
             try:
                 rule = Rule(
-                    id=item['id'],
-                    category=item.get('category', 'general'),
-                    content=item['content'],
-                    context=item.get('context', {}),
-                    source=source_name
+                    id=item["id"],
+                    category=item.get("category", "general"),
+                    content=item["content"],
+                    context=item.get("context", {}),
+                    source=source_name,
                 )
                 self.rules.append(rule)
             except KeyError as e:
@@ -116,7 +121,7 @@ class RuleEngine:
             for content in contents:
                 output.append(f"- {content}")
             output.append("")
-        
+
         return "\n".join(output).strip()
 
     def reload(self):

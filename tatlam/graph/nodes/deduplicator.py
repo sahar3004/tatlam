@@ -10,15 +10,15 @@ Key Features:
 - Marks duplicates for regeneration
 - Logs dedup statistics
 """
+
 from __future__ import annotations
 
 import json
 import logging
-from typing import Any
 
 import numpy as np
 
-from tatlam.graph.state import SwarmState, ScenarioCandidate, ScenarioStatus, WorkflowPhase
+from tatlam.graph.state import ScenarioStatus, SwarmState, WorkflowPhase
 from tatlam.settings import get_settings
 
 logger = logging.getLogger(__name__)
@@ -35,16 +35,13 @@ def _cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
 
 def _embed_text(text: str) -> np.ndarray | None:
     """Embed text using the cloud OpenAI embeddings API."""
-    from tatlam.core.llm_factory import client_cloud, ConfigurationError
+    from tatlam.core.llm_factory import ConfigurationError, client_cloud
 
     settings = get_settings()
 
     try:
         cloud = client_cloud()
-        response = cloud.embeddings.create(
-            model=settings.EMBED_MODEL,
-            input=text
-        )
+        response = cloud.embeddings.create(model=settings.EMBED_MODEL, input=text)
         return np.array(response.data[0].embedding, dtype=np.float32)
     except (ConfigurationError, Exception) as e:
         logger.warning("Failed to embed text: %s", e)
@@ -53,9 +50,10 @@ def _embed_text(text: str) -> np.ndarray | None:
 
 def _load_existing_embeddings() -> tuple[list[str], list[np.ndarray]]:
     """Load all existing embeddings from the database."""
+    from sqlalchemy import select
+
     from tatlam.infra.db import get_session
     from tatlam.infra.models import ScenarioEmbedding
-    from sqlalchemy import select
 
     titles: list[str] = []
     vectors: list[np.ndarray] = []
@@ -145,10 +143,7 @@ def deduplicator_node(state: SwarmState) -> SwarmState:
     state.log_phase_change(WorkflowPhase.DEDUPLICATING)
 
     # Find formatted candidates to check
-    candidates_to_check = [
-        c for c in state.candidates
-        if c.status == ScenarioStatus.FORMATTED
-    ]
+    candidates_to_check = [c for c in state.candidates if c.status == ScenarioStatus.FORMATTED]
 
     if not candidates_to_check:
         logger.info("Deduplicator: No formatted candidates to check")
@@ -195,10 +190,7 @@ def deduplicator_node(state: SwarmState) -> SwarmState:
                 # Store embedding in candidate data for Archivist
                 candidate.data["_embedding"] = vec.tolist()
 
-    logger.info(
-        "Deduplicator completed: %d unique, %d duplicates",
-        unique_found, duplicates_found
-    )
+    logger.info("Deduplicator completed: %d unique, %d duplicates", unique_found, duplicates_found)
 
     return state
 

@@ -10,11 +10,13 @@ Usage:
     with get_session() as session:
         scenarios = session.scalars(select(Scenario)).all()
 """
+
 from __future__ import annotations
 
+from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Generator
+from typing import TYPE_CHECKING
 
 from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
@@ -24,6 +26,7 @@ from tatlam.settings import get_settings
 
 if TYPE_CHECKING:
     import sqlite3
+
     from sqlalchemy.pool import ConnectionPoolEntry
 
 # Module-level engine and session factory (lazy initialization)
@@ -51,7 +54,7 @@ def get_db_url() -> str:
 
 def _set_wal_mode(
     dbapi_connection: sqlite3.Connection,
-    connection_record: "ConnectionPoolEntry",
+    connection_record: ConnectionPoolEntry,
 ) -> None:
     """Enable WAL mode and optimized synchronous settings on connect.
 

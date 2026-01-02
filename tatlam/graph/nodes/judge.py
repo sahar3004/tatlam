@@ -11,6 +11,7 @@ Key Features:
 - Returns structured critique for repair cycles
 - Uses system_prompt for consistent evaluation
 """
+
 from __future__ import annotations
 
 import json
@@ -18,16 +19,16 @@ import logging
 from typing import Any
 
 from tenacity import (
+    before_sleep_log,
     retry,
+    retry_if_exception_type,
     stop_after_attempt,
     wait_exponential,
-    retry_if_exception_type,
-    before_sleep_log,
 )
 
-from tatlam.graph.state import SwarmState, ScenarioStatus, WorkflowPhase
 from tatlam.core.doctrine import TRINITY_DOCTRINE, get_system_prompt
 from tatlam.core.validators import validate_scenario_doctrine
+from tatlam.graph.state import ScenarioStatus, SwarmState, WorkflowPhase
 from tatlam.settings import get_settings
 
 logger = logging.getLogger(__name__)
@@ -87,7 +88,7 @@ def _score_with_llm(scenario: dict[str, Any], rubric: str) -> tuple[float, str]:
     Returns:
         (score, critique)
     """
-    from tatlam.core.llm_factory import create_writer_client, ConfigurationError
+    from tatlam.core.llm_factory import ConfigurationError, create_writer_client
 
     settings = get_settings()
 
@@ -102,16 +103,21 @@ def _score_with_llm(scenario: dict[str, Any], rubric: str) -> tuple[float, str]:
     # Infer context for Rule Engine
     category_str = str(scenario.get("category", ""))
     location_str = str(scenario.get("location", ""))
-    
+
     venue = "allenby"
-    if "jaffa" in location_str.lower() or "surface" in location_str.lower() or "יפו" in location_str or "עילי" in location_str:
+    if (
+        "jaffa" in location_str.lower()
+        or "surface" in location_str.lower()
+        or "יפו" in location_str
+        or "עילי" in location_str
+    ):
         venue = "jaffa"
-    
+
     rule_context = {
         "category": "suspicious_object" if "חפץ חשוד" in category_str else "general",
         "venue": venue,
         "location_type": "surface" if venue == "jaffa" else "underground",
-        "risk_level": "high"
+        "risk_level": "high",
     }
 
     # Get Judge system prompt with active rules
@@ -176,13 +182,13 @@ def _score_with_llm(scenario: dict[str, Any], rubric: str) -> tuple[float, str]:
         repair_instructions = result.get("repair_instructions", [])
 
         if audit_log:
-             critique = f"🔍 לוג בדיקה:\n{audit_log}\n\n📝 סיכום:\n{critique}"
+            critique = f"🔍 לוג בדיקה:\n{audit_log}\n\n📝 סיכום:\n{critique}"
 
         if strengths:
             critique += f"\n\n✅ חוזקות: {', '.join(strengths)}"
         if weaknesses:
             critique += f"\n\n❌ חולשות: {', '.join(weaknesses)}"
-        
+
         # Add actionable repair instructions for the Writer
         if repair_instructions:
             repair_text = "\n\n🔧 הוראות תיקון לכותב:\n"
@@ -219,10 +225,7 @@ def judge_node(state: SwarmState) -> SwarmState:
     state.log_phase_change(WorkflowPhase.JUDGING)
 
     # Find unique candidates to judge
-    candidates_to_judge = [
-        c for c in state.candidates
-        if c.status == ScenarioStatus.UNIQUE
-    ]
+    candidates_to_judge = [c for c in state.candidates if c.status == ScenarioStatus.UNIQUE]
 
     if not candidates_to_judge:
         logger.info("Judge: No unique candidates to evaluate")
@@ -243,10 +246,7 @@ def judge_node(state: SwarmState) -> SwarmState:
         # If doctrine validation fails critically, reject immediately
         if not doctrine_result.is_valid:
             candidate.status = ScenarioStatus.REJECTED
-            candidate.add_feedback(
-                f"כשל דוקטרינה: {', '.join(doctrine_result.errors)}",
-                0.0
-            )
+            candidate.add_feedback(f"כשל דוקטרינה: {', '.join(doctrine_result.errors)}", 0.0)
             state.metrics.total_rejected += 1
             logger.debug("Rejected by doctrine: %s", candidate.title)
             continue
@@ -258,7 +258,9 @@ def judge_node(state: SwarmState) -> SwarmState:
             logger.warning("LLM scoring failed: %s, using doctrine score", e)
             state.metrics.llm_errors += 1
             llm_score = doctrine_score
-            llm_critique = f"שימוש בציון דוקטרינה בלבד. אזהרות: {', '.join(doctrine_result.warnings)}"
+            llm_critique = (
+                f"שימוש בציון דוקטרינה בלבד. אזהרות: {', '.join(doctrine_result.warnings)}"
+            )
 
         # Combine scores (weighted average)
         # Doctrine: 40%, LLM: 60%
@@ -281,7 +283,12 @@ def judge_node(state: SwarmState) -> SwarmState:
         else:
             candidate.status = ScenarioStatus.REJECTED
             state.metrics.total_rejected += 1
-            logger.debug("Rejected: %s (score=%.1f < %.1f)", candidate.title, final_score, state.score_threshold)
+            logger.debug(
+                "Rejected: %s (score=%.1f < %.1f)",
+                candidate.title,
+                final_score,
+                state.score_threshold,
+            )
 
     # Update score statistics
     if scores:
@@ -291,7 +298,7 @@ def judge_node(state: SwarmState) -> SwarmState:
         "Judge completed: %d approved, %d rejected (avg_score=%.1f)",
         state.metrics.total_approved,
         state.metrics.total_rejected,
-        state.metrics.average_score
+        state.metrics.average_score,
     )
 
     return state

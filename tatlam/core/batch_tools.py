@@ -3,33 +3,31 @@
 This module contains reusable logic for batch operations, enabling the decomposition
 of the monolithic run_batch.py script. It serves as a bridge for legacy dependencies.
 """
+
 from __future__ import annotations
 
 import json
 import logging
 import os
-import re
-import asyncio
-from typing import Any
 
 import numpy as np
+from openai import BadRequestError
 from sqlalchemy import select
 from tenacity import (
+    before_sleep_log,
     retry,
+    retry_if_exception_type,
     stop_after_attempt,
     wait_exponential,
-    retry_if_exception_type,
-    before_sleep_log,
 )
-from openai import BadRequestError
 
-from tatlam.settings import get_settings
 from tatlam.core.llm_factory import client_cloud
 from tatlam.core.utils import strip_markdown_and_parse_json
+from tatlam.core.validators import build_validator_prompt
 from tatlam.infra.db import get_session, init_db_sqlalchemy
 from tatlam.infra.models import ScenarioEmbedding
-from tatlam.core.validators import build_validator_prompt
 from tatlam.infra.repo import insert_scenario, save_embedding
+from tatlam.settings import get_settings
 
 LOGGER = logging.getLogger(__name__)
 
@@ -40,9 +38,11 @@ VALIDATOR_MODEL = _settings.VALIDATOR_MODEL
 SIM_THRESHOLD = _settings.SIM_THRESHOLD
 CHECKER_MODEL = os.getenv("CHECKER_MODEL", "")
 
+
 def ensure_db() -> None:
     """Ensure the database schema exists."""
     init_db_sqlalchemy()
+
 
 @retry(
     stop=stop_after_attempt(5),
@@ -66,6 +66,7 @@ def chat_create_safe(client, **kwargs):
             return client.chat.completions.create(**payload)
         raise
 
+
 def embed_text(text: str) -> np.ndarray | None:
     try:
         cloud = client_cloud()
@@ -75,8 +76,10 @@ def embed_text(text: str) -> np.ndarray | None:
         LOGGER.warning("embed_text failed: %s", e)
         return None
 
+
 def cosine(a, b):
     return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-8))
+
 
 def load_all_embeddings():
     """Load all embeddings from DB used for duplicate detection."""
@@ -97,8 +100,9 @@ def load_all_embeddings():
     except Exception as exc:
         LOGGER.warning("Failed to load embeddings: %s", exc)
         return [], []
-        
+
     return titles, vecs
+
 
 def is_duplicate_title(title: str, titles, vecs, threshold: float | None = None):
     """
@@ -112,10 +116,11 @@ def is_duplicate_title(title: str, titles, vecs, threshold: float | None = None)
         return False, v
     if threshold is None:
         threshold = SIM_THRESHOLD
-    
+
     sims = [cosine(v, w) for w in valid_vecs]
     best = max(sims) if sims else -1.0
     return (best >= threshold), v
+
 
 def minimal_title_fix(old_title: str) -> str:
     """
@@ -146,6 +151,7 @@ def minimal_title_fix(old_title: str) -> str:
     LOGGER.debug("minimal_title_fix failed to parse JSON response, using old_title")
     return old_title
 
+
 def dedup_and_embed_titles(bundle: dict):
     mem_titles, mem_vecs = load_all_embeddings()
     for sc in bundle.get("scenarios", []):
@@ -167,6 +173,7 @@ def dedup_and_embed_titles(bundle: dict):
         else:
             mem_vecs.append(None)
     return bundle
+
 
 def check_and_repair(bundle: dict) -> dict:
     """
@@ -194,6 +201,7 @@ def check_and_repair(bundle: dict) -> dict:
         return fixed
     LOGGER.warning("Validator returned non-JSON; using original bundle")
     return bundle
+
 
 def insert_bundle_to_db(bundle: dict, owner: str = "web", approved_by: str = "") -> dict:
     """Insert all scenarios from a bundle into the database (Refactored)."""

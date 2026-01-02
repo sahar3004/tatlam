@@ -9,12 +9,13 @@ The Supervisor orchestrates the entire workflow:
 
 This is the "brain" that drives the graph's conditional edges.
 """
+
 from __future__ import annotations
 
 import logging
 from typing import Literal
 
-from tatlam.graph.state import SwarmState, ScenarioStatus, WorkflowPhase
+from tatlam.graph.state import ScenarioStatus, SwarmState, WorkflowPhase
 
 logger = logging.getLogger(__name__)
 
@@ -43,15 +44,18 @@ def supervisor_node(state: SwarmState) -> SwarmState:
 
     logger.info(
         "Supervisor: iteration=%d, approved=%d/%d, rejected=%d, pending=%d",
-        state.iteration, approved_count, state.target_count,
-        rejected_count, pending_count
+        state.iteration,
+        approved_count,
+        state.target_count,
+        rejected_count,
+        pending_count,
     )
 
     # Check for scenarios that can be repaired (rejected but not exhausted retries)
     repairable = [
-        c for c in state.candidates
-        if c.status == ScenarioStatus.REJECTED
-        and c.attempt_count <= state.max_retries_per_scenario
+        c
+        for c in state.candidates
+        if c.status == ScenarioStatus.REJECTED and c.attempt_count <= state.max_retries_per_scenario
     ]
 
     if repairable:
@@ -88,14 +92,17 @@ def should_continue(state: SwarmState) -> Literal["writer", "archivist", "end"]:
 
     # Success: we have enough
     if approved_count >= state.target_count:
-        logger.info("Target reached (%d/%d). Routing to archivist.", approved_count, state.target_count)
+        logger.info(
+            "Target reached (%d/%d). Routing to archivist.", approved_count, state.target_count
+        )
         return "archivist"
 
     # Safety: max iterations reached
     if state.iteration >= state.max_iterations:
         logger.warning(
             "Max iterations reached (%d). Routing to archivist with %d scenarios.",
-            state.max_iterations, approved_count
+            state.max_iterations,
+            approved_count,
         )
         if approved_count > 0:
             return "archivist"
@@ -106,9 +113,9 @@ def should_continue(state: SwarmState) -> Literal["writer", "archivist", "end"]:
 
     # Check for repairable scenarios
     repairable = [
-        c for c in state.candidates
-        if c.status == ScenarioStatus.REJECTED
-        and c.attempt_count <= state.max_retries_per_scenario
+        c
+        for c in state.candidates
+        if c.status == ScenarioStatus.REJECTED and c.attempt_count <= state.max_retries_per_scenario
     ]
 
     # If we have repairable scenarios, go to writer with repair mode
@@ -118,7 +125,9 @@ def should_continue(state: SwarmState) -> Literal["writer", "archivist", "end"]:
 
     # Need more scenarios
     if state.needs_more:
-        logger.info("Need more scenarios (%d/%d). Routing to writer.", approved_count, state.target_count)
+        logger.info(
+            "Need more scenarios (%d/%d). Routing to writer.", approved_count, state.target_count
+        )
         return "writer"
 
     # Fallback: should not happen

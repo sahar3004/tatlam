@@ -25,6 +25,7 @@ Usage:
 Legacy Usage (backward compatible):
     from tatlam.core.prompts import load_system_prompt, memory_addendum
 """
+
 from __future__ import annotations
 
 import logging
@@ -38,11 +39,13 @@ logger = logging.getLogger(__name__)
 
 class PromptValidationError(Exception):
     """Raised when prompt validation fails."""
+
     pass
 
 
 class PromptInjectionDetectedError(Exception):
     """Raised when potential prompt injection is detected in user input."""
+
     pass
 
 
@@ -166,7 +169,9 @@ class PromptManager:
         """Get the batch processing system prompt (from file)."""
         return self._batch_prompt
 
-    def get_trinity_prompt(self, role: str, venue: str = "allenby", context: dict[str, Any] | None = None) -> str:
+    def get_trinity_prompt(
+        self, role: str, venue: str = "allenby", context: dict[str, Any] | None = None
+    ) -> str:
         """
         Get the Trinity system prompt for a specific role.
 
@@ -236,20 +241,24 @@ class PromptManager:
 
         # Get valid categories from the doctrine
         from tatlam.core.categories import CATS
-        valid_categories = ", ".join([meta.get("title", "") for meta in CATS.values() if meta.get("title") != "לא מסווג"][:8])
+
+        valid_categories = ", ".join(
+            [meta.get("title", "") for meta in CATS.values() if meta.get("title") != "לא מסווג"][:8]
+        )
 
         # Determine venue from category
         # Determine venue from category/input
         venue = "allenby"
         if safe_category:
             from tatlam.core.categories import category_to_slug
+
             slug = category_to_slug(safe_category)
             if slug == "tachanot-iliyot":
                 venue = "jaffa"
 
         if "עילי" in safe_input or "יפו" in safe_input:
             venue = "jaffa"
-            
+
         if venue == "jaffa":
             logger.info("Detected Surface Station context (Jaffa Line) from input/category")
 
@@ -261,7 +270,7 @@ class PromptManager:
         # Adjust Prompt based on Venue
         # If Jaffa, we remove the strict distance constraint for "Touch" as it's harder to enforce
         # But we KEEP strict safety.
-        
+
         # Inject dynamic rules based on venue
         if venue == "jaffa":
             safety_rules = """🚨 כללי ברזל לתחנה עילית (Jaffa Line):
@@ -396,7 +405,9 @@ class PromptManager:
         """
         valid_types = ("civilian", "suspect", "terrorist")
         if character_type not in valid_types:
-            raise ValueError(f"Invalid character_type: {character_type}. Must be one of: {valid_types}")
+            raise ValueError(
+                f"Invalid character_type: {character_type}. Must be one of: {valid_types}"
+            )
 
         base_prompt = self.get_trinity_prompt("simulator", venue=venue)
 

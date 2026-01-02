@@ -18,6 +18,7 @@ Design Principles:
     - Infrastructure implementations (repo.py, db.py) implement these interfaces
     - Dependency injection allows swapping implementations for testing
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -72,9 +73,7 @@ class RepositoryInterface(Protocol):
         """
         ...
 
-    def fetch_count(
-        self, where_sql: str = "", params: tuple[Any, ...] = ()
-    ) -> int:
+    def fetch_count(self, where_sql: str = "", params: tuple[Any, ...] = ()) -> int:
         """Count scenarios matching optional filter criteria.
 
         Parameters
@@ -164,9 +163,7 @@ class AbstractRepository(ABC):
         pass
 
     @abstractmethod
-    def fetch_count(
-        self, where_sql: str = "", params: tuple[Any, ...] = ()
-    ) -> int:
+    def fetch_count(self, where_sql: str = "", params: tuple[Any, ...] = ()) -> int:
         """Count scenarios matching optional filter criteria."""
         pass
 

@@ -3,13 +3,14 @@
 This module provides the command-line interface for the batch processing system.
 Extracted from run_batch.py as part of Phase 2 architecture refactoring.
 """
+
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 
 from tatlam import configure_logging
-import os
 
 
 def main() -> None:
@@ -53,33 +54,29 @@ Environment Variables:
 
     # Import here to avoid circular dependencies and keep startup fast
     # Import new workflow logic
-    from tatlam.graph.workflow import run_scenario_generation, run_scenario_generation_async
     import asyncio
+
+    from tatlam.graph.workflow import run_scenario_generation, run_scenario_generation_async
 
     # Execute batch processing
     try:
         # Default parameters for legacy batch command
         count = int(os.getenv("CANDIDATE_COUNT", "8"))
-        
+
         if args.use_async:
-            result_obj = asyncio.run(run_scenario_generation_async(
-                category=args.category,
-                target_count=count
-            ))
-        else:
-            result_obj = run_scenario_generation(
-                category=args.category,
-                target_count=count
+            result_obj = asyncio.run(
+                run_scenario_generation_async(category=args.category, target_count=count)
             )
-            
-        # Convert internal result object to dict-like logic if needed, 
+        else:
+            result_obj = run_scenario_generation(category=args.category, target_count=count)
+
+        # Convert internal result object to dict-like logic if needed,
         # or just use attributes. The legacy code expects a dict with 'bundle_id'.
         # But run_scenario_generation returns a dataclass/pydantic object.
         bundle_id = result_obj.bundle_id
         scenario_count = len(result_obj.approved_scenarios)
 
         # Success
-
 
         print(f"\n✅ Batch complete: {bundle_id}")
         print(f"   Generated {scenario_count} scenarios")

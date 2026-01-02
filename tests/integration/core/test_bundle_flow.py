@@ -23,22 +23,22 @@ class TestBundleFlow:
                 "category": "פיגועים פשוטים",
                 "difficulty": "קל",
                 "bundle_id": "חבילת פיגועים",
-                "steps": [{"step": 1, "description": "צעד"}]
+                "steps": [{"step": 1, "description": "צעד"}],
             },
             {
                 "title": "תרחיש פיגוע 2",
                 "category": "פיגועים פשוטים",
                 "difficulty": "בינוני",
                 "bundle_id": "חבילת פיגועים",
-                "steps": [{"step": 1, "description": "צעד"}]
+                "steps": [{"step": 1, "description": "צעד"}],
             },
             {
                 "title": "תרחיש חפץ חשוד",
                 "category": "חפץ חשוד ומטען",
                 "difficulty": "קשה",
                 "bundle_id": "חבילת חפצים",
-                "steps": [{"step": 1, "description": "צעד"}]
-            }
+                "steps": [{"step": 1, "description": "צעד"}],
+            },
         ]
 
         for scenario in scenarios:
@@ -72,7 +72,7 @@ class TestBundleFlow:
                 "category": "פיגועים פשוטים",
                 "threat_level": threat_level,
                 "bundle_id": bundle_name,
-                "steps": [{"step": 1, "description": "צעד"}]
+                "steps": [{"step": 1, "description": "צעד"}],
             }
             insert_scenario(scenario)
 
@@ -94,7 +94,7 @@ class TestBundleFlow:
             "title": "תרחיש ללא חבילה",
             "category": "פיגועים פשוטים",
             "difficulty": "בינוני",
-            "steps": [{"step": 1, "description": "צעד"}]
+            "steps": [{"step": 1, "description": "צעד"}],
             # No 'bundle_id' field
         }
 
@@ -119,7 +119,7 @@ class TestBundleFlow:
                 "category": "בני ערובה",
                 "threat_level": "בינוני",
                 "bundle_id": bundle_name,
-                "steps": [{"step": 1, "description": f"צעד {i+1}"}]
+                "steps": [{"step": 1, "description": f"צעד {i+1}"}],
             }
             insert_scenario(scenario)
 
@@ -143,23 +143,27 @@ class TestBundleFlow:
 
         # Insert scenarios in bundle 1
         for i in range(2):
-            insert_scenario({
-                "title": f"תרחיש B1-{i}",
-                "category": "פיגועים פשוטים",
-                "difficulty": "קל",
-                "bundle_id": bundle1_name,
-                "steps": [{"step": 1, "description": "צעד"}]
-            })
+            insert_scenario(
+                {
+                    "title": f"תרחיש B1-{i}",
+                    "category": "פיגועים פשוטים",
+                    "difficulty": "קל",
+                    "bundle_id": bundle1_name,
+                    "steps": [{"step": 1, "description": "צעד"}],
+                }
+            )
 
         # Insert scenarios in bundle 2
         for i in range(3):
-            insert_scenario({
-                "title": f"תרחיש B2-{i}",
-                "category": "חפץ חשוד ומטען",
-                "difficulty": "בינוני",
-                "bundle_id": bundle2_name,
-                "steps": [{"step": 1, "description": "צעד"}]
-            })
+            insert_scenario(
+                {
+                    "title": f"תרחיש B2-{i}",
+                    "category": "חפץ חשוד ומטען",
+                    "difficulty": "בינוני",
+                    "bundle_id": bundle2_name,
+                    "steps": [{"step": 1, "description": "צעד"}],
+                }
+            )
 
         all_scenarios = fetch_all()
 

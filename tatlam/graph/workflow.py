@@ -20,20 +20,21 @@ Key Features:
 - Quality loop with repair cycles
 - Early termination on success
 """
+
 from __future__ import annotations
 
 import logging
 from typing import Any
 
-from tatlam.graph.state import SwarmState, WorkflowPhase
-from tatlam.graph.nodes.scout import scout_node
-from tatlam.graph.nodes.curator import curator_node
-from tatlam.graph.nodes.writer import writer_node
+from tatlam.graph.nodes.archivist import archivist_node
 from tatlam.graph.nodes.clerk import clerk_node
+from tatlam.graph.nodes.curator import curator_node
 from tatlam.graph.nodes.deduplicator import deduplicator_node
 from tatlam.graph.nodes.judge import judge_node
-from tatlam.graph.nodes.supervisor import supervisor_node, should_continue, init_supervisor
-from tatlam.graph.nodes.archivist import archivist_node
+from tatlam.graph.nodes.scout import scout_node
+from tatlam.graph.nodes.supervisor import init_supervisor, should_continue, supervisor_node
+from tatlam.graph.nodes.writer import writer_node
+from tatlam.graph.state import SwarmState, WorkflowPhase
 
 logger = logging.getLogger(__name__)
 
@@ -58,12 +59,11 @@ def create_scenario_graph() -> Any:
         ImportError: If langgraph is not installed
     """
     try:
-        from langgraph.graph import StateGraph, END
+        from langgraph.graph import END, StateGraph
     except ImportError:
         logger.error("langgraph not installed. Install with: pip install langgraph")
         raise ImportError(
-            "langgraph is required for the graph workflow. "
-            "Install with: pip install langgraph"
+            "langgraph is required for the graph workflow. " "Install with: pip install langgraph"
         )
 
     # Create the graph
@@ -101,10 +101,10 @@ def create_scenario_graph() -> Any:
         "supervisor",
         should_continue,
         {
-            "writer": "writer",      # Need more / repair (skip scout for repairs)
+            "writer": "writer",  # Need more / repair (skip scout for repairs)
             "archivist": "archivist",  # Done, save to DB
-            "end": END,              # Error or complete
-        }
+            "end": END,  # Error or complete
+        },
     )
 
     # Archivist → END

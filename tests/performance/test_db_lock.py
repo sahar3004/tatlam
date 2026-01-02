@@ -21,12 +21,14 @@ class TestDatabaseLocking:
 
         # Insert test data
         for i in range(10):
-            insert_scenario({
-                "title": f"תרחיש {i}",
-                "category": "פיגועים פשוטים",
-                "difficulty": "בינוני",
-                "steps": [{"step": 1, "description": "צעד"}]
-            })
+            insert_scenario(
+                {
+                    "title": f"תרחיש {i}",
+                    "category": "פיגועים פשוטים",
+                    "difficulty": "בינוני",
+                    "steps": [{"step": 1, "description": "צעד"}],
+                }
+            )
 
         # Perform concurrent reads
         results = []
@@ -61,12 +63,14 @@ class TestDatabaseLocking:
 
         def insert_scenario_thread(i):
             try:
-                scenario_id = insert_scenario({
-                    "title": f"תרחיש {i}",
-                    "category": "פיגועים פשוטים",
-                    "difficulty": "בינוני",
-                    "steps": [{"step": 1, "description": "צעד"}]
-                })
+                scenario_id = insert_scenario(
+                    {
+                        "title": f"תרחיש {i}",
+                        "category": "פיגועים פשוטים",
+                        "difficulty": "בינוני",
+                        "steps": [{"step": 1, "description": "צעד"}],
+                    }
+                )
                 inserted_ids.append(scenario_id)
             except Exception as e:
                 errors.append(str(e))
@@ -89,24 +93,28 @@ class TestDatabaseLocking:
         from tatlam.infra.repo import insert_scenario, fetch_all
 
         # Insert initial data
-        insert_scenario({
-            "title": "תרחיש ראשוני",
-            "category": "פיגועים פשוטים",
-            "difficulty": "בינוני",
-            "steps": [{"step": 1, "description": "צעד"}]
-        })
+        insert_scenario(
+            {
+                "title": "תרחיש ראשוני",
+                "category": "פיגועים פשוטים",
+                "difficulty": "בינוני",
+                "steps": [{"step": 1, "description": "צעד"}],
+            }
+        )
 
         read_results = []
         write_complete = threading.Event()
 
         def slow_write():
             for i in range(5):
-                insert_scenario({
-                    "title": f"תרחיש {i}",
-                    "category": "פיגועים פשוטים",
-                    "difficulty": "בינוני",
-                    "steps": [{"step": 1, "description": "צעד"}]
-                })
+                insert_scenario(
+                    {
+                        "title": f"תרחיש {i}",
+                        "category": "פיגועים פשוטים",
+                        "difficulty": "בינוני",
+                        "steps": [{"step": 1, "description": "צעד"}],
+                    }
+                )
                 time.sleep(0.01)
             write_complete.set()
 
@@ -136,24 +144,28 @@ class TestDatabaseLocking:
         from tatlam.infra.repo import insert_scenario, fetch_all
 
         # Perform operation
-        insert_scenario({
-            "title": "תרחיש",
-            "category": "פיגועים פשוטים",
-            "difficulty": "בינוני",
-            "steps": [{"step": 1, "description": "צעד"}]
-        })
+        insert_scenario(
+            {
+                "title": "תרחיש",
+                "category": "פיגועים פשוטים",
+                "difficulty": "בינוני",
+                "steps": [{"step": 1, "description": "צעד"}],
+            }
+        )
 
         # Should be able to immediately perform another operation
         scenarios = fetch_all()
         assert scenarios is not None
 
         # And another
-        insert_scenario({
-            "title": "תרחיש נוסף",
-            "category": "פיגועים פשוטים",
-            "difficulty": "בינוני",
-            "steps": [{"step": 1, "description": "צעד"}]
-        })
+        insert_scenario(
+            {
+                "title": "תרחיש נוסף",
+                "category": "פיגועים פשוטים",
+                "difficulty": "בינוני",
+                "steps": [{"step": 1, "description": "צעד"}],
+            }
+        )
 
     def test_transaction_rollback_on_error(self, in_memory_db):
         """Test that transactions rollback on error."""
@@ -161,10 +173,13 @@ class TestDatabaseLocking:
 
         try:
             cursor.execute("BEGIN TRANSACTION")
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO scenarios (title, category, difficulty, steps)
                 VALUES (?, ?, ?, ?)
-            """, ("תרחיש", "פיננסים", "בינוני", "[]"))
+            """,
+                ("תרחיש", "פיננסים", "בינוני", "[]"),
+            )
 
             # Force an error
             cursor.execute("INSERT INTO nonexistent_table VALUES (1)")
@@ -202,12 +217,14 @@ class TestDatabaseLocking:
 
         # Insert 100 scenarios
         for i in range(100):
-            insert_scenario({
-                "title": f"תרחיש {i}",
-                "category": "פיגועים פשוטים",
-                "difficulty": "בינוני",
-                "steps": [{"step": 1, "description": "צעד"}]
-            })
+            insert_scenario(
+                {
+                    "title": f"תרחיש {i}",
+                    "category": "פיגועים פשוטים",
+                    "difficulty": "בינוני",
+                    "steps": [{"step": 1, "description": "צעד"}],
+                }
+            )
 
         elapsed_time = time.time() - start_time
 
@@ -221,12 +238,14 @@ class TestDatabaseLocking:
 
         # Insert many scenarios
         for i in range(100):
-            insert_scenario({
-                "title": f"תרחיש {i}",
-                "category": "פיגועים פשוטים",
-                "difficulty": "בינוני",
-                "steps": [{"step": 1, "description": "צעד"}]
-            })
+            insert_scenario(
+                {
+                    "title": f"תרחיש {i}",
+                    "category": "פיגועים פשוטים",
+                    "difficulty": "בינוני",
+                    "steps": [{"step": 1, "description": "צעד"}],
+                }
+            )
 
         # Time fetch_all
         start_time = time.time()

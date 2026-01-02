@@ -49,6 +49,7 @@ def normalize(row: dict[str, Any]) -> dict[str, Any]:
     Note: This is now largely a no-op since Scenario.to_dict() already
     parses JSON fields. Kept for backward compatibility.
     """
+
     def load(x: Any) -> Any:
         if isinstance(x, (list, dict)):
             return x

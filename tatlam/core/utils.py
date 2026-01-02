@@ -4,6 +4,7 @@ from typing import Any
 
 LOGGER = logging.getLogger(__name__)
 
+
 def strip_markdown_and_parse_json(text: str) -> dict[str, Any] | list[Any] | None:
     """
     Secure JSON parser that strips markdown code blocks before parsing.
@@ -27,7 +28,7 @@ def strip_markdown_and_parse_json(text: str) -> dict[str, Any] | list[Any] | Non
         # Find the end of the first line (language specifier)
         first_line_end = cleaned.find("\n")
         if first_line_end != -1:
-            cleaned = cleaned[first_line_end + 1:]
+            cleaned = cleaned[first_line_end + 1 :]
 
     # Remove closing markdown fence
     if cleaned.endswith("```"):

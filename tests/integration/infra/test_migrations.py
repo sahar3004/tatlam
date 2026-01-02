@@ -29,7 +29,7 @@ class TestDatabaseMigrations:
         tables = [row[0] for row in cursor.fetchall()]
 
         # For now, just verify scenarios table exists
-        assert 'scenarios' in tables
+        assert "scenarios" in tables
 
     def test_backward_compatibility(self, in_memory_db):
         """Placeholder for backward compatibility test."""

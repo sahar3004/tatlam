@@ -34,10 +34,10 @@ class TestRepositoryCRUD:
             "bundle_id": "חבילת בדיקה",
             "steps": [
                 {"step": 1, "description": "פתח את היישום"},
-                {"step": 2, "description": "בחר באפשרות תשלום"}
+                {"step": 2, "description": "בחר באפשרות תשלום"},
             ],
             "expected_behavior": "המשתמש יוכל להשלים תשלום",
-            "testing_tips": "בדוק טיפול בשגיאות"
+            "testing_tips": "בדוק טיפול בשגיאות",
         }
 
         scenario_id = insert_scenario(hebrew_scenario)
@@ -110,7 +110,7 @@ class TestRepositoryCRUD:
             "title": hebrew_title,
             "category": "חפץ חשוד ומטען",  # Valid CATS category
             "difficulty": "בינוני",
-            "steps": [{"step": 1, "description": "צעד בעברית"}]
+            "steps": [{"step": 1, "description": "צעד בעברית"}],
         }
 
         insert_scenario(scenario)
@@ -124,7 +124,7 @@ class TestRepositoryCRUD:
                 assert s["category"] == "חפץ חשוד ומטען"
                 break
 
-        assert found, f"Scenario with Hebrew title not found in fetch_all results"
+        assert found, "Scenario with Hebrew title not found in fetch_all results"
 
     def test_insert_scenario_with_all_fields(self, in_memory_db):
         """Test inserting scenario with all optional fields."""
@@ -138,10 +138,10 @@ class TestRepositoryCRUD:
             "steps": [
                 {"step": 1, "description": "צעד 1"},
                 {"step": 2, "description": "צעד 2"},
-                {"step": 3, "description": "צעד 3"}
+                {"step": 3, "description": "צעד 3"},
             ],
             "expected_behavior": "התנהגות צפויה",
-            "testing_tips": "טיפים לבדיקה"
+            "testing_tips": "טיפים לבדיקה",
         }
 
         scenario_id = insert_scenario(complete_scenario)
@@ -159,7 +159,7 @@ class TestRepositoryCRUD:
                 "title": f"תרחיש category {i+1}",
                 "category": category,
                 "difficulty": "בינוני",
-                "steps": [{"step": 1, "description": f"צעד עבור {category}"}]
+                "steps": [{"step": 1, "description": f"צעד עבור {category}"}],
             }
             insert_scenario(scenario)
 

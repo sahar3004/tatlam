@@ -37,12 +37,7 @@ class TestJSONRobustness:
         """Test that all required fields are always in generated JSON."""
         required_fields = ["title", "category", "difficulty", "steps"]
 
-        sample_json = {
-            "title": "תרחיש",
-            "category": "פיננסים",
-            "difficulty": "בינוני",
-            "steps": []
-        }
+        sample_json = {"title": "תרחיש", "category": "פיננסים", "difficulty": "בינוני", "steps": []}
 
         for field in required_fields:
             assert field in sample_json
@@ -51,7 +46,7 @@ class TestJSONRobustness:
         """Test that steps array has consistent structure."""
         sample_steps = [
             {"step": 1, "description": "צעד ראשון"},
-            {"step": 2, "description": "צעד שני"}
+            {"step": 2, "description": "צעד שני"},
         ]
 
         # Each step should have required fields
@@ -77,8 +72,8 @@ class TestJSONRobustness:
     def test_json_proper_string_escaping(self, mock_brain):
         """Test that strings with quotes are properly escaped."""
         json_with_quotes = {
-            "title": 'תרחיש עם "מרכאות" ו-\'גרשיים\'',
-            "description": "תיאור עם \n שורה חדשה"
+            "title": "תרחיש עם \"מרכאות\" ו-'גרשיים'",
+            "description": "תיאור עם \n שורה חדשה",
         }
 
         # Should serialize and parse correctly
@@ -89,10 +84,7 @@ class TestJSONRobustness:
 
     def test_json_handles_empty_arrays(self, mock_brain):
         """Test that empty arrays are valid."""
-        json_with_empty_array = {
-            "title": "תרחיש",
-            "steps": []
-        }
+        json_with_empty_array = {"title": "תרחיש", "steps": []}
 
         json_str = json.dumps(json_with_empty_array)
         parsed = json.loads(json_str)
@@ -102,10 +94,7 @@ class TestJSONRobustness:
 
     def test_json_no_undefined_or_null_strings(self, mock_brain):
         """Test that JSON doesn't contain string values like 'undefined' or 'null'."""
-        sample_json = {
-            "title": "תרחיש",
-            "optional_field": None  # None is valid
-        }
+        sample_json = {"title": "תרחיש", "optional_field": None}  # None is valid
 
         json_str = json.dumps(sample_json)
 
@@ -118,7 +107,7 @@ class TestJSONRobustness:
         sample_json = {
             "step": 1,  # Should be int
             "priority": 5,  # Should be int
-            "completion": 0.95  # Can be float
+            "completion": 0.95,  # Can be float
         }
 
         # Step numbers should be integers
@@ -147,9 +136,7 @@ class TestJSONRobustness:
             "title": "תרחיש בדיקה",
             "category": "פיננסים",
             "difficulty": "בינוני",
-            "steps": [
-                {"step": 1, "description": "צעד ראשון"}
-            ]
+            "steps": [{"step": 1, "description": "צעד ראשון"}],
         }
 
         # Should pass validation
@@ -158,11 +145,7 @@ class TestJSONRobustness:
 
     def test_json_encoding_utf8(self, mock_brain):
         """Test that JSON is properly UTF-8 encoded."""
-        hebrew_data = {
-            "title": "בדיקת קידוד UTF-8",
-            "emoji": "🔥✅",
-            "mixed": "עברית English 中文"
-        }
+        hebrew_data = {"title": "בדיקת קידוד UTF-8", "emoji": "🔥✅", "mixed": "עברית English 中文"}
 
         json_str = json.dumps(hebrew_data, ensure_ascii=False)
 

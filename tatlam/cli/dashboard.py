@@ -11,6 +11,7 @@ Usage:
     python -m tatlam.cli.dashboard
     # or use the launcher script: ./scripts/start_dashboard.sh
 """
+
 from __future__ import annotations
 
 import logging
@@ -18,13 +19,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from sqlalchemy import func, select
 from textual.app import App, ComposeResult
-from textual.containers import Container, Horizontal, Vertical
-from textual.widgets import Button, DataTable, Footer, Header, Label, Static
 from textual.binding import Binding
-from textual.timer import Timer
+from textual.containers import Container, Vertical
+from textual.widgets import DataTable, Footer, Header, Label, Static
 
-from sqlalchemy import select, func
 from tatlam.infra.db import get_session
 from tatlam.infra.models import Scenario
 from tatlam.settings import get_settings
@@ -50,15 +50,17 @@ class LogViewer(Static):
                 self.update("[dim]Log file not found:[/dim] {self.log_path}")
                 return
 
-            with open(self.log_path, "r", encoding="utf-8") as f:
+            with open(self.log_path, encoding="utf-8") as f:
                 lines = f.readlines()
 
             # Get last max_lines
-            recent_lines = lines[-self.max_lines:]
+            recent_lines = lines[-self.max_lines :]
             content = "".join(recent_lines)
 
             # Format with markup
-            formatted = f"[dim]Last {len(recent_lines)} lines from {self.log_path.name}:[/dim]\n\n{content}"
+            formatted = (
+                f"[dim]Last {len(recent_lines)} lines from {self.log_path.name}:[/dim]\n\n{content}"
+            )
             self.update(formatted)
 
         except Exception as e:
@@ -101,11 +103,7 @@ class ScenarioTable(DataTable):
         try:
             with get_session() as session:
                 # Query scenarios ordered by creation time (newest first)
-                stmt = (
-                    select(Scenario)
-                    .order_by(Scenario.created_at.desc())
-                    .limit(100)
-                )
+                stmt = select(Scenario).order_by(Scenario.created_at.desc()).limit(100)
                 scenarios = session.scalars(stmt).all()
 
                 # Clear existing rows
@@ -160,17 +158,28 @@ class StatsBar(Static):
                 total = session.scalar(select(func.count(Scenario.id))) or 0
 
                 # Count by status
-                pending = session.scalar(
-                    select(func.count(Scenario.id)).where(Scenario.status == "pending")
-                ) or 0
-                approved = session.scalar(
-                    select(func.count(Scenario.id)).where(Scenario.status == "approved")
-                ) or 0
+                pending = (
+                    session.scalar(
+                        select(func.count(Scenario.id)).where(Scenario.status == "pending")
+                    )
+                    or 0
+                )
+                approved = (
+                    session.scalar(
+                        select(func.count(Scenario.id)).where(Scenario.status == "approved")
+                    )
+                    or 0
+                )
 
                 # Count by threat level
-                high = session.scalar(
-                    select(func.count(Scenario.id)).where(Scenario.threat_level.in_(["גבוהה", "גבוהה מאוד"]))
-                ) or 0
+                high = (
+                    session.scalar(
+                        select(func.count(Scenario.id)).where(
+                            Scenario.threat_level.in_(["גבוהה", "גבוהה מאוד"])
+                        )
+                    )
+                    or 0
+                )
 
                 stats_text = (
                     f"[bold]Total:[/bold] {total}  |  "
@@ -268,7 +277,9 @@ class TatlamDashboard(App):
         with Vertical():
             # Scenario table
             with Container(id="table-container"):
-                yield Label("Scenarios (ID | Title | Category | Threat | Status | Created)", classes="label")
+                yield Label(
+                    "Scenarios (ID | Title | Category | Threat | Status | Created)", classes="label"
+                )
                 yield ScenarioTable()
 
             # Log viewer

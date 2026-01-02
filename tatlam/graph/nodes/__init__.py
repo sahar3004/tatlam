@@ -14,14 +14,15 @@ Nodes:
 - archivist: Saves approved scenarios to database
 - supervisor: Orchestrates the workflow
 """
+
 from __future__ import annotations
 
-from tatlam.graph.nodes.writer import writer_node
+from tatlam.graph.nodes.archivist import archivist_node
 from tatlam.graph.nodes.clerk import clerk_node
 from tatlam.graph.nodes.deduplicator import deduplicator_node
 from tatlam.graph.nodes.judge import judge_node
-from tatlam.graph.nodes.archivist import archivist_node
-from tatlam.graph.nodes.supervisor import supervisor_node, should_continue
+from tatlam.graph.nodes.supervisor import should_continue, supervisor_node
+from tatlam.graph.nodes.writer import writer_node
 
 __all__ = [
     "writer_node",

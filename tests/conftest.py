@@ -9,7 +9,7 @@ This module provides:
 import pytest
 import sqlite3
 import tempfile
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 from pathlib import Path
 
 
@@ -26,19 +26,18 @@ def in_memory_db(monkeypatch):
     - Cleans up automatically
     """
     from tatlam.settings import get_settings
-    from tatlam.infra.db import get_engine, reset_engine, init_db_sqlalchemy
+    from tatlam.infra.db import reset_engine, init_db_sqlalchemy
     from tatlam.infra import repo as repo_module
-    from tatlam.infra.models import Base
 
     # Create temporary database
-    temp_db = tempfile.NamedTemporaryFile(mode='w', suffix='.db', delete=False)
+    temp_db = tempfile.NamedTemporaryFile(mode="w", suffix=".db", delete=False)
     temp_db_path = temp_db.name
     temp_db.close()
 
     # Clear settings cache and monkeypatch environment
     get_settings.cache_clear()
-    monkeypatch.setenv('DB_PATH', temp_db_path)
-    monkeypatch.setenv('REQUIRE_APPROVED_ONLY', 'false')
+    monkeypatch.setenv("DB_PATH", temp_db_path)
+    monkeypatch.setenv("REQUIRE_APPROVED_ONLY", "false")
 
     # Reset SQLAlchemy engine to pick up new DB path
     reset_engine()
@@ -78,9 +77,11 @@ def mock_brain():
     Returns:
         TrinityBrain with all API clients mocked to return safe responses
     """
-    with patch('anthropic.Anthropic') as mock_anthropic, \
-         patch('google.generativeai.GenerativeModel') as mock_gemini, \
-         patch('openai.OpenAI') as mock_openai:
+    with (
+        patch("anthropic.Anthropic") as mock_anthropic,
+        patch("google.generativeai.GenerativeModel") as mock_gemini,
+        patch("openai.OpenAI") as mock_openai,
+    ):
 
         # Mock Anthropic (Claude)
         mock_claude_response = MagicMock()
@@ -95,11 +96,14 @@ def mock_brain():
 
         # Mock OpenAI (GPT-4)
         mock_openai_response = MagicMock()
-        mock_openai_response.choices = [MagicMock(message=MagicMock(content="Mocked GPT-4 Response"))]
+        mock_openai_response.choices = [
+            MagicMock(message=MagicMock(content="Mocked GPT-4 Response"))
+        ]
         mock_openai.return_value.chat.completions.create.return_value = mock_openai_response
 
         # Import and instantiate TrinityBrain with mocked clients
         from tatlam.core.brain import TrinityBrain
+
         brain = TrinityBrain()
 
         yield brain
@@ -121,10 +125,10 @@ def sample_scenario_data():
         "bundle": "חבילה 1",
         "steps": [
             {"step": 1, "description": "פתח את האפליקציה"},
-            {"step": 2, "description": "בחר אפשרות תשלום"}
+            {"step": 2, "description": "בחר אפשרות תשלום"},
         ],
         "expected_behavior": "המשתמש יכול להשלים תשלום",
-        "testing_tips": "בדוק טיפול בשגיאות"
+        "testing_tips": "בדוק טיפול בשגיאות",
     }
 
 
@@ -146,15 +150,12 @@ def sample_json_schema():
                 "items": {
                     "type": "object",
                     "required": ["step", "description"],
-                    "properties": {
-                        "step": {"type": "number"},
-                        "description": {"type": "string"}
-                    }
-                }
+                    "properties": {"step": {"type": "number"}, "description": {"type": "string"}},
+                },
             },
             "expected_behavior": {"type": "string"},
-            "testing_tips": {"type": "string"}
-        }
+            "testing_tips": {"type": "string"},
+        },
     }
 
 
@@ -167,6 +168,4 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "integration: marks tests as integration tests (database access)"
     )
-    config.addinivalue_line(
-        "markers", "unit: marks tests as unit tests (fast, isolated)"
-    )
+    config.addinivalue_line("markers", "unit: marks tests as unit tests (fast, isolated)")

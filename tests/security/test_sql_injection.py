@@ -21,7 +21,7 @@ class TestSQLInjection:
             "title": "'; DROP TABLE scenarios; --",
             "category": "פיגועים פשוטים",
             "difficulty": "בינוני",
-            "steps": [{"step": 1, "description": "צעד"}]
+            "steps": [{"step": 1, "description": "צעד"}],
         }
 
         # Should safely insert without executing malicious SQL
@@ -43,7 +43,7 @@ class TestSQLInjection:
             "title": "תרחיש עם 'גרשיים' ו-\"מרכאות\"",
             "category": "פיגועים פשוטים",
             "difficulty": "בינוני",
-            "steps": [{"step": 1, "description": "צעד עם 'גרש'"}]
+            "steps": [{"step": 1, "description": "צעד עם 'גרש'"}],
         }
 
         scenario_id = insert_scenario(scenario_with_quotes)
@@ -82,7 +82,7 @@ class TestSQLInjection:
                 "title": pattern,
                 "category": "פיגועים פשוטים",
                 "difficulty": "בינוני",
-                "steps": [{"step": 1, "description": "צעד"}]
+                "steps": [{"step": 1, "description": "צעד"}],
             }
 
             # Should safely insert without executing injection
@@ -102,18 +102,13 @@ class TestSQLInjection:
         from tatlam.infra.repo import insert_scenario
         import json
 
-        malicious_steps = [
-            {
-                "step": 1,
-                "description": "'; DROP TABLE scenarios; --"
-            }
-        ]
+        malicious_steps = [{"step": 1, "description": "'; DROP TABLE scenarios; --"}]
 
         scenario = {
             "title": "תרחיש",
             "category": "פיגועים פשוטים",
             "difficulty": "בינוני",
-            "steps": malicious_steps
+            "steps": malicious_steps,
         }
 
         scenario_id = insert_scenario(scenario)
@@ -138,7 +133,7 @@ class TestSQLInjection:
             "title": "תרחיש\x00'; DROP TABLE scenarios; --",
             "category": "פיגועים פשוטים",
             "difficulty": "בינוני",
-            "steps": [{"step": 1, "description": "צעד"}]
+            "steps": [{"step": 1, "description": "צעד"}],
         }
 
         scenario_id = insert_scenario(unicode_injection)
@@ -153,18 +148,14 @@ class TestSQLInjection:
         """Test that SQL comment injection is prevented."""
         from tatlam.infra.repo import insert_scenario
 
-        comment_patterns = [
-            "תרחיש -- comment",
-            "תרחיש /* block comment */",
-            "תרחיש # hash comment"
-        ]
+        comment_patterns = ["תרחיש -- comment", "תרחיש /* block comment */", "תרחיש # hash comment"]
 
         for pattern in comment_patterns:
             scenario = {
                 "title": pattern,
                 "category": "פיגועים פשוטים",
                 "difficulty": "בינוני",
-                "steps": [{"step": 1, "description": "צעד"}]
+                "steps": [{"step": 1, "description": "צעד"}],
             }
 
             scenario_id = insert_scenario(scenario)
@@ -179,7 +170,7 @@ class TestSQLInjection:
             "title": "'; DROP TABLE scenarios; --",
             "category": "פיגועים פשוטים",
             "threat_level": "בינוני",
-            "steps": [{"step": 1, "description": "צעד"}]
+            "steps": [{"step": 1, "description": "צעד"}],
         }
 
         scenario_id = insert_scenario(malicious_data)
@@ -193,7 +184,7 @@ class TestSQLInjection:
             "title": f"Second order: {retrieved['title']}",  # Contains malicious string
             "category": "פיגועים פשוטים",
             "threat_level": "בינוני",
-            "steps": [{"step": 1, "description": "צעד"}]
+            "steps": [{"step": 1, "description": "צעד"}],
         }
 
         new_id = insert_scenario(new_scenario)
@@ -214,7 +205,7 @@ class TestSQLInjection:
                 "title": f"תרחיש {i}'; DROP TABLE scenarios; --",
                 "category": "פיגועים פשוטים",
                 "difficulty": "בינוני",
-                "steps": [{"step": 1, "description": "צעד"}]
+                "steps": [{"step": 1, "description": "צעד"}],
             }
             for i in range(5)
         ]

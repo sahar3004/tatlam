@@ -9,13 +9,11 @@ from __future__ import annotations
 from functools import lru_cache
 from pathlib import Path
 
-
-from functools import lru_cache
-from pathlib import Path
 from tatlam.core.rules import RuleEngine
 
 # Initialize Rule Engine (Singleton-like)
 rule_engine = RuleEngine()
+
 
 @lru_cache(maxsize=1)
 def load_prompt() -> str:
@@ -39,12 +37,10 @@ def load_prompt() -> str:
 
     for path in possible_paths:
         if path.exists():
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 return f.read()
 
-    raise FileNotFoundError(
-        "system_prompt_he.txt not found in project root or relative paths"
-    )
+    raise FileNotFoundError("system_prompt_he.txt not found in project root or relative paths")
 
 
 TRINITY_DOCTRINE = {
@@ -53,18 +49,18 @@ TRINITY_DOCTRINE = {
         "foot_assault": {
             "suicide_bomber": {
                 "belt": {
-                    "payload": "3-5 ק\"ג חנ\"מ + רסס (ברגים/מסמרים)",
-                    "indicators": "נפח חריג באזור המותניים/טורסו, אי-פרופורציה בגוף"
+                    "payload": '3-5 ק"ג חנ"מ + רסס (ברגים/מסמרים)',
+                    "indicators": "נפח חריג באזור המותניים/טורסו, אי-פרופורציה בגוף",
                 },
                 "backpack": {
-                    "payload": "6-10 ק\"ג חנ\"מ",
-                    "indicators": "הליכה כבדה, מסורבלת, חתימת תנועה (Kinetic Signature) איטית"
+                    "payload": '6-10 ק"ג חנ"מ',
+                    "indicators": "הליכה כבדה, מסורבלת, חתימת תנועה (Kinetic Signature) איטית",
                 },
                 "tiny_ied": {
-                    "payload": "0.5 ק\"ג או גודל רימון 26/פחית",
+                    "payload": '0.5 ק"ג או גודל רימון 26/פחית',
                     "hiding_spot": "מוסתר בכבודה/תיק צד",
-                    "detection": "מחייב שיקוף או חיפוש ידני, קשה לזיהוי ויזואלי"
-                }
+                    "detection": "מחייב שיקוף או חיפוש ידני, קשה לזיהוי ויזואלי",
+                },
             },
             "active_shooter_cold_weapon": {
                 "weapons": ["אקדח (אחוד/מפורק)", "סכין", "גרזן", "מברג"],
@@ -73,111 +69,105 @@ TRINITY_DOCTRINE = {
                     "תסמונת הצייד (Dread)",
                     "סריקה מהירה של השטח",
                     "קיבעון (Fixation) על המאבטח",
-                    "הסתרת יד דומיננטית"
-                ]
-            }
+                    "הסתרת יד דומיננטית",
+                ],
+            },
         },
         "vehicle_threats": {
             "vbied_types": {
-                "motorcycle": {"capacity": "50 ק\"ג", "risk": "עקיפת מחסומים סטטיים"},
-                "car": {"capacity": "300 ק\"ג"},
-                "van": {"capacity": "500 ק\"ג"},
-                "truck": {"capacity": "1,000 ק\"ג (1 טון)", "risk": "מוטות מבנים/גשרים"}
+                "motorcycle": {"capacity": '50 ק"ג', "risk": "עקיפת מחסומים סטטיים"},
+                "car": {"capacity": '300 ק"ג'},
+                "van": {"capacity": '500 ק"ג'},
+                "truck": {"capacity": '1,000 ק"ג (1 טון)', "risk": "מוטות מבנים/גשרים"},
             },
             "indicators": [
                 "שקיעת מתלים (Suspension sag)",
                 "לוחיות רישוי אינן תואמות",
                 "ריח חריג (דלק/חומצה)",
-                "רכב חונה בציר חירום/גשר"
+                "רכב חונה בציר חירום/גשר",
             ],
             "ramming": {
                 "mass": "עד 10 טון",
-                "speed": "60 קמ\"ש",
+                "speed": '60 קמ"ש',
                 "target": "הולכי רגל/עמודי נגיפה",
-                "vector": "סטייה חדה מתוואי כביש"
-            }
+                "vector": "סטייה חדה מתוואי כביש",
+            },
         },
         "aerial_threats": {
             "drones": {
                 "types": ["רחפן מסחרי (COTS)", "רחפן בבנייה עצמית (250 גרם+)"],
                 "tactics": ["הטלת חימוש (רימון)", "רחפן מתאבד", "נחילים (עד 5 במקביל)"],
-                "envelope": "גובה עד 300 רגל (90 מ'), רדיוס 100 מ'"
+                "envelope": "גובה עד 300 רגל (90 מ'), רדיוס 100 מ'",
             },
-            "high_angle_fire": "ירי נק\"ל/נ\"ט מגגות שולטים או ירי תלול מסלול (רקטות)"
+            "high_angle_fire": 'ירי נק"ל/נ"ט מגגות שולטים או ירי תלול מסלול (רקטות)',
         },
         "infrastructure_hazmat": {
             "hazmat_leech": "מטען 'עלוקה' (250 גרם) מוצמד למיכל חומר מסוכן",
-            "sabotage": ["חיתוך סיבים/חשמל", "שיבוש שו\"ב", "הנחת מכשול למסילה (שימוט)"]
-        }
+            "sabotage": ["חיתוך סיבים/חשמל", 'שיבוש שו"ב', "הנחת מכשול למסילה (שימוט)"],
+        },
     },
-
     # פרק 2: זירת הפעולה - תחנת אלנבי
     "venue_allenby": {
-        "specs": {
-            "depth": "28 מטר מתחת לקרקע",
-            "type": "מערכת פתוחה עם סינון סלקטיבי"
-        },
+        "specs": {"depth": "28 מטר מתחת לקרקע", "type": "מערכת פתוחה עם סינון סלקטיבי"},
         "levels": {
             "surface": {
                 "name": "מפלס הרחוב",
                 "features": ["3 כניסות (הרכבת, מקווה ישראל, אלנבי)", "פיר מעלית אחורי"],
-                "defenses": "עמודי נגיפה הידראוליים (HVM)"
+                "defenses": "עמודי נגיפה הידראוליים (HVM)",
             },
             "minus_1": {
                 "name": "קומת כרטוס (Concourse)",
                 "assets": ["חדר בקרת תחנה (SMR)", "חדר שנאים", "שערי גבייה"],
-                "risk": "השתלטות על SMR = עיוורון מצלמות ושליטה בדלתות"
+                "risk": "השתלטות על SMR = עיוורון מצלמות ושליטה בדלתות",
             },
             "minus_2": {
                 "name": "קומה טכנית",
                 "status": "שטח סטרילי (אין כניסת נוסעים)",
-                "alert_rule": "כל אדם בקומה זו = אירוע פריצה/פח\"ע מיידי"
+                "alert_rule": 'כל אדם בקומה זו = אירוע פריצה/פח"ע מיידי',
             },
             "minus_3": {
                 "name": "קומת רציפים",
                 "vulnerabilities": ["מעבר שירות למסילה", "צפיפות קהל (Kill Zone)"],
-                "assets": "חדרי תקשורת"
-            }
+                "assets": "חדרי תקשורת",
+            },
         },
         "force_structure": "מינימום 2 מאבטחים (1 בכרטוס, 1 ברציף). הסתמכות על הפתעה ותווך.",
         "dead_zones": [
             "מדרגות חירום (הטמנת מטען)",
             "מסדרונות תפעוליים",
-            "שירותים (הרכבת מטען לאחר בידוק)"
-        ]
+            "שירותים (הרכבת מטען לאחר בידוק)",
+        ],
     },
-
     # פרק 2ב: זירת הפעולה - תחנות עיליות (ציר יפו)
     "venue_surface_jaffa": {
         "specs": {
             "type": "מערכת פתוחה (Open System)",
             "environment": "רחוב עירוני פתוח ללא גדרות (Perimeter-less)",
-            "context": "ציר יפו (אוכלוסייה מעורבת, צפיפות, היסטוריה עוינת)"
+            "context": "ציר יפו (אוכלוסייה מעורבת, צפיפות, היסטוריה עוינת)",
         },
         "levels": {
             "surface": {
                 "name": "מפלס הרציף/רחוב",
                 "features": ["תחנה פתוחה", "מעברי חצייה", "תנועה מעורבת (רכב/הולכי רגל)"],
-                "risks": ["השלכת אבנים/בקת\"ב מרחוב סמוך", "דריסה לתוך הרציף"]
+                "risks": ['השלכת אבנים/בקת"ב מרחוב סמוך', "דריסה לתוך הרציף"],
             },
             "train_interior": {
                 "name": "תוך הרכבת",
                 "status": "חלל סגור",
-                "risk": "מלכודת מוות (Kill Box) בעת אירוע ירי/דקירה"
-            }
+                "risk": "מלכודת מוות (Kill Box) בעת אירוע ירי/דקירה",
+            },
         },
         "force_structure": {
             "motorcycle_unit": "יחידת אופנוענים ניידת (תגובה תוך 2-4 דקות)",
             "train_guard": "מאבטח רכבת (דילוגים לתחנה וסריקה ויזואלית)",
-            "concept": "אין אבטחה סטטית. אין שערים. הגנה מבוססת הרתעה ותגובה."
+            "concept": "אין אבטחה סטטית. אין שערים. הגנה מבוססת הרתעה ותגובה.",
         },
         "threats_specific": [
-            "פח\"ע ירי (כמו פיגוע אוקטובר 2024)",
-            "יידוי אבנים/בקת\"ב",
-            "חסימת מסילה (ונדליזם לאומני)"
-        ]
+            'פח"ע ירי (כמו פיגוע אוקטובר 2024)',
+            'יידוי אבנים/בקת"ב',
+            "חסימת מסילה (ונדליזם לאומני)",
+        ],
     },
-
     # פרק 3: סמכויות ומשפט (האלגוריתם של השופט)
     "legal_framework": {
         "search_authority": {
@@ -188,48 +178,53 @@ TRINITY_DOCTRINE = {
             "forced_search": {
                 "condition": "חשד סביר בלבד (Reasonable Suspicion)",
                 "definition": "למשל: סירוב + בליטה חשודה בבגד",
-                "action": "שימוש בכוח סביר"
-            }
+                "action": "שימוש בכוח סביר",
+            },
         },
         "detainment_authority": {
             "conditions": ["חשד לנשיאת נשק שלא כדין", "חשד לשימוש בנשק", "אלימות/סכנה לציבור"],
             "duration": "עד הגעת שוטר (זמן סביר). רף עליון סטטוטורי: 3 שעות",
-            "force": "כוח סביר למימוש העיכוב במקרה התנגדות"
+            "force": "כוח סביר למימוש העיכוב במקרה התנגדות",
         },
         "identification": {
             "rule": "מותר לדרוש תעודה בכניסה",
-            "profiling_ban": "איסור מוחלט על דרישה על בסיס גזע, דת, מוצא, דעה פוליטית. חריגה = ציון 0 בשיפוט."
+            "profiling_ban": "איסור מוחלט על דרישה על בסיס גזע, דת, מוצא, דעה פוליטית. חריגה = ציון 0 בשיפוט.",
         },
         "open_fire_regulations": {
             "core_principle": "אמצעי אחרון (Ultima Ratio)",
             "conditions": [
                 "סכנת חיים ממשית ומיידית (Life Threat)",
-                "זיהוי אמצעי (Means) + כוונה (Intent)"
+                "זיהוי אמצעי (Means) + כוונה (Intent)",
             ],
             "prohibitions": [
                 "אסור לירות להגנה על רכוש",
                 "אסור לירות להגנה על סדר ציבורי",
-                "אסור לירות בגב של בורח שאינו מסכן חיים"
+                "אסור לירות בגב של בורח שאינו מסכן חיים",
             ],
-            "exceptions": "מיידי אבנים/בקת\"ב - רק בטווח מסכן חיים מיידי"
-        }
+            "exceptions": 'מיידי אבנים/בקת"ב - רק בטווח מסכן חיים מיידי',
+        },
     },
-
     # פרק 4: פרוטוקולי פעולה (SOPs)
     "procedures": {
         "suspicious_object": {
             "classification": {
                 "abandoned": "מקום טבעי, חפץ תמים, ניתן לאיתור בעלים",
-                "suspicious": "מוסתר, כבד, חוטים/אורות, ריח שקדים/דלק, מיקום רגיש (עמוד תומך)"
+                "suspicious": "מוסתר, כבד, חוטים/אורות, ריח שקדים/דלק, מיקום רגיש (עמוד תומך)",
             },
             "actions_donts": ["אסור לגעת!", "אסור להזיז/לפתוח", "אסור להשתמש בקשר/סלולר ליד החפץ"],
-            "actions_dos": ["בידוד זירה", "חסימה", "דיווח", "סריקה למטען משני", "טיפול ע\"י חבלן בלבד"],
+            "actions_dos": [
+                "בידוד זירה",
+                "חסימה",
+                "דיווח",
+                "סריקה למטען משני",
+                'טיפול ע"י חבלן בלבד',
+            ],
             "safety_distances": {
                 "object_urban": "50 מטר (מאחורי מחסה)",
                 "object_open": "100 מטר",
                 "car": "100 מטר ומעלה",
-                "truck": "עד 400 מטר"
-            }
+                "truck": "עד 400 מטר",
+            },
         },
         "hostile_event_peh_hey_ay": {
             "flow": [
@@ -238,38 +233,38 @@ TRINITY_DOCTRINE = {
                 "3. חתירה למגע (צמצום טווח, ניצול מחסות)",
                 "4. נטרול (ירי סלקטיבי, זהירות על קהל)",
                 "5. סיום איום (הרחקה מנשק, כבילה)",
-                "6. טיפול רפואי (רק לאחר זיכוי זירה)"
+                "6. טיפול רפואי (רק לאחר זיכוי זירה)",
             ]
         },
         "public_disturbance": {
             "level_a_quiet": "מחאה שקטה/שלטים -> לא להתערב",
             "level_b_soft": "צעקות/הפרעה לתנועה -> אזהרה, מניעת כניסה",
             "level_c_violent": "ונדליזם/תקיפה -> כוח סביר, הרחקה, משטרה",
-            "red_line": "אסור להשתמש בנשק חם לפיזור הפגנה"
+            "red_line": "אסור להשתמש בנשק חם לפיזור הפגנה",
         },
         "emergency_routine": {
             "routine": "סריקות ביטחון כל שעתיים (כולל שטחים מתים)",
             "missile_alert": "פתיחת שערים, הכוונה לקומות -2/-3 (מקלט)",
-            "fire": "נוהל אש, פינוי נגד כיוון העשן, חסימת כניסות"
-        }
+            "fire": "נוהל אש, פינוי נגד כיוון העשן, חסימת כניסות",
+        },
     },
-
     # פרק 5: לוגיקת שיפוט וניקוד
     "scoring_logic": {
         "safety": {
             "pass": "שמירה על טווחי בטיחות, אי-מגע בחפץ",
-            "fail": "נגיעה בחפץ חשוד (ציון 0 מיידי), כניסה לטווח סכנה"
+            "fail": "נגיעה בחפץ חשוד (ציון 0 מיידי), כניסה לטווח סכנה",
         },
         "legality": {
             "pass": "כוח סביר, ירי מוצדק, עיכוב חוקי",
-            "fail": "ירי ללא סכנת חיים, אפליה, עיכוב מעל 3 שעות"
+            "fail": "ירי ללא סכנת חיים, אפליה, עיכוב מעל 3 שעות",
         },
         "tactics": {
-            "pass": "חתירה למגע בפח\"ע, בידוד בחפץ חשוד",
-            "fail": "בריחה בפח\"ע, הסתערות על חפץ חשוד"
-        }
-    }
+            "pass": 'חתירה למגע בפח"ע, בידוד בחפץ חשוד',
+            "fail": 'בריחה בפח"ע, הסתערות על חפץ חשוד',
+        },
+    },
 }
+
 
 def get_system_prompt(role: str, venue: str = "allenby", context: dict | None = None) -> str:
     """
@@ -314,26 +309,25 @@ def get_system_prompt(role: str, venue: str = "allenby", context: dict | None = 
             "2.1 מאפייני זירה: מערכת פתוחה (Open System), רחוב עירוני ללא גדרות.\n"
             "2.2 כוח אבטחה: אין שערים ואין עמדות סטטיות. האבטחה מתבססת על יחידות אופנוענים (תגובה 2-4 דק') "
             "ומאבטחי רכבות (סריקה בדילוגים מהקרון לרציף).\n"
-            "2.3 איומים ייחודיים: פח\"ע ירי (כמו אוקטובר 2024), יידוי אבנים/בקת\"ב, חסימת מסילה.\n"
+            '2.3 איומים ייחודיים: פח"ע ירי (כמו אוקטובר 2024), יידוי אבנים/בקת"ב, חסימת מסילה.\n'
             "2.4 שטחים מתים: מעברי חצייה, גינות סמוכות, תוך הרכבת (Kill Box).\n"
         )
-        
+
         # Replace the Allenby section in the prompt
         # We look for the marker "פרק 2: זירת הפעולה" until the next chapter or end of section
         import re
+
         allenby_pattern = r"(פרק 2: זירת הפעולה.*?)(\n\nפרק 3)"
-        
+
         # Note: DOTALL is crucial to match across newlines
         base_prompt = re.sub(allenby_pattern, f"{jaffa_doctrine}\\2", base_prompt, flags=re.DOTALL)
-        
+
         # Also replace "מהנדס בטיחות ושטח" context usually found in the Council description
         base_prompt = base_prompt.replace(
-            "מתמקד במבנה תחנת \"אלנבי\"", 
-            "מתמקד במתווה הפתוח של ציר יפו (Surface)"
+            'מתמקד במבנה תחנת "אלנבי"', "מתמקד במתווה הפתוח של ציר יפו (Surface)"
         )
         base_prompt = base_prompt.replace(
-            "תיק שטח - תחנת \"אלנבי\"",
-            "תיק שטח - ציר יפו (רכבת קלה ת\"א)"
+            'תיק שטח - תחנת "אלנבי"', 'תיק שטח - ציר יפו (רכבת קלה ת"א)'
         )
 
     # Role-specific addendums
@@ -420,21 +414,22 @@ def get_system_prompt(role: str, venue: str = "allenby", context: dict | None = 
 4. אל תענה שום מלל מלבד ה-JSON.
 5. הקפד על סגירת סוגריים תקינה.
 """,
-        "simulator": ""  # Simulator gets just the full prompt
+        "simulator": "",  # Simulator gets just the full prompt
     }
 
     addendum = role_addendum.get(role, "")
-    
+
     # Dynamic Rules Injection
     rules_section = ""
     if context:
         # Ensure context has venue info if not present
         if "location_type" not in context:
             context["location_type"] = "surface" if venue == "jaffa" else "underground"
-            
+
         formatted_rules = rule_engine.format_rules_for_prompt(context)
         if formatted_rules:
-            rules_section = f"\n\n*** הנחיות דינמיות וחוקים מעודכנים (Active Rules) ***\n{formatted_rules}\n"
+            rules_section = (
+                f"\n\n*** הנחיות דינמיות וחוקים מעודכנים (Active Rules) ***\n{formatted_rules}\n"
+            )
 
     return base_prompt + addendum + rules_section + language_guard
-

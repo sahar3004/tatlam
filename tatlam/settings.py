@@ -10,9 +10,9 @@ Features:
 - Fail-fast on missing required API keys (configurable)
 - Sensible defaults for development
 """
+
 from __future__ import annotations
 
-import os
 from enum import Enum
 from functools import lru_cache
 from pathlib import Path
@@ -24,6 +24,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class ThreatLevel(str, Enum):
     """Valid threat levels for scenarios."""
+
     LOW = "נמוכה"
     MEDIUM = "בינונית"
     HIGH = "גבוהה"
@@ -32,6 +33,7 @@ class ThreatLevel(str, Enum):
 
 class Complexity(str, Enum):
     """Valid complexity levels for scenarios."""
+
     LOW = "נמוכה"
     MEDIUM = "בינונית"
     HIGH = "גבוהה"
@@ -39,6 +41,7 @@ class Complexity(str, Enum):
 
 class Likelihood(str, Enum):
     """Valid likelihood levels for scenarios."""
+
     LOW = "נמוכה"
     MEDIUM = "בינונית"
     HIGH = "גבוהה"
@@ -74,7 +77,7 @@ class Settings(BaseSettings):
     EMB_TABLE: str = Field(default="title_embeddings")
 
     @model_validator(mode="after")
-    def set_default_db_path(self) -> "Settings":
+    def set_default_db_path(self) -> Settings:
         """Set default DB_PATH relative to BASE_DIR if not provided."""
         if not self.DB_PATH:
             self.DB_PATH = str(self.BASE_DIR / "db" / "tatlam.db")
@@ -93,7 +96,7 @@ class Settings(BaseSettings):
     # ==== Trinity Architecture: Judge (Claude Opus for deep critique) ====
     JUDGE_MODEL_PROVIDER: Literal["anthropic"] = "anthropic"
     JUDGE_MODEL_NAME: str = Field(default="claude-opus-4-5-20251101")
-    
+
     # ==== Trinity Architecture: Clerk (Gemini Flash for JSON formatting) ====
     CLERK_MODEL_PROVIDER: Literal["google"] = "google"
     CLERK_MODEL_NAME: str = Field(default="gemini-3-flash-preview")
@@ -171,6 +174,7 @@ class Settings(BaseSettings):
 
 class ConfigurationError(Exception):
     """Raised when required configuration is missing or invalid."""
+
     pass
 
 
@@ -208,6 +212,7 @@ def get_settings() -> Settings:
 # ==== Module-Level Exports for Backward Compatibility ====
 # These allow: from tatlam.settings import DB_PATH, TABLE_NAME
 # Instead of: from tatlam.settings import get_settings; settings = get_settings(); settings.DB_PATH
+
 
 def __getattr__(name: str) -> Any:
     """

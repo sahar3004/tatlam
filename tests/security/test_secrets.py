@@ -56,9 +56,9 @@ class TestSecretsManagement:
 
         # Config should attempt to load from environment or have placeholder
         # Check that API key attributes exist
-        assert hasattr(settings, 'ANTHROPIC_API_KEY')
-        assert hasattr(settings, 'GOOGLE_API_KEY')
-        assert hasattr(settings, 'OPENAI_API_KEY')
+        assert hasattr(settings, "ANTHROPIC_API_KEY")
+        assert hasattr(settings, "GOOGLE_API_KEY")
+        assert hasattr(settings, "OPENAI_API_KEY")
 
     def test_no_passwords_in_database(self, in_memory_db):
         """Test that database doesn't contain password fields."""

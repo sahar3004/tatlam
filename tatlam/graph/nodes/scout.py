@@ -11,6 +11,7 @@ Key Features:
 - Cloud Claude for refinement and structure
 - Graceful fallback if local LLM unavailable
 """
+
 from __future__ import annotations
 
 import logging
@@ -18,27 +19,26 @@ import re
 from typing import TYPE_CHECKING, Any
 
 from tenacity import (
+    before_sleep_log,
     retry,
+    retry_if_exception_type,
     stop_after_attempt,
     wait_exponential,
-    retry_if_exception_type,
-    before_sleep_log,
 )
 
 from tatlam.graph.state import SwarmState, WorkflowPhase
 from tatlam.settings import get_settings
-from tatlam.core.doctrine import get_system_prompt
 
 if TYPE_CHECKING:
-    from openai import OpenAI
     import anthropic
+    from openai import OpenAI
 
 logger = logging.getLogger(__name__)
 
 
-def _get_local_client() -> "OpenAI | None":
+def _get_local_client() -> OpenAI | None:
     """Get the local LLM client."""
-    from tatlam.core.llm_factory import client_local, ConfigurationError
+    from tatlam.core.llm_factory import ConfigurationError, client_local
 
     try:
         return client_local()
@@ -47,9 +47,9 @@ def _get_local_client() -> "OpenAI | None":
         return None
 
 
-def _get_anthropic_client() -> "anthropic.Anthropic | None":
+def _get_anthropic_client() -> anthropic.Anthropic | None:
     """Get the Anthropic Claude client for Stage 2."""
-    from tatlam.core.llm_factory import create_writer_client, ConfigurationError
+    from tatlam.core.llm_factory import ConfigurationError, create_writer_client
 
     try:
         return create_writer_client()
@@ -65,7 +65,7 @@ def _get_anthropic_client() -> "anthropic.Anthropic | None":
     before_sleep=before_sleep_log(logger, logging.WARNING),
     reraise=True,
 )
-def _call_local_llm(client: "OpenAI", model: str, system: str, prompt: str) -> str:
+def _call_local_llm(client: OpenAI, model: str, system: str, prompt: str) -> str:
     """Call local LLM for Stage 1 idea generation."""
     response = client.chat.completions.create(
         model=model,
@@ -116,7 +116,7 @@ def _call_claude_refinement(client: Any, model: str, raw_ideas: str, category: s
 
 def _build_scout_prompt(category: str, count: int = 25, venue_type: str = "allenby") -> str:
     """Build the prompt for Stage 1 seed generation."""
-    
+
     venue_desc = """📍 זירת הפעולה: תחנת רכבת קלה "אלנבי" בתל אביב
    - מפלס 0: רחוב, כניסה ראשית
    - מפלס -1: כרטוס, בידוק, מבואה
@@ -176,81 +176,83 @@ def _parse_seeds(raw_text: str) -> list[str]:
     """Parse the raw LLM output into a list of seeds."""
     lines = raw_text.strip().split("\n")
     seeds = []
-    
+
     for line in lines:
         # Clean the line
         line = line.strip()
         # Remove common prefixes like "1.", "-", "*", "•"
-        line = re.sub(r'^[\d]+[.)]\s*', '', line)
-        line = re.sub(r'^[-*•]\s*', '', line)
+        line = re.sub(r"^[\d]+[.)]\s*", "", line)
+        line = re.sub(r"^[-*•]\s*", "", line)
         line = line.strip()
-        
+
         # Filter valid seeds (reasonable length)
         if 15 < len(line) < 250:
             seeds.append(line)
-    
+
     return seeds
 
 
 def scout_node(state: SwarmState) -> SwarmState:
     """
     Scout Node: 2-Stage idea generation pipeline.
-    
+
     Stage 1 (Local Qwen): Generate raw, creative ideas quickly
     Stage 2 (Claude Sonnet): Refine items and ensure quality
-    
+
     If Local LLM unavailable, Claude serves as complete fallback.
-    
+
     Args:
         state: Current SwarmState
-        
+
     Returns:
         Updated SwarmState with scout_seeds populated
     """
     state.log_phase_change(WorkflowPhase.SCOUTING)
-    
+
     settings = get_settings()
     seed_count = max(25, state.batch_size * 3)
-    
+
     logger.info(
         "Scout starting 2-stage pipeline for category '%s' (target: %d seeds)",
-        state.category, seed_count
+        state.category,
+        seed_count,
     )
-    
+
     # Get clients
     local_client = _get_local_client()
     anthropic_client = _get_anthropic_client()
-    
+
     raw_ideas = ""
     refined_ideas = ""
-    
+
     # === STAGE 1: Local Qwen - Raw Idea Generation ===
     if local_client:
         try:
             logger.info("Scout Stage 1: Generating raw ideas with Local Qwen")
-            
+
             system_prompt = "אתה יוצר רעיונות יצירתי ומגוון. תפקידך להציע רעיונות מאתגרים ולא שגרתיים לתרחישי אבטחה."
             # Determine venue
             venue_type = "allenby"
-            if "jaffa" in str(state.category).lower() or "surface" in str(state.category).lower() or "tachanot-iliyot" in str(state.category).lower():
+            if (
+                "jaffa" in str(state.category).lower()
+                or "surface" in str(state.category).lower()
+                or "tachanot-iliyot" in str(state.category).lower()
+            ):
                 venue_type = "jaffa"
-                
+
             user_prompt = _build_scout_prompt(state.category, seed_count, venue_type)
-            
+
             raw_ideas = _call_local_llm(
-                local_client,
-                settings.LOCAL_MODEL_NAME,
-                system_prompt,
-                user_prompt
+                local_client, settings.LOCAL_MODEL_NAME, system_prompt, user_prompt
             )
-            
+
             logger.info("Scout Stage 1 complete: %d chars of raw ideas", len(raw_ideas))
-            
+
         except Exception as e:
             logger.warning("Scout Stage 1 failed: %s", e)
             state.metrics.llm_errors += 1
             raw_ideas = ""
-    
+
     # === STAGE 2: Claude Sonnet - Refinement ===
     if anthropic_client:
         try:
@@ -261,13 +263,13 @@ def scout_node(state: SwarmState) -> SwarmState:
                     anthropic_client,
                     settings.WRITER_MODEL_NAME,  # Claude Sonnet 4.5
                     raw_ideas,
-                    state.category
+                    state.category,
                 )
             else:
                 # Fallback mode: generate from scratch
                 logger.info("Scout Stage 2: Fallback - generating with Claude Sonnet")
                 fallback_prompt = _build_fallback_prompt(state.category, 20)
-                
+
                 response = anthropic_client.messages.create(
                     model=settings.WRITER_MODEL_NAME,
                     max_tokens=2048,
@@ -275,9 +277,9 @@ def scout_node(state: SwarmState) -> SwarmState:
                     messages=[{"role": "user", "content": fallback_prompt}],
                 )
                 refined_ideas = (response.content[0].text if response.content else "").strip()
-            
+
             logger.info("Scout Stage 2 complete: %d chars refined", len(refined_ideas))
-            
+
         except Exception as e:
             logger.warning("Scout Stage 2 failed: %s", e)
             state.metrics.llm_errors += 1
@@ -286,10 +288,10 @@ def scout_node(state: SwarmState) -> SwarmState:
     else:
         # No Claude available - use raw ideas directly
         refined_ideas = raw_ideas
-    
+
     # === Parse and store seeds ===
     final_text = refined_ideas or raw_ideas
-    
+
     if final_text:
         seeds = _parse_seeds(final_text)
         state.scout_seeds = seeds
@@ -297,11 +299,11 @@ def scout_node(state: SwarmState) -> SwarmState:
             "Scout pipeline complete: %d seeds generated (Local: %s, Claude: %s)",
             len(seeds),
             "✓" if local_client else "✗",
-            "✓" if anthropic_client else "✗"
+            "✓" if anthropic_client else "✗",
         )
     else:
         logger.warning("Scout failed: No ideas generated, continuing without seeds")
-    
+
     return state
 
 

@@ -39,7 +39,7 @@ class TestExport:
             "title": "תרחיש בעברית עם ניקוד: שָׁלוֹם",
             "category": "חפץ חשוד ומטען",  # Valid CATS category
             "difficulty": "בינוני",
-            "steps": [{"step": 1, "description": "צעד בעברית"}]
+            "steps": [{"step": 1, "description": "צעד בעברית"}],
         }
 
         insert_scenario(hebrew_scenario)
@@ -75,12 +75,9 @@ class TestExport:
             "category": "בני ערובה",  # Valid CATS category
             "difficulty": "קל",
             "bundle": "חבילה 1",
-            "steps": [
-                {"step": 1, "description": "צעד 1"},
-                {"step": 2, "description": "צעד 2"}
-            ],
+            "steps": [{"step": 1, "description": "צעד 1"}, {"step": 2, "description": "צעד 2"}],
             "expected_behavior": "התנהגות צפויה",
-            "testing_tips": "טיפים לבדיקה"
+            "testing_tips": "טיפים לבדיקה",
         }
 
         insert_scenario(complete_scenario)
@@ -130,12 +127,14 @@ class TestExport:
 
         for category in categories:
             for i in range(2):
-                insert_scenario({
-                    "title": f"תרחיש {category} {i}",
-                    "category": category,
-                    "difficulty": "בינוני",
-                    "steps": [{"step": 1, "description": "צעד"}]
-                })
+                insert_scenario(
+                    {
+                        "title": f"תרחיש {category} {i}",
+                        "category": category,
+                        "difficulty": "בינוני",
+                        "steps": [{"step": 1, "description": "צעד"}],
+                    }
+                )
 
         all_scenarios = fetch_all()
 
@@ -156,13 +155,15 @@ class TestExport:
         bundle_name = "חבילת ייצוא"
 
         for i in range(3):
-            insert_scenario({
-                "title": f"תרחיש bundle {i}",
-                "category": "פיגועים פשוטים",  # Valid CATS category
-                "difficulty": "בינוני",
-                "bundle_id": bundle_name,
-                "steps": [{"step": 1, "description": "צעד"}]
-            })
+            insert_scenario(
+                {
+                    "title": f"תרחיש bundle {i}",
+                    "category": "פיגועים פשוטים",  # Valid CATS category
+                    "difficulty": "בינוני",
+                    "bundle_id": bundle_name,
+                    "steps": [{"step": 1, "description": "צעד"}],
+                }
+            )
 
         all_scenarios = fetch_all()
         bundle_scenarios = [s for s in all_scenarios if s.get("bundle_id") == bundle_name]
@@ -193,7 +194,7 @@ class TestExport:
             "title": "תרחיש עם \"מרכאות\" ו-'גרשיים'",
             "category": "פיגועים פשוטים",  # Valid CATS category
             "difficulty": "בינוני",
-            "steps": [{"step": 1, "description": "צעד עם \n שורה חדשה"}]
+            "steps": [{"step": 1, "description": "צעד עם \n שורה חדשה"}],
         }
 
         insert_scenario(scenario_with_special)

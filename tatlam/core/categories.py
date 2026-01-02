@@ -105,7 +105,7 @@ CATS: dict[str, CatMeta] = {
     },
     "tachanot-iliyot": {"title": "תחנות עיליות", "aliases": ["תחנות עיליות"]},
     "iyumim-tech": {"title": "איומים טכנולוגיים", "aliases": ["איומים טכנולוגיים"]},
-    "eiroa-kimi": {"title": "אירוע כימי", "aliases": ["אירוע כימי", "חומ\"ס", "HazMat"]},
+    "eiroa-kimi": {"title": "אירוע כימי", "aliases": ["אירוע כימי", 'חומ"ס', "HazMat"]},
     "bnei-aruba": {"title": "בני ערובה", "aliases": ["בני ערובה"]},
     "uncategorized": {
         "title": "לא מסווג",
@@ -188,4 +188,3 @@ def category_to_slug(category: str | None) -> str | None:
 
 
 __all__ = ["CATS", "CATEGORY_TO_THREAT_VECTOR", "normalize_hebrew", "category_to_slug"]
-

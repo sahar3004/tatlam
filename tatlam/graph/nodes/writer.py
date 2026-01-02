@@ -12,22 +12,21 @@ Key Features:
 - Incorporates Gold examples for quality
 - Supports repair mode with Judge critique feedback
 """
+
 from __future__ import annotations
 
 import logging
-import os
-from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
 from tenacity import (
+    before_sleep_log,
     retry,
+    retry_if_exception_type,
     stop_after_attempt,
     wait_exponential,
-    retry_if_exception_type,
-    before_sleep_log,
 )
 
-from tatlam.graph.state import SwarmState, ScenarioStatus, WorkflowPhase
+from tatlam.graph.state import ScenarioStatus, SwarmState, WorkflowPhase
 from tatlam.settings import get_settings
 
 if TYPE_CHECKING:
@@ -36,9 +35,14 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def _get_clients() -> tuple["OpenAI | None", "OpenAI | None", Any]:
+def _get_clients() -> tuple[OpenAI | None, OpenAI | None, Any]:
     """Get local, cloud (OpenAI), and Anthropic clients."""
-    from tatlam.core.llm_factory import client_local, client_cloud, create_writer_client, ConfigurationError
+    from tatlam.core.llm_factory import (
+        ConfigurationError,
+        client_cloud,
+        client_local,
+        create_writer_client,
+    )
 
     local_client = None
     cloud_client = None
@@ -53,7 +57,7 @@ def _get_clients() -> tuple["OpenAI | None", "OpenAI | None", Any]:
         cloud_client = client_cloud()
     except (ConfigurationError, Exception) as e:
         logger.debug("Cloud client (OpenAI) not available: %s", e)
-        
+
     try:
         anthropic_client = create_writer_client()
     except (ConfigurationError, Exception) as e:
@@ -69,7 +73,7 @@ def _get_clients() -> tuple["OpenAI | None", "OpenAI | None", Any]:
     before_sleep=before_sleep_log(logger, logging.WARNING),
     reraise=True,
 )
-def _call_llm(client: "OpenAI", model: str, messages: list[dict], temperature: float = 0.7) -> str:
+def _call_llm(client: OpenAI, model: str, messages: list[dict], temperature: float = 0.7) -> str:
     """Call LLM with retry logic (OpenAI interface)."""
     response = client.chat.completions.create(
         model=model,
@@ -125,9 +129,11 @@ def _get_doctrine_context(venue_type: str = "allenby") -> str:
 """
     else:
         # Allenby doctrine
-        safety = doctrine.get("procedures", {}).get("suspicious_object", {}).get("safety_distances", {})
+        safety = (
+            doctrine.get("procedures", {}).get("suspicious_object", {}).get("safety_distances", {})
+        )
         venue_data = doctrine.get("venue_allenby", {})
-        
+
         safety_rules = f"""
 🚨 טווחי בטיחות (אלנבי):
 - חפץ חשוד עירוני: {safety.get('object_urban', '50 מטר')}
@@ -168,12 +174,16 @@ def _build_generation_prompt(state: SwarmState, repair_critique: str = "") -> st
 
     # Determine venue
     venue_type = "allenby"
-    if "jaffa" in str(state.category).lower() or "surface" in str(state.category).lower() or "tachanot-iliyot" in str(state.category).lower():
+    if (
+        "jaffa" in str(state.category).lower()
+        or "surface" in str(state.category).lower()
+        or "tachanot-iliyot" in str(state.category).lower()
+    ):
         venue_type = "jaffa"
-    
+
     if "יפו" in str(state.category) or "עילי" in str(state.category):
         venue_type = "jaffa"
-        
+
     # Get doctrine context
     doctrine_context = _get_doctrine_context(venue_type)
 
@@ -259,6 +269,7 @@ def _load_gold_examples(category: str) -> str:
     """Load gold examples from DB or filesystem."""
     # Import here to avoid circular imports
     from sqlalchemy import func, select
+
     from tatlam.infra.db import get_session
     from tatlam.infra.models import Scenario
 
@@ -305,7 +316,9 @@ def writer_node(state: SwarmState) -> SwarmState:
 
     logger.info(
         "Writer starting iteration %d for category '%s' (need %d more)",
-        state.iteration, state.category, state.target_count - len(state.approved_scenarios)
+        state.iteration,
+        state.category,
+        state.target_count - len(state.approved_scenarios),
     )
 
     # Load gold examples if not already loaded
@@ -315,7 +328,8 @@ def writer_node(state: SwarmState) -> SwarmState:
     # Check for repair mode (scenarios needing rework)
     repair_critique = ""
     scenarios_to_repair = [
-        c for c in state.candidates
+        c
+        for c in state.candidates
         if c.status == ScenarioStatus.REJECTED and c.attempt_count <= state.max_retries_per_scenario
     ]
     if scenarios_to_repair:
@@ -327,31 +341,37 @@ def writer_node(state: SwarmState) -> SwarmState:
 
     # Load system prompt
     from tatlam.core.prompts import get_prompt_manager, memory_addendum
-    
+
     # Use prompt manager to get dynamic system prompt (injecting venue)
     pm = get_prompt_manager()
-    
+
     # Infer venue type again for system prompt
     venue_type = "allenby"
-    if "jaffa" in str(state.category).lower() or "surface" in str(state.category).lower() or "tachanot-iliyot" in str(state.category).lower():
+    if (
+        "jaffa" in str(state.category).lower()
+        or "surface" in str(state.category).lower()
+        or "tachanot-iliyot" in str(state.category).lower()
+    ):
         venue_type = "jaffa"
     if "יפו" in str(state.category) or "עילי" in str(state.category):
         venue_type = "jaffa"
-        
+
     # Build Rule Engine Context
     rule_context = {
-        "category": "suspicious_object" if "חפץ חשוד" in state.category else "general", # Map Hebrew to rule keys
+        "category": (
+            "suspicious_object" if "חפץ חשוד" in state.category else "general"
+        ),  # Map Hebrew to rule keys
         "venue": venue_type,
         "location_type": "surface" if venue_type == "jaffa" else "underground",
-        "risk_level": "high" # default
+        "risk_level": "high",  # default
     }
-    
+
     # Simple mapping for common Hebrew categories to English rule keys
     if "חפץ חשוד" in state.category:
         rule_context["category"] = "suspicious_object"
     elif "רכב חשוד" in state.category:
         rule_context["category"] = "suspicious_vehicle"
-        
+
     system_prompt = pm.get_trinity_prompt("writer", venue=venue_type, context=rule_context)
     memory_msg = memory_addendum()
 
@@ -362,7 +382,7 @@ def writer_node(state: SwarmState) -> SwarmState:
     # Determine primary model based on settings
     use_anthropic = settings.WRITER_MODEL_PROVIDER == "anthropic"
     use_cloud_first = settings.WRITER_MODEL_PROVIDER in ("anthropic", "openai", "google")
-    
+
     draft_text = ""
     model_used = ""
 
@@ -371,12 +391,12 @@ def writer_node(state: SwarmState) -> SwarmState:
         try:
             model_used = settings.WRITER_MODEL_NAME
             logger.debug("Calling Cloud Writer (Anthropic): %s", model_used)
-            
+
             draft_text = _call_anthropic(
                 anthropic_client,
                 model_used,
                 system_prompt,  # Claude accepts system prompt separately
-                f"{memory_msg}\n{user_prompt}"  # Append memory to user prompt
+                f"{memory_msg}\n{user_prompt}",  # Append memory to user prompt
             )
         except Exception as e:
             logger.warning("Anthropic Writer failed: %s, falling back...", e)
@@ -387,7 +407,7 @@ def writer_node(state: SwarmState) -> SwarmState:
         try:
             model_used = settings.WRITER_MODEL_NAME or settings.GEN_MODEL
             logger.debug("Calling Cloud Writer (OpenAI): %s", model_used)
-            
+
             draft_text = _call_llm(
                 cloud_client,
                 model_used,
@@ -422,7 +442,7 @@ def writer_node(state: SwarmState) -> SwarmState:
 
     # Strategy 4: Cloud Fallback (if Local was primary and failed)
     if not draft_text and not use_cloud_first and cloud_client:
-         try:
+        try:
             model_used = settings.GEN_MODEL
             logger.debug("Calling Cloud Fallback: %s", model_used)
             draft_text = _call_llm(
@@ -434,7 +454,7 @@ def writer_node(state: SwarmState) -> SwarmState:
                     {"role": "user", "content": user_prompt},
                 ],
             )
-         except Exception as e:
+        except Exception as e:
             logger.error("Cloud Fallback failed: %s", e)
             state.metrics.llm_errors += 1
 
@@ -444,17 +464,18 @@ def writer_node(state: SwarmState) -> SwarmState:
 
     # Store the raw draft for the Clerk to process
     # We store it as a special "raw" candidate
-    raw_candidate = state.add_candidate({
-        "_raw_text": draft_text,
-        "_model": model_used,
-        "_is_raw_draft": True,
-        "category": state.category,
-    })
+    raw_candidate = state.add_candidate(
+        {
+            "_raw_text": draft_text,
+            "_model": model_used,
+            "_is_raw_draft": True,
+            "category": state.category,
+        }
+    )
     raw_candidate.status = ScenarioStatus.DRAFT
 
     logger.info(
-        "Writer completed: generated %d chars of draft text using %s",
-        len(draft_text), model_used
+        "Writer completed: generated %d chars of draft text using %s", len(draft_text), model_used
     )
 
     return state

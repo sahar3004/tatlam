@@ -7,15 +7,16 @@ by ensuring the LLM follows the documented rules precisely.
 
 If tests fail, it indicates the LLM needs better instruction via system prompts.
 """
+
 from __future__ import annotations
 
 import pytest
 
 from tatlam.core.brain import TrinityBrain
-from tatlam.core.doctrine import TRINITY_DOCTRINE
 
 
 # ==== Deterministic Rule Implementations ====
+
 
 def python_threat_level(scenario_description: str) -> str:
     """
@@ -33,9 +34,17 @@ def python_threat_level(scenario_description: str) -> str:
 
     # High threat: Weapons found
     weapon_indicators = [
-        "נשק", "אקדח", "סכין", "גרזן", "מברג",
-        "חגורת נפץ", "רימון", "מטען", "חומר נפץ",
-        "פצצה", "חנ\"מ"
+        "נשק",
+        "אקדח",
+        "סכין",
+        "גרזן",
+        "מברג",
+        "חגורת נפץ",
+        "רימון",
+        "מטען",
+        "חומר נפץ",
+        "פצצה",
+        'חנ"מ',
     ]
     if any(indicator in desc_lower for indicator in weapon_indicators):
         return "גבוהה מאוד"
@@ -75,14 +84,14 @@ def python_category(scenario_description: str) -> str:
             return "איום רכב / דריסה / מטען"
 
     # Drone/aerial
-    drone_keywords = ["רחפן", "מזל\"ט", "כטב\"מ"]
+    drone_keywords = ["רחפן", 'מזל"ט', 'כטב"מ']
     if any(kw in desc_lower for kw in drone_keywords):
         return "איום אווירי / רחפנים"
 
     # Active shooter / cold weapon
     weapon_keywords = ["אקדח", "סכין", "גרזן", "ירי", "תוקף"]
     if any(kw in desc_lower for kw in weapon_keywords):
-        return "פח\"ע / תוקף בנשק קר"
+        return 'פח"ע / תוקף בנשק קר'
 
     # Suspicious object / IED
     object_keywords = ["חפץ חשוד", "כבודה", "תיק נטוש", "מטען"]
@@ -122,7 +131,7 @@ TEST_SCENARIOS = [
     {
         "description": "נמצא נשק חם (אקדח) במהלך בדיקת תיק",
         "expected_threat": "גבוהה מאוד",
-        "expected_category": "פח\"ע / תוקף בנשק קר",
+        "expected_category": 'פח"ע / תוקף בנשק קר',
     },
     {
         "description": "כבודה עזובה ליד כניסת התחנה, ללא בעלים",
@@ -259,30 +268,37 @@ class TestDoctrine_AlignmentAlignment:
 
                 # Allow fuzzy matching for categories (LLM might use synonyms)
                 if python_result["category"] != llm_result["category"]:
-                    failures.append({
+                    failures.append(
+                        {
+                            "scenario_id": i,
+                            "description": scenario["description"],
+                            "expected_category": python_result["category"],
+                            "llm_category": llm_result["category"],
+                        }
+                    )
+            except Exception as e:
+                failures.append(
+                    {
                         "scenario_id": i,
                         "description": scenario["description"],
-                        "expected_category": python_result["category"],
-                        "llm_category": llm_result["category"],
-                    })
-            except Exception as e:
-                failures.append({
-                    "scenario_id": i,
-                    "description": scenario["description"],
-                    "error": str(e),
-                })
+                        "error": str(e),
+                    }
+                )
 
         if failures:
-            failure_msg = "\n\n".join([
-                f"Scenario {f['scenario_id']}: {f['description']}\n"
-                f"  Expected: {f.get('expected_category', 'N/A')}\n"
-                f"  Got: {f.get('llm_category', f.get('error', 'Unknown'))}"
-                for f in failures
-            ])
+            failure_msg = "\n\n".join(
+                [
+                    f"Scenario {f['scenario_id']}: {f['description']}\n"
+                    f"  Expected: {f.get('expected_category', 'N/A')}\n"
+                    f"  Got: {f.get('llm_category', f.get('error', 'Unknown'))}"
+                    for f in failures
+                ]
+            )
             pytest.fail(f"Category mismatches found:\n\n{failure_msg}")
 
 
 # ==== Operational Directives Generation ====
+
 
 def generate_operational_directives() -> str:
     """
