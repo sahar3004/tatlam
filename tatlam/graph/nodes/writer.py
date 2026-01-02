@@ -17,7 +17,7 @@ from __future__ import annotations
 import logging
 import os
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from tenacity import (
     retry,
@@ -36,12 +36,13 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def _get_clients() -> tuple["OpenAI | None", "OpenAI | None"]:
-    """Get local and cloud clients."""
-    from tatlam.core.llm_factory import client_local, client_cloud, ConfigurationError
+def _get_clients() -> tuple["OpenAI | None", "OpenAI | None", Any]:
+    """Get local, cloud (OpenAI), and Anthropic clients."""
+    from tatlam.core.llm_factory import client_local, client_cloud, create_writer_client, ConfigurationError
 
     local_client = None
     cloud_client = None
+    anthropic_client = None
 
     try:
         local_client = client_local()
@@ -51,9 +52,14 @@ def _get_clients() -> tuple["OpenAI | None", "OpenAI | None"]:
     try:
         cloud_client = client_cloud()
     except (ConfigurationError, Exception) as e:
-        logger.debug("Cloud client not available: %s", e)
+        logger.debug("Cloud client (OpenAI) not available: %s", e)
+        
+    try:
+        anthropic_client = create_writer_client()
+    except (ConfigurationError, Exception) as e:
+        logger.debug("Anthropic client not available: %s", e)
 
-    return local_client, cloud_client
+    return local_client, cloud_client, anthropic_client
 
 
 @retry(
@@ -64,13 +70,33 @@ def _get_clients() -> tuple["OpenAI | None", "OpenAI | None"]:
     reraise=True,
 )
 def _call_llm(client: "OpenAI", model: str, messages: list[dict], temperature: float = 0.7) -> str:
-    """Call LLM with retry logic."""
+    """Call LLM with retry logic (OpenAI interface)."""
     response = client.chat.completions.create(
         model=model,
         messages=messages,
         temperature=temperature,
     )
     return (response.choices[0].message.content or "").strip()
+
+
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=2, max=30),
+    retry=retry_if_exception_type((ConnectionError, TimeoutError)),
+    before_sleep=before_sleep_log(logger, logging.WARNING),
+    reraise=True,
+)
+def _call_anthropic(client: Any, model: str, system: str, user_prompt: str) -> str:
+    """Call Anthropic LLM (Claude) with retry logic."""
+    response = client.messages.create(
+        model=model,
+        max_tokens=4096,
+        system=system,
+        messages=[
+            {"role": "user", "content": user_prompt},
+        ],
+    )
+    return (response.content[0].text if response.content else "").strip()
 
 
 def _get_doctrine_context() -> str:
@@ -277,29 +303,37 @@ def writer_node(state: SwarmState) -> SwarmState:
     memory_msg = memory_addendum()
 
     # Get LLM clients
-    local_client, cloud_client = _get_clients()
+    local_client, cloud_client, anthropic_client = _get_clients()
     settings = get_settings()
 
     # Determine primary model based on settings
+    use_anthropic = settings.WRITER_MODEL_PROVIDER == "anthropic"
     use_cloud_first = settings.WRITER_MODEL_PROVIDER in ("anthropic", "openai", "google")
     
     draft_text = ""
     model_used = ""
 
-    # Strategy: Cloud First (if configured)
-    if use_cloud_first and cloud_client:
+    # Strategy 1: Anthropic (Claude) - Primary for Writer
+    if use_anthropic and anthropic_client:
         try:
-             # Use specific writer model if defined, else generic gen model
+            model_used = settings.WRITER_MODEL_NAME
+            logger.debug("Calling Cloud Writer (Anthropic): %s", model_used)
+            
+            draft_text = _call_anthropic(
+                anthropic_client,
+                model_used,
+                system_prompt,  # Claude accepts system prompt separately
+                f"{memory_msg}\n{user_prompt}"  # Append memory to user prompt
+            )
+        except Exception as e:
+            logger.warning("Anthropic Writer failed: %s, falling back...", e)
+            state.metrics.llm_errors += 1
+
+    # Strategy 2: Cloud OpenAI/Generic (if Anthropic failed or not selected)
+    if not draft_text and use_cloud_first and cloud_client and not use_anthropic:
+        try:
             model_used = settings.WRITER_MODEL_NAME or settings.GEN_MODEL
-            logger.debug("Calling Cloud Writer (%s): %s", settings.WRITER_MODEL_PROVIDER, model_used)
-            
-            # Use specific client method based on provider if needed, currently specialized wrappers 
-            # should handle this, but here we use the generic _call_llm wrapper which expects OpenAI-like interface
-            # For Anthropic/Gemini, we need to ensure the client wrapper adapts it, 
-            # OR we use the specific client protocols.
-            
-            # NOTE: For now, assuming cloud_client is OpenAI-compatible (via LiteLLM or direct)
-            # If WRITER_MODEL_PROVIDER is anthropic, we might need specific handling if not proxied.
+            logger.debug("Calling Cloud Writer (OpenAI): %s", model_used)
             
             draft_text = _call_llm(
                 cloud_client,
@@ -311,10 +345,10 @@ def writer_node(state: SwarmState) -> SwarmState:
                 ],
             )
         except Exception as e:
-            logger.warning("Cloud Writer failed: %s, falling back to Local if available", e)
+            logger.warning("Cloud Writer failed: %s, falling back...", e)
             state.metrics.llm_errors += 1
 
-    # Strategy: Local (Primary or Fallback)
+    # Strategy 3: Local LLM (Primary or Fallback)
     if not draft_text and local_client:
         try:
             model_used = settings.LOCAL_MODEL_NAME
@@ -333,7 +367,7 @@ def writer_node(state: SwarmState) -> SwarmState:
             logger.warning("Local Writer failed: %s", e)
             state.metrics.llm_errors += 1
 
-    # Strategy: Cloud Fallback (if Local was primary and failed)
+    # Strategy 4: Cloud Fallback (if Local was primary and failed)
     if not draft_text and not use_cloud_first and cloud_client:
          try:
             model_used = settings.GEN_MODEL
@@ -353,10 +387,6 @@ def writer_node(state: SwarmState) -> SwarmState:
 
     if not draft_text:
         state.add_error("Writer failed: all configured LLMs failed")
-        return state
-
-    if not draft_text:
-        state.add_error("Writer failed: no LLM response received")
         return state
 
     # Store the raw draft for the Clerk to process

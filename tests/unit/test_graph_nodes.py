@@ -87,7 +87,7 @@ class TestWriterNode:
         from tatlam.graph.nodes.writer import writer_node
 
         mock_local = MagicMock()
-        mock_clients.return_value = (mock_local, None)
+        mock_clients.return_value = (mock_local, None, None)
         mock_call.return_value = "Generated text content"
 
         state = SwarmState(category="חפץ חשוד", target_count=5)
@@ -101,7 +101,7 @@ class TestWriterNode:
         """Test writer handles case when no LLM clients available."""
         from tatlam.graph.nodes.writer import writer_node
 
-        mock_clients.return_value = (None, None)
+        mock_clients.return_value = (None, None, None)
 
         state = SwarmState(category="Test", target_count=5)
         result = writer_node(state)
