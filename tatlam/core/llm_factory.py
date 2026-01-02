@@ -451,4 +451,6 @@ __all__ = [
     "client_cloud",
     # Router (Phase 2)
     "LLMRouter",
+    # Exceptions
+    "ConfigurationError",
 ]

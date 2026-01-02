@@ -771,6 +771,90 @@ class TrinityBrain:
             "simulator": self.has_simulator(),
         }
 
+    # ==== Graph-Based Batch Generation ====
+
+    def generate_batch(
+        self,
+        category: str,
+        count: int = 5,
+        score_threshold: float = 70.0,
+    ) -> dict[str, Any]:
+        """
+        Generate a batch of scenarios using the LangGraph multi-agent system.
+
+        This method replaces the monolithic run_batch.py with a modular,
+        observable workflow that includes:
+        - Quality loops with repair cycles
+        - Early deduplication
+        - Doctrine-based scoring
+
+        Args:
+            category: The scenario category (e.g., "חפץ חשוד ומטען")
+            count: Number of scenarios to generate
+            score_threshold: Minimum score to approve (0-100)
+
+        Returns:
+            Dict with:
+                - bundle_id: Unique bundle identifier
+                - scenarios: List of approved scenario dicts
+                - metrics: Generation statistics
+
+        Example:
+            brain = TrinityBrain()
+            result = brain.generate_batch("חפץ חשוד ומטען", count=5)
+            print(f"Generated {len(result['scenarios'])} scenarios")
+        """
+        from tatlam.graph.workflow import run_scenario_generation
+
+        logger.info("TrinityBrain.generate_batch: category=%s, count=%d", category, count)
+
+        final_state = run_scenario_generation(
+            category=category,
+            target_count=count,
+            score_threshold=score_threshold,
+        )
+
+        return {
+            "bundle_id": final_state.bundle_id,
+            "scenarios": [c.data for c in final_state.approved_scenarios],
+            "metrics": final_state.metrics.to_dict(),
+            "errors": final_state.errors,
+        }
+
+    async def generate_batch_async(
+        self,
+        category: str,
+        count: int = 5,
+        score_threshold: float = 70.0,
+    ) -> dict[str, Any]:
+        """
+        Async version of generate_batch.
+
+        Args:
+            category: The scenario category
+            count: Number of scenarios to generate
+            score_threshold: Minimum score to approve
+
+        Returns:
+            Dict with bundle_id, scenarios, metrics, errors
+        """
+        from tatlam.graph.workflow import run_scenario_generation_async
+
+        logger.info("TrinityBrain.generate_batch_async: category=%s, count=%d", category, count)
+
+        final_state = await run_scenario_generation_async(
+            category=category,
+            target_count=count,
+            score_threshold=score_threshold,
+        )
+
+        return {
+            "bundle_id": final_state.bundle_id,
+            "scenarios": [c.data for c in final_state.approved_scenarios],
+            "metrics": final_state.metrics.to_dict(),
+            "errors": final_state.errors,
+        }
+
     def think(
         self,
         prompt: str,
